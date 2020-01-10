@@ -8,7 +8,7 @@ English | **[简体中文](README_zh.md)**
   <img src="wiki/bytex-logo.png" height="111" width="340"  alt="logo" />
  </h1>
 
-
+> Powered by bytedance douyin android team.
 
 
 ByteX is a bytecode plugin platform based on Android Gradle Transform Api and ASM. 
