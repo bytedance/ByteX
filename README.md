@@ -8,39 +8,39 @@ English | **[简体中文](README_zh.md)**
   <img src="wiki/bytex-logo.png" height="111" width="340"  alt="logo" />
  </h1>
 
-> Powered by bytedance douyin android team.
+> Powered by ByteDance Douyin Android team.
 
 
-ByteX is a bytecode plugin platform based on Android Gradle Transform Api and ASM. 
+ByteX is a bytecode plugin platform based on Android Gradle Transform API and ASM. 
 
  (Maybe you can think of it as a socket with unlimited plugs?)
 
 
-In the apk building process, each plugin is completely independent. It not only can run independently from the ByteX host, but also can be automatically integrated into the host into a single Transform along with other plugins. 
+ByteX plugin family consists of several bytecode plugins. Each of them can not only run separately, but also be automatically integrated into the ByteX host,  along with other plugins as a single Transform in the apk building process.
 
-What's more, each plugin's code is decoupled from one another, as well as their host, which makes it extensible and highly efficient for the development of new plugins.
+What's more, each plugin is independent from one another, as well as their ByteX host. This architecture makes ByteX flexible, extensible and highly efficient for new plugins development.
 
 ### Background
 
-If all features are developed as a separate plugin, each plugin will cost 10+s, and the compilation time will increase linearly. 
+If a project applies several separate bytecode plugins with 10s build time for each, the build time will get a linear increase.
 
-But if  the iterative development in only one plugin module will make it more and more cluttered, for the code is deeply coupled. 
+However, if the iterative development in only one plugin module will make it more and more cluttered, for the code is deeply coupled. 
 
 So an idea was raised. It could make sense to build a bytecode plugin platform, and the new feature can be extended based on it as a new plugin.
 
 ### Feature
 
-- Code reuse. The common code sinks to `common` module and is reused by all plugins, so that each plugin only needs to focus on bytecode operation.
+- Code sharing. The common code sinks to `common` module and is shared by all plugins, so that developers could take more focus on bytecode operations.
 
-- Plugin code is isolated and decoupled from each other. Based on ByteX, each feature is independent as a single plugin, and the code of each plugin is isolated from each other, which is conducive to develop a new plugin.
+- Plugin code is isolated and decoupled from each other. Long ago in ByteDance, all of the features related to bytecode operations were bundled together in a single plugin. As time goes by, the code went incomprehensible and could not be maintained anymore. However, based on ByteX, each feature is a standalone plugin, which makes it conducive to developing a new plugin.
 
 - Platformization makes `Transform` more efficient.
 
-  - Class files are processed in multiple threads concurrently, making full use of the CPU resources of your machine.
+  - Class files are processed in parallel, making full use of CPU resources of your computer.
 
-  - Plugins are automatically and seamlessly integrated into a single `Transform` to improve the efficiency of processing. During the `Transform` process, the IO of the class file is time-consuming. Integrating all the plugins into a single transform can avoid the costing  time increasing linearly. It makes "1 + 1 = 2"  become "1 + 1 <2" or approximately equal to 1.
+  - Plugins are automatically and seamlessly integrated into one single `Transform` to improve the efficiency of processing. During the `Transform` process, the IO of the class file is time-consuming. Integrating all the plugins into a single transform can avoid linear increase of build time. It makes "1 + 1 = 2"  become "1 + 1 < 2" or approximately equal to 1.
 
-- Plugin portability is outstanding. Each plugin can be separated from the ByteX host, working as a transform independently.
+- Plugin portability is outstanding. Each plugin can be separated from the ByteX host, working as a standalone transform.
 
 ### Structure
 
@@ -50,7 +50,7 @@ So an idea was raised. It could make sense to build a bytecode plugin platform, 
 
 **TransformEngine**
 
-Reading all the class files in the project and Android SDK, and writing back to the specified directory.
+Reading all the class files from both the project sources and Android SDK, as well as writing back to a specified directory.
 
 **base-plugin**
 
@@ -62,7 +62,7 @@ Basic code library, including class diagram construction, logs, interfaces provi
 
 **other plugin modules**
 
-Depending on `common` module and focusing on bytecode operation.
+Depending on `common` module and focusing on bytecode operations.
 
 
 
@@ -101,9 +101,9 @@ apply plugin: 'bytex.refer_check'
 // ...
 ```
 
-Note: If you do not apply the ByteX host, those ByteX plugins are no different from ordinary plugins and each will form a separate Transform. On the contrary, all ByteX plugins will automatically merge into a Transform with the help of the ByteX host.
+Note: If ByteX host is not applied, there is no difference between ByteX plugins and ordinary ones, and all of them will run separately. On the contrary, all ByteX plugins can be automatically merged into one single Transform with the help of the ByteX host.
 
-The following are the plugins based on ByteX.  You can learn more usage information about those plugins in their own README.md.
+The following are the plugins based on ByteX. You can read their own README.md to get more information.
 
 ## Plugins
 
@@ -136,9 +136,9 @@ The following are the plugins based on ByteX.  You can learn more usage informat
 
 ## Contribution
 
-If you have some creative ideas and demands related to bytecode, come to join us to develop a new bytecode plugin based on ByteX!
+If you have some creative ideas and demands related to bytecode, come to join us to and it is appreciated to expand ByteX plugin family!
 
-Please read through our [Developer API](wiki/ByteX-Developer-API-en.md).
+Please refer to our [Developer API](wiki/ByteX-Developer-API-en.md) to get more information.
 
 
 
