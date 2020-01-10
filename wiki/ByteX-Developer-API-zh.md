@@ -1,4 +1,4 @@
-[English](ByteX Developer API-en.md) | **[简体中文](ByteX Developer API-zh.md)**
+[English](ByteX-Developer-API-en.md) | **[简体中文](ByteX-Developer-API-zh.md)**
 ## Quick Start 快速上手
 
 ### 环境搭建
