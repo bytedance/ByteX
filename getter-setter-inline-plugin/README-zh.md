@@ -4,58 +4,45 @@
 
 ## 功能
 
-内联access$方法，减少apk方法数和包大小。
+内联Getter和Setter方法，减少apk方法数和包大小。 
 
-我们来看看下面这种case：
+在日常的开发中，我们常常会为一些类手写一些getter或setter方法，如下代码所示。
 
-``` java
-public class Foo {
-    private int mValue;
-
-    private void doStuff(int value) {
-        System.out.println("Value is " + value);
+```java
+public class People {
+    private int age;
+    public int getAge() {
+        return this.age;
     }
-
-    private class Inner {
-        void stuff() {
-            Foo.this.doStuff(Foo.this.mValue);
-        }
+    public void setAge(int age) {
+        this.age = age;
     }
 }
 ```
 
+通过这样的Getter和Setter方法，让类变量被外部读写变得可控。当变量被 `private` 修饰符隐藏并且只能通过 Getter 和 Setter 访问时，它就被“封装”起来了。封装是面向对象编程(OOP)的基本特性之一，使用Getter和Setter 方法是在程序代码中强制执行封装的方法之一。
 
-JVM认为从内部类`Foo$Inner`直接访问外部类`Foo`的私有方法是非法的，因为`Foo`和`Foo$Inner` 是两个不同的类，尽管Java语法里允许内部类直接访问外部类的私有成员。编译器为了能实现这种语法，会在编译期生成以下方法：
-
-``` java
-/*package*/ static int Foo.access$100(Foo foo) {
-    return foo.mValue;
-}
-/*package*/ static void Foo.access$200(Foo foo, int value) {
-    foo.doStuff(value);
-}
-```
-
-当内部类需要访问外部类的`mValue` 或调用`doStuff()`方法时，会借助这些静态方法来间接实现。
-
-然而，编译器的这种语法糖对方法数的增加还是很可观的。而这个gradle插件会内联这些方法来减少release版本apk的方法数。
+但这些方法的数量其实在整包里还是相当可观的，在一般的大型App里一般会有7k~9k个。
 
 
 
 ## 使用
 
 ```groovy
-classpath "com.bytedance.android.byteX:access-inline-plugin:${plugin_version}"
+classpath "com.bytedance.android.byteX:getter_setter-inline-plugin:${plugin_version}"
 ```
 
 
 
 ```groovy
-apply plugin: 'bytex.access_inline'
-access_inline {
+apply plugin: 'bytex.getter_setter_inline'
+getter_setter_inline {
     enable true
     enableInDebug false
     logLevel "DEBUG"
+    shouldInline = [
+            "com/ss/android/ugc/bytex/example/getter_setter/"
+    ]
 }
 ```
 
@@ -77,8 +64,18 @@ A：这是个好问题。 如果我们在配置文件里为proguard添加以下�
 
 但是，因为国内大多数大型app都接入了hotfix，而proguard的短方法内联会导致线上被内联的方法不能被hotfix，所以我们一般会把proguard的短方法内联禁用。
 
-但是像access方法是编译器生成的方法，就算内联了这些方法也不会影响hotfix（因为这些方法是对开发者透明的，被hotfix的概率极低）。
+但是像Getter和Setter方法指令极少，被hotfix的概率极低。
 
 然而，开发者并不能控制哪些方法能内联，哪些方法不要内联。
 
 所以access-inline-plugin正是为此而生，只专注于为你的App在打包过程中自动内联access方法。
+
+
+
+### 如何配置某些方法不被插件内联？
+
+Q：如果Getter和Setter需要被运行时反射或者被native代码调用，如何配置这些方法不被内联？
+
+A：该插件在打包时会自动收集所有的Proguard文件，解析所有`-keep`的配置项，用于排除某些class和method的内联。
+
+因此，你只需要把你的方法在Proguard配置文件里配好就OK啦。
