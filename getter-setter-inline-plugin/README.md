@@ -41,7 +41,7 @@ getter_setter_inline {
     enableInDebug false
     logLevel "DEBUG"
     shouldInline = [
-            "com/ss/android/ugc/bytex/getter_setter/"
+        "com/ss/android/ugc/bytex/example/getter_setter/"
     ]
 }
 ```
