@@ -29,7 +29,7 @@ Through such Getters and Setters, class fields can be controlled while external 
 ## How to use it
 
 ```groovy
-classpath "com.bytedance.android.byteX:getter_setter-inline-plugin:${plugin_version}"
+classpath "com.bytedance.android.byteX:getter-setter-inline-plugin:${plugin_version}"
 ```
 
 
@@ -41,8 +41,7 @@ getter_setter_inline {
     enableInDebug false
     logLevel "DEBUG"
     shouldInline = [
-            "com/ss/android/ugc/aweme/challenge/model/",
-            "com/ss/android/ugc/aweme/comment/model/",
+        "com/ss/android/ugc/bytex/example/getter_setter/"
     ]
 }
 ```
