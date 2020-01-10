@@ -26,7 +26,7 @@ public class Foo {
 }
 ```
 
-The JVM thinks it is illegal to access  `Foo`'s private members from `Foo$Inner` directly because `Foo` and `Foo$Inner`are different classes, even though the Java language standard allows an inner class to access an outer class' private members. To bridge the gap, the compiler generates a couple of synthetic methods:
+The JVM thinks it is illegal to access `Foo`'s private members from `Foo$Inner` directly because `Foo` and `Foo$Inner`are different classes, even though the Java language standard allows an inner class to access an outer class' private members. To bridge the gap, the compiler generates a couple of synthetic methods:
 
 ```java
 /*package*/ static int Foo.access$100(Foo foo) {
@@ -76,7 +76,7 @@ A: That's a good question. If we add the following line to Proguard configuratio
 
 
 
-However, because most large apps in China have the ability to apply hotfix patches based on loading Java classes without releasing a new version in Play Store. Short methods inlined by Proguard cannot be hotfixed, so It is a common practive to disable the short method inlining of proguard.
+However, because most large apps in China have the ability to apply hotfix patches based on loading Java classes without releasing a new version in Play Store, short methods inlined by Proguard cannot be hotfixed. In fact, it is a common practive to disable the short method inlining of proguard.
 
 But the access methods are compiler-generated methods. Even if these methods are inlined, they will not affect hotfixes (because these methods are invisible to normal developers and the probability of being hotfixed is extremely low).  So we only want to inline those methods.
 
