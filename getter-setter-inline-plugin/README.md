@@ -29,7 +29,7 @@ Through such Getters and Setters, class fields can be controlled while external 
 ## How to use it
 
 ```groovy
-classpath "com.bytedance.android.byteX:getter_setter-inline-plugin:${plugin_version}"
+classpath "com.bytedance.android.byteX:getter-setter-inline-plugin:${plugin_version}"
 ```
 
 

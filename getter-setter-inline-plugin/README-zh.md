@@ -29,7 +29,7 @@ public class People {
 ## 使用
 
 ```groovy
-classpath "com.bytedance.android.byteX:getter_setter-inline-plugin:${plugin_version}"
+classpath "com.bytedance.android.byteX:getter-setter-inline-plugin:${plugin_version}"
 ```
 
 
