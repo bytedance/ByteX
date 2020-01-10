@@ -8,7 +8,9 @@ English | **[简体中文](README_zh.md)**
   <img src="wiki/bytex-logo.png" height="111" width="340"  alt="logo" />
  </h1>
 
-> Powered by bytedance douyin android team.
+![version](https://img.shields.io/badge/version-0.1.0-green) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
+
+> Powered by ByteDance TikTok(Douyin) Android team.
 
 
 ByteX is a bytecode plugin platform based on Android Gradle Transform Api and ASM. 
