@@ -1,0 +1,12 @@
+apply plugin: 'java'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compile('com.google.auto.service:auto-service:1.0-rc4')
+    compile project(':PluginConfigAnnotation')
+}
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+group "$upload_group"
+version "$upload_version"
+apply from: rootProject.file('gradle/publish.gradle')

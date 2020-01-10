@@ -1,0 +1,4 @@
+apply from: rootProject.file('gradle/plugin.gradle')
+dependencies {
+    implementation "com.google.code.gson:gson:2.8.2"
+}

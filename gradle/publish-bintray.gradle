@@ -1,0 +1,109 @@
+group "$upload_group"
+version "$upload_version"
+def propertiesFile = project.file("gradle.properties")
+if (!propertiesFile.exists()) {
+    propertiesFile.parentFile.mkdirs()
+    propertiesFile.createNewFile()
+    propertiesFile.append("ARTIFACT_GROUP=$upload_group\n")
+    propertiesFile.append("ARTIFACT_NAME=$project.name\n")
+    //propertiesFile.append("ARTIFACT_VERSION=$upload_version\n")
+}
+
+def loadProperties(Properties properties) {
+    def is = new FileInputStream(project.file("gradle.properties"))
+    try {
+        properties.load(is)
+    } finally {
+        is.close()
+    }
+}
+
+def properties = new Properties()
+loadProperties(properties)
+if (properties.getProperty("ARTIFACT_NAME") == null) {
+    propertiesFile.append("ARTIFACT_NAME=$project.name\n")
+    loadProperties(properties)
+}
+if (properties.getProperty("ARTIFACT_GROUP") == null) {
+    propertiesFile.append("ARTIFACT_GROUP=$upload_group\n")
+    loadProperties(properties)
+}
+
+def pomGroupId = properties.getProperty("ARTIFACT_GROUP") == null ? "$upload_group" : properties.getProperty("ARTIFACT_GROUP")
+def pomArtifactId = properties.getProperty("ARTIFACT_NAME") == null ? "$project.name" : properties.getProperty("ARTIFACT_NAME")
+//此处特别写成upload_version，因为ARTIFACT_NAME是个ByteBus用的，ARTIFACT_GROUP和ARTIFACT_NAME共用
+def pomVersion = properties.getProperty("upload_version") == null ? "$upload_version" : properties.getProperty("upload_version")
+def bintray_user = "$upload_user_name"
+def bintray_key = "$bintray_key"
+
+def isAndroid = project.getPlugins().hasPlugin('com.android.application') || project.getPlugins().hasPlugin('com.android.library')
+if (isAndroid) {
+    task androidjavadocJar_(type: Jar, dependsOn: dokka) {
+        group = 'jar'
+        classifier = 'javadoc'
+        from "$buildDir/javadoc"
+    }
+    task androidsourcesJar_(type: Jar) {
+        group = 'jar'
+        from android.sourceSets.main.java.srcDirs
+        classifier = 'sources'
+    }
+} else {
+    task javadocJar_(type: Jar, dependsOn: dokka) {
+        group = 'jar'
+        classifier = 'javadoc'
+        from "$buildDir/javadoc"
+    }
+    task sourcesJar_(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+}
+apply plugin: 'digital.wup.android-maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+publishing {
+    publications {
+        if (isAndroid) {
+            android.libraryVariants.all { variant ->
+                println("android.libraryVariants.all --- maven${variant.name.capitalize()}Aar")
+
+                "maven${variant.name.capitalize()}Aar"(MavenPublication) {
+                    from components.findByName("android${variant.name.capitalize()}")
+                    groupId pomGroupId
+                    artifactId pomArtifactId
+                    version pomVersion
+                }
+
+            }
+        } else {
+            mavenJar(MavenPublication) {
+                from components.java
+//                artifact javadocJar_
+                artifact sourcesJar_
+                groupId pomGroupId
+                artifactId pomArtifactId
+                version pomVersion
+            }
+        }
+    }
+}
+bintray {
+    user = bintray_user
+    key = bintray_key
+    pkg {
+        repo = 'maven'
+        name = pomArtifactId
+        websiteUrl = "https://github.com/bytedance/ByteX"
+        vcsUrl = "https://github.com/bytedance/ByteX.git"
+        licenses = ["Apache-2.0"]
+        publish = true
+
+        version {
+            name = pomVersion
+            released = new Date()
+            vcsTag = pomVersion
+        }
+    }
+    publications = isAndroid? ["mavenReleaseAar"] : ["mavenJar"]
+}

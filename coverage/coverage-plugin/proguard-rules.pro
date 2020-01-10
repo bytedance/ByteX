@@ -1,0 +1,1 @@
+-keep class com.ss.android.ugc.bytex.coverage_lib.** { *; }

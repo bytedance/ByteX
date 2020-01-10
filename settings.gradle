@@ -1,0 +1,54 @@
+def excludeApp = false
+def proFile = file("./upload.properties")
+if (proFile != null) {
+    Properties p = new Properties()
+    try {
+        proFile.withInputStream { stream ->
+            p.load(stream)
+        }
+        excludeApp = p.excludeApp
+    } catch (e) {
+    }
+}
+if (!excludeApp) {
+//    "./publish.sh".execute().waitForProcessOutput(System.out, System.err)
+    include ':example'
+}
+
+//common
+include ':base-plugin'
+include ':common'
+include ':TransformEngine'
+include ':HookProguard'
+include ':GradleToolKit'
+include ':GradleEnvApi'
+project(':GradleEnvApi').projectDir = new File('GradleToolKit/submodules/GradleEnvApi')
+include ':CompatGradleApiV3_0'
+project(':CompatGradleApiV3_0').projectDir = new File('GradleToolKit/submodules/CompatGradleApiV3_0')
+include ':CompatGradleApiV3_2'
+project(':CompatGradleApiV3_2').projectDir = new File('GradleToolKit/submodules/CompatGradleApiV3_2')
+include ':CompatGradleApiV3_3'
+project(':CompatGradleApiV3_3').projectDir = new File('GradleToolKit/submodules/CompatGradleApiV3_3')
+include ':PluginConfigProcessor'
+project(':PluginConfigProcessor').projectDir = new File('PluginConfig/PluginConfigProcessor')
+include ':PluginConfigAnnotation'
+project(':PluginConfigAnnotation').projectDir = new File('PluginConfig/PluginConfigAnnotation')
+
+//opensource
+include ':shrink-r-plugin'
+include ':access-inline-plugin'
+include ':getter-setter-inline-plugin'
+include ':refer-check-plugin'
+include ':closeable-check-plugin'
+include ':serialization-check-plugin'
+include ':const-inline-plugin'
+include ':field-assign-opt-plugin'
+include ':method-call-opt-plugin'
+include ':SourceFileKiller'
+
+include ':coverage-plugin'
+project(':coverage-plugin').projectDir = new File('coverage/coverage-plugin')
+include ':coverage-lib'
+project(':coverage-lib').projectDir = new File('coverage/coverage-lib')
+
+//pull request

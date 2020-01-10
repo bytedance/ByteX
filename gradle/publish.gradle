@@ -1,0 +1,2 @@
+apply from: "$rootDir/gradle/publish-maven.gradle"
+apply from: "$rootDir/gradle/publish-bintray.gradle"

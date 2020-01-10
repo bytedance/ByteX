@@ -1,0 +1,14 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compile gradleApi()
+    compileOnly "com.android.tools.build:gradle:$gradle_version"
+    compile "com.google.guava:guava:$guava_version"
+    testCompile 'com.squareup.okio:okio:1.14.0'
+    compile "io.reactivex.rxjava2:rxjava:2.2.6"
+    compile project(':GradleEnvApi')
+    compile project(':GradleToolKit')
+}
+
+apply from: rootProject.file('gradle/publish.gradle')

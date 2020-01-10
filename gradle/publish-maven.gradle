@@ -1,0 +1,143 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+group "$upload_group"
+version "$upload_version"
+
+def propertiesFile = project.file("gradle.properties")
+if (!propertiesFile.exists()) {
+    propertiesFile.parentFile.mkdirs()
+    propertiesFile.createNewFile()
+    propertiesFile.append("ARTIFACT_GROUP=$upload_group\n")
+    propertiesFile.append("ARTIFACT_NAME=$project.name\n")
+    //propertiesFile.append("ARTIFACT_VERSION=$upload_version\n")
+}
+
+def loadProperties(Properties properties) {
+    def is = new FileInputStream(project.file("gradle.properties"))
+    try {
+        properties.load(is)
+    } finally {
+        is.close()
+    }
+}
+
+def properties = new Properties()
+loadProperties(properties)
+if (properties.getProperty("ARTIFACT_NAME") == null) {
+    propertiesFile.append("ARTIFACT_NAME=$project.name\n")
+    loadProperties(properties)
+}
+if (properties.getProperty("ARTIFACT_GROUP") == null) {
+    propertiesFile.append("ARTIFACT_GROUP=$upload_group\n")
+    loadProperties(properties)
+}
+
+def pomGroupId = properties.getProperty("ARTIFACT_GROUP") == null ? "$upload_group" : properties.getProperty("ARTIFACT_GROUP")
+def pomArtifactId = properties.getProperty("ARTIFACT_NAME") == null ? "$project.name" : properties.getProperty("ARTIFACT_NAME")
+//此处特别写成upload_version，因为ARTIFACT_NAME是个ByteBus用的，ARTIFACT_GROUP和ARTIFACT_NAME共用
+def pomVersion = properties.getProperty("upload_version") == null ? "$upload_version" : properties.getProperty("upload_version")
+def upload = properties.getProperty("UPLOAD2MAVEN") == null ? "$upload2Maven" : properties.getProperty("UPLOAD2MAVEN")
+def useSnapshot = properties.getProperty("USESNAPSHOT") == null ? "$useSnapshot" : properties.getProperty("USESNAPSHOT")
+def mavenUrl = useSnapshot == 'true' ?
+        (properties.getProperty("UPLOAD_MAVEN_URL_SNAPSHOT") == null ? "$upload_maven_url_snapshot" : properties.getProperty("UPLOAD_MAVEN_URL_SNAPSHOT")) :
+        (properties.getProperty("UPLOAD_MAVEN_URL") == null ? "$upload_maven_url" : properties.getProperty("UPLOAD_MAVEN_URL"))
+def uploadUserName = useSnapshot == 'true' ?
+        (properties.getProperty("USERNAME_SNAPSHOT") == null ? "$upload_user_name_snapshot" : properties.getProperty("USERNAME_SNAPSHOT")) :
+        (properties.getProperty("USERNAME") == null ? "$upload_user_name" : properties.getProperty("USERNAME"))
+def uploadPassword = useSnapshot == 'true' ?
+        (properties.getProperty("PASSWORD_SNAPSHOT") == null ? "$upload_password_snapshot" : properties.getProperty("PASSWORD_SNAPSHOT")) :
+        (properties.getProperty("PASSWORD") == null ? "$upload_password" : properties.getProperty("PASSWORD"))
+
+def uploadDir = properties.getProperty("UPLOADDIR") == null ? "$upload_dir" : properties.getProperty("UPLOADDIR")
+
+apply plugin: 'org.jetbrains.dokka'
+dokka {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
+}
+afterEvaluate { project ->
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                pom.groupId = pomGroupId
+                pom.artifactId = pomArtifactId
+                pom.version = pomVersion
+                if (upload == 'true') {
+                    repository(url: uri(mavenUrl)) {
+                        authentication(userName: uploadUserName, password: uploadPassword)
+                    }
+                } else {
+                    //文件发布到下面目录
+                    repository(url: uri(uploadDir))
+                }
+            }
+        }
+    }
+
+    signing {
+        required { gradle.taskGraph.hasTask("uploadArchives") }
+        sign configurations.archives
+    }
+
+    if (project.getPlugins().hasPlugin('com.android.application') ||
+            project.getPlugins().hasPlugin('com.android.library')) {
+        task install(type: Upload, dependsOn: assemble) {
+            repositories.mavenInstaller {
+                configuration = configurations.archives
+
+                pom.groupId = pomGroupId
+                pom.artifactId = pomArtifactId
+                pom.version = pomVersion
+            }
+        }
+        task androidJavadocJar(type: Jar, dependsOn: dokka) {
+            group = 'jar'
+            classifier = 'javadoc'
+            from "$buildDir/javadoc"
+        }
+        task androidSourcesJar(type: Jar) {
+            group = 'jar'
+            from android.sourceSets.main.java.srcDirs
+            classifier = 'sources'
+        }
+    } else {
+        install {
+            repositories.mavenInstaller {
+                pom.groupId = pomGroupId
+                pom.artifactId = pomArtifactId
+                pom.version = pomVersion
+            }
+        }
+
+        task javadocJar(type: Jar, dependsOn: dokka) {
+            group = 'jar'
+            classifier = 'javadoc'
+            from "$buildDir/javadoc"
+        }
+        task sourcesJar(type: Jar, dependsOn: classes) {
+            classifier = 'sources'
+            from sourceSets.main.allSource
+        }
+    }
+
+    if (JavaVersion.current().isJava8Compatible()) {
+        allprojects {
+            tasks.withType(Javadoc) {
+                options.addStringOption('Xdoclint:none', '-quiet')
+            }
+        }
+    }
+
+    artifacts {
+        if (project.getPlugins().hasPlugin('com.android.application') ||
+                project.getPlugins().hasPlugin('com.android.library')) {
+            //archives androidJavadocJar
+            archives androidSourcesJar
+        } else {
+            //archives javadocJar
+            archives sourcesJar
+        }
+    }
+}

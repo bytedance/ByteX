@@ -1,0 +1,262 @@
+def pluginEnable = true
+def pluginEnableInDebug = true
+def pluginLogLevel = "DEBUG"
+
+apply plugin: 'bytex'
+ByteX {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+}
+
+apply plugin: 'bytex.refer_check'
+refer_check {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    strictMode true
+    whiteList = [
+            "com/google/+",
+            "junit/+",
+            "me/ele/lancet/+",
+            "javassist/+",
+            "sun/+",
+            "com/appsee/Appsee",
+            "com/alipay/+",
+            "com/alibaba/+",
+            "com/taobao/+",
+            "org/android/agoo/+",
+            "com/ut/mini/+",
+            "org/mozilla/+",
+            "com/amap/api/+",
+            "com/zhihu/matisse/+", // 知乎开源的图片选择库
+            "org/greenrobot/greendao/+",
+            // checker-compat-qual库，guava依赖的
+            "afu/org/checkerframework/checker/formatter/qual/ConversionCategory",
+            "org/checkerframework/checker/formatter/qual/ConversionCategory",
+            // -------------------------------
+            // Okhttp3的非必须依赖。 Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
+            // Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
+            "org/conscrypt/+",
+    ]
+    logMethods = [
+            "com/ss/android/ugc/bytex/example/accessinline/OuterClass#run"
+    ]
+}
+
+apply plugin: 'bytex.access_inline'
+access_inline {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+}
+
+apply plugin: 'bytex.shrink_r_class'
+shrinkR {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    keepList = [
+            "android.support.constraint.R.id",
+            // your icon
+            "R.drawable.icon",
+            "com.xxx.ooo.R.id.haha_didd+",
+            // for fabric
+            "R.string.com_crashlytics_*",
+            // for umeng update
+            "R.string.umeng*",
+            "R.string.UM*",
+            "R.string.tb_*",
+            "R.layout.umeng*",
+            "R.layout.tb_*",
+            "R.drawable.umeng*",
+            "R.drawable.tb_*",
+            "R.anim.umeng*",
+            "R.color.umeng*",
+            "R.color.tb_*",
+            "R.style.*UM*",
+            "R.style.umeng*",
+            "R.id.umeng*",
+            // umeng share for sina
+            "R.drawable.sina*",
+            // for google-services.json
+            "R.string.google_app_id",
+            "R.string.gcm_defaultSenderId",
+            "R.string.default_web_client_id",
+            "R.string.ga_trackingId",
+
+            "R.string.firebase_database_url",
+            "R.string.google_api_key",
+            "R.string.google_crash_reporting_api_key",
+            "R.dimen.navigation_bar_height",
+            "R.bool.config_showNavigationBar",
+            "R.drawable.src_res*",
+            "R.drawable.bg_rectangular_button_grey",
+            "R.drawable.splash_activity_banner",
+            "R.string.CODE_PUSH_APK_BUILD_TIME",
+            "R.dimen.navigation_bar_height",
+            "R.dimen.status_bar_height",
+            "R.bool.config_showNavigationBar",
+            "R.raw.*"
+    ]
+    resCheck {
+        enable true
+        onlyCheck = [
+                // 只检查主工程里的资源
+                "app/build",
+                "example/build"
+        ]
+    }
+}
+
+apply plugin: 'bytex.getter_setter_inline'
+getter_setter_inline {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+}
+
+apply plugin: 'bytex.closeable_checker'
+closeable_checker {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    ignoreWhenMethodParam = true
+    ignoreAsReturn = true
+    ignoreField = true
+    ignoreMethodThrowException = false
+    strictMode = true
+
+    onlyCheckList = [
+            "com/ss/android/ugc/bytex/example/closeable/CloseableCheckTest"
+    ]
+    whiteList = [
+            //滤过检查的类 格式为 类名#方法名#方法签名  支持模式匹配
+            "android*",
+            "kotlin*",
+            "java*"
+    ]
+    closeableList = [
+            //就要检查的类，包含其子类
+            "java/io/InputStream",
+            "java/io/OutputStream",
+            "java/io/PrintStream",
+            "java/io/Writer",
+            "java/io/Reader",
+            "java/io/RandomAccessFile",
+            "java/nio/file/FileSystem",
+            "android/database/Cursor",
+            "java/util/zip/ZipFile",
+            "android/database/sqlite/SQLiteClosable",
+            "okhttp3/Response",
+            "android/media/MediaDataSource",
+            "java/net/MediaDataSource",
+            "android/net/LocalSocket",
+            "okio/Sink",
+            "okio/Source",
+            "okio/UnsafeCursor",
+            "java/nio/channels/Selector",
+            "android/arch/persistence/db/SupportSQLiteProgram"
+    ]
+    excludeCloseableList = [
+            //排除需要检查的类，和closeableList相似，此处不包含子类
+            "java/io/StringReader",
+            "java/io/StringWriter",
+            "java/io/ByteArrayOutputStream",
+            "java/io/ByteArrayInputStream",
+    ]
+}
+
+apply plugin: 'bytex.serialization_check'
+SerializationCheck {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    whiteList = [
+            "kotlin/+"
+    ]
+    onlyCheck = [
+            "com/ss/android/ugc/"
+    ]
+}
+
+apply plugin: 'bytex.const_inline'
+const_inline {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    autoFilterReflectionField = false
+    skipWithRuntimeAnnotation true
+    skipWithAnnotations = [
+            "android/support/annotation/Keep"
+    ]
+    //supposesReflectionWithString = true
+    whiteList = [
+    ]
+}
+
+apply plugin: 'bytex.method_call_opt'
+method_call_opt {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    //#分割   class#method#desc#isStatic[true|false]
+    methodList = [
+            "android/util/Log#v#(Ljava/lang/String;Ljava/lang/String;)I",
+            "android/util/Log#v#(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I",
+            "android/util/Log#d#(Ljava/lang/String;Ljava/lang/String;)I",
+            "android/util/Log#d#(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I",
+            "android/util/Log#i#(Ljava/lang/String;Ljava/lang/String;)I",
+            "android/util/Log#i#(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I",
+            "android/util/Log#w#(Ljava/lang/String;Ljava/lang/String;)I",
+            "android/util/Log#w#(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I",
+            "android/util/Log#e#(Ljava/lang/String;Ljava/lang/String;)I",
+            "android/util/Log#e#(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I",
+            "android/util/Log#println#(ILjava/lang/String;Ljava/lang/String;)I",
+
+            "java/lang/Throwable#printStackTrace#()V",
+            "com/google/devtools/build/android/desugar/runtime/ThrowableExtension#printStackTrace#(Ljava/lang/Throwable;)V"
+    ]
+    onlyCheckList = [
+            //"com/ss/*",
+            //"com/bytedance/*"
+    ]
+
+    whiteList = [
+            "com/facebook/stetho*",
+            "com/google/devtools/build/android/desugar/runtime*"
+    ]
+
+}
+
+apply plugin: 'bytex.field_assign_opt'
+field_assign_opt {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    removeLineNumber true
+    whiteList = [
+            //"android.support.constraint.solver.ArrayRow.variable",
+    ]
+}
+
+apply plugin: 'bytex.sourcefile'
+SourceFile {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    deleteSourceFile true
+    deleteLineNumber true
+}
+
+apply plugin: "bytex.coverage"
+CoveragePlugin{
+    // we perfer input from CI
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    // only report <clinit> for better performance
+    clInitOnly false
+    whiteList = ["com/ss/android/ugc/bytex/+"]
+}
+

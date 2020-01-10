@@ -1,0 +1,18 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-kapt'
+group "$upload_group"
+version "$upload_version"
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compile gradleApi()
+    compileOnly "com.android.tools.build:gradle:$gradle_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile project(':common')
+    compile project(':PluginConfigProcessor')
+    kapt project(':PluginConfigProcessor')
+}
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+
+apply from: rootProject.file('gradle/publish.gradle')

@@ -1,0 +1,87 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+buildscript {
+    repositories {
+        maven {
+            url uri('../gradle_plugins')
+        }
+        maven { url "https://dl.bintray.com/tellh/maven" }
+        google()
+        jcenter()
+    }
+    ext {
+        plugin_version = upload_version
+    }
+    dependencies {
+        classpath "com.bytedance.android.byteX:base-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:access-inline-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:shrink-r-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:refer-check-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:getter-setter-inline-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:const-inline-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:field-assign-opt-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:closeable-check-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:method-call-opt-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:serialization-check-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:SourceFileKiller:${plugin_version}"
+        classpath "com.bytedance.android.byteX:coverage-lib:${plugin_version}"
+        classpath "com.bytedance.android.byteX:coverage-plugin:${plugin_version}"
+    }
+}
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "29.0.0"
+
+    flavorDimensions "app", "mode"
+    productFlavors {
+        douyin {
+            dimension "app"
+        }
+        bytex {
+            dimension "app"
+        }
+        i18n {
+            dimension "mode"
+        }
+        cn {
+            dimension "mode"
+        }
+    }
+
+
+    defaultConfig {
+        applicationId "com.ss.android.ugc.bytex.example"
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            minifyEnabled true
+            multiDexEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation "com.google.code.gson:gson:2.8.2"
+    implementation "com.bytedance.android.byteX:coverage-lib:${plugin_version}"
+}
+apply from: project.file('plugin-bytex.gradle')

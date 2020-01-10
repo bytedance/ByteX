@@ -1,0 +1,4 @@
+apply from: rootProject.file('gradle/plugin.gradle')
+dependencies{
+    implementation "br.usp.each.saeg:asm-defuse:0.0.5"
+}

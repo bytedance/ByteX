@@ -1,0 +1,18 @@
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compile gradleApi()
+    compileOnly "com.android.tools.build:gradle:$gradle_version"
+    compile "com.google.guava:guava:$guava_version"
+    compile "org.ow2.asm:asm:$asm_version"
+    compile "org.ow2.asm:asm-tree:$asm_version"
+    compile "org.ow2.asm:asm-util:$asm_version"
+    compile "org.ow2.asm:asm-analysis:$asm_version"
+    compile "org.ow2.asm:asm-commons:$asm_version"
+    compile project(':TransformEngine')
+    compile project(':GradleToolKit')
+    compile group: 'dom4j', name: 'dom4j', version: '1.6.1'
+}
+
+apply from: rootProject.file('gradle/publish.gradle')

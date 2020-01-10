@@ -1,0 +1,4 @@
+apply from: rootProject.file('gradle/plugin.gradle')
+dependencies {
+    compile group: 'dom4j', name: 'dom4j', version: '1.6.1'
+}

@@ -1,0 +1,14 @@
+apply plugin: 'com.android.library'
+apply from: rootProject.file('gradle/publish.gradle')
+android {
+    compileSdkVersion 16
+    defaultConfig {
+        minSdkVersion 16
+
+    }
+    buildToolsVersion "28.0.3"
+    lintOptions {
+        abortOnError false
+    }
+
+}
