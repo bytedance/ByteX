@@ -101,7 +101,7 @@ apply plugin: 'bytex.refer_check'
 // ...
 ```
 
-Note: If you do not apply the ByteX host, those ByteX plugins are no different from ordinary plugins and each will form a separate Transform. On the contrary, all ByteX plugins will automatically merge into a Transform with the help of the ByteX host.
+Note: If you do not apply the ByteX host, those ByteX plugins have no difference from ordinary plugins and each will form a separate Transform. On the contrary, all ByteX plugins will automatically merge into a Transform with the help of the ByteX host.
 
 The following are the plugins based on ByteX.  You can learn more usage information about those plugins in their own README.md.
 
