@@ -16,13 +16,13 @@ ByteX is a bytecode plugin platform based on Android Gradle Transform API and AS
  (Maybe you can think of it as a socket with unlimited plugs?)
 
 
-ByteX plugin family consists of several bytecode plugins. Each of them can not only run separately, but also be automatically integrated into the ByteX host,  along with other plugins as a single Transform in the apk building process.
+ByteX plugin family consists of several bytecode plugins. Each of them can not only run separately, but also be automatically integrated into the ByteX host, along with other plugins as a single Transform in the apk building process.
 
 What's more, each plugin is independent from one another, as well as their ByteX host. This architecture makes ByteX flexible, extensible and highly efficient for new plugins development.
 
 ### Background
 
-If a project applies several separate bytecode plugins with 10s build time for each, the build time will get a linear increase.
+If a project applies several separate bytecode plugins with 10s build time for each, the total project build time will get a linear increase.
 
 However, if the iterative development in only one plugin module will make it more and more cluttered, for the code is deeply coupled. 
 
@@ -32,7 +32,7 @@ So an idea was raised. It could make sense to build a bytecode plugin platform, 
 
 - Code sharing. The common code sinks to `common` module and is shared by all plugins, so that developers could take more focus on bytecode operations.
 
-- Plugin code is isolated and decoupled from each other. Long ago in ByteDance, all of the features related to bytecode operations were bundled together in a single plugin. As time goes by, the code went incomprehensible and could not be maintained anymore. However, based on ByteX, each feature is a standalone plugin, which makes it conducive to developing a new plugin.
+- Plugin code is isolated and decoupled from each other. Long ago in ByteDance, all of the features related to bytecode operations were bundled together in a single plugin. As time goes by, the code went incomprehensible and could not be maintained anymore. However, based on ByteX, each feature is a standalone plugin, which makes it conducive to developing new plugins.
 
 - Platformization makes `Transform` more efficient.
 
