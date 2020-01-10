@@ -41,8 +41,7 @@ getter_setter_inline {
     enableInDebug false
     logLevel "DEBUG"
     shouldInline = [
-            "com/ss/android/ugc/aweme/challenge/model/",
-            "com/ss/android/ugc/aweme/comment/model/",
+            "com/ss/android/ugc/bytex/getter_setter/"
     ]
 }
 ```
