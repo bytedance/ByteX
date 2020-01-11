@@ -120,7 +120,7 @@ The following are the plugins based on ByteX.  You can learn more usage informat
 - [SourceFileKiller](SourceFileKiller/README.md)（Shrink SourceFile and linenumber）
 
 
-## Known Users
+## Apps Using ByteX
 
 <!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" height="60" width="60"  alt="抖音" style="margin:10px"/>-->
 <!--<img src="wiki/icons/tiktok.png" height="60" width="150"  alt="tiktok" style="margin: 10px"/>-->
@@ -132,7 +132,7 @@ The following are the plugins based on ByteX.  You can learn more usage informat
 <!--<img src="https://sf3-ttcdn-tos.pstatp.com/img/ee-finolhu/5f2b63d1fc904c47a37c89dd439e2b7a~noop.image" height="60" width="60"  alt="轻颜" style="margin: 10px"/>-->
 <!--<img src="wiki/icons/feiliao.png" height="45" width="122"  alt="飞聊" style="margin:17px"/>-->
 
-<img src="wiki/KnownUsers.png" height="171" width="503"  alt="飞聊" style="margin:10px"/>
+<img src="wiki/KnownUsers.png" height="171" width="503"  alt="Apps" style="margin:10px"/>
 
 ## Contribution
 
