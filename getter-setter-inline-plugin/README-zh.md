@@ -54,7 +54,7 @@ getter_setter_inline {
 
 Q：据我所知，如果开启了proguard的短方法内联也可以达到一样的优化效果，为什么不直接用proguard来做呢？ 
 
-A：这是个好问题。 如果我们在配置文件里为proguard添加以下这个配置，允许它在内联短方法的时候能修改类成员的方法权限，proguard也就能为我们内联access方法，那么也就没必要用这个插件了。
+A：这是个好问题。 如果我们在配置文件里为proguard添加以下这个配置，允许它在内联短方法的时候能修改类成员的方法权限，proguard也就能为我们内联getters setters方法，那么也就没必要用这个插件了。
 
 ```
 -allowaccessmodification
@@ -68,7 +68,7 @@ A：这是个好问题。 如果我们在配置文件里为proguard添加以下�
 
 然而，开发者并不能控制哪些方法能内联，哪些方法不要内联。
 
-所以access-inline-plugin正是为此而生，只专注于为你的App在打包过程中自动内联access方法。
+所以getter-setter-inline-plugin正是为此而生，只专注于为你的App在打包过程中自动内联getters setters方法。
 
 
 
