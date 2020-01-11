@@ -129,7 +129,10 @@ apply plugin: 'bytex.refer_check'
 
 请参考研发WIKI：[Developer API](wiki/ByteX-Developer-API-zh.md)
 
+## 鸣谢
 
+- [lancet](https://github.com/eleme/lancet) 
+- [booster](https://github.com/didi/booster)
 
 ## License
 
