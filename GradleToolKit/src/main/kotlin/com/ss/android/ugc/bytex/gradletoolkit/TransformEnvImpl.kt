@@ -5,6 +5,7 @@ import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.api.ApplicationVariant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.didiglobal.booster.gradle.*
 import com.google.auto.service.AutoService
 import org.gradle.api.UnknownDomainObjectException
 import java.io.File
@@ -47,7 +48,7 @@ class TransformEnvImpl() : TransformEnv {
                     .map {
                         //过滤出所有的app和feature的project
                         try {
-                            it.getAndroid<BaseExtension>()
+                            it.extensions.getByName("android") as BaseExtension
                         } catch (e: UnknownDomainObjectException) {
                             null
                         } as? AppExtension
