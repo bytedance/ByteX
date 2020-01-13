@@ -22,13 +22,7 @@ include ':TransformEngine'
 include ':HookProguard'
 include ':GradleToolKit'
 include ':GradleEnvApi'
-project(':GradleEnvApi').projectDir = new File('GradleToolKit/submodules/GradleEnvApi')
-include ':CompatGradleApiV3_0'
-project(':CompatGradleApiV3_0').projectDir = new File('GradleToolKit/submodules/CompatGradleApiV3_0')
-include ':CompatGradleApiV3_2'
-project(':CompatGradleApiV3_2').projectDir = new File('GradleToolKit/submodules/CompatGradleApiV3_2')
-include ':CompatGradleApiV3_3'
-project(':CompatGradleApiV3_3').projectDir = new File('GradleToolKit/submodules/CompatGradleApiV3_3')
+project(':GradleEnvApi').projectDir = new File('GradleToolKit/GradleEnvApi')
 include ':PluginConfigProcessor'
 project(':PluginConfigProcessor').projectDir = new File('PluginConfig/PluginConfigProcessor')
 include ':PluginConfigAnnotation'
