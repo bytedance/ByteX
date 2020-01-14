@@ -8,7 +8,9 @@ English | **[简体中文](README_zh.md)**
   <img src="wiki/bytex-logo.png" height="111" width="340"  alt="logo" />
  </h1>
 
-> Powered by bytedance douyin android team.
+[![Download](https://api.bintray.com/packages/tellh/maven/common/images/download.svg)](https://bintray.com/tellh/maven/common/_latestVersion) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
+
+> Powered by ByteDance TikTok & Douyin Android team.
 
 
 ByteX is a bytecode plugin platform based on Android Gradle Transform Api and ASM. 
@@ -101,9 +103,7 @@ apply plugin: 'bytex.refer_check'
 // ...
 ```
 
-Note: If you do not apply the ByteX host, those ByteX plugins are no different from ordinary plugins and each will form a separate Transform. On the contrary, all ByteX plugins will automatically merge into a Transform with the help of the ByteX host.
-
-The following are the plugins based on ByteX.  You can learn more usage information about those plugins in their own README.md.
+Note: If ByteX host is not applied, there is no difference between ByteX plugins and ordinary ones, and all of them will run separately. On the contrary, all ByteX plugins can be automatically merged into one single Transform with the help of the ByteX host.
 
 ## Plugins
 
@@ -146,6 +146,14 @@ Please read through our [Developer API](wiki/ByteX-Developer-API-en.md).
 - [booster](https://github.com/didi/booster)
  
 
+
+## Contact us
+
+If you have any question or advice about ByteX, feel free to join our WeChat group.
+
+![wechat_group](wiki/wechat_group.jpeg)
+
+Besides,  sending email to yangzhiqian@bytedance.com or  tanlehua@bytedance.com  is also available for you.
 
 ## License
 
