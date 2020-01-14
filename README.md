@@ -144,6 +144,14 @@ Please read through our [Developer API](wiki/ByteX-Developer-API-en.md).
 
 
 
+## Contact us
+
+If you have any question or advice about ByteX, feel free to join our WeChat group.
+
+![wechat_group](wiki/wechat_group.png)
+
+Besides,  sending email to yangzhiqian@bytedance.com or  tanlehua@bytedance.com  is also available for you.
+
 ## License
 
 Apache 2.0

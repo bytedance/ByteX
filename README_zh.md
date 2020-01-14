@@ -124,7 +124,6 @@ apply plugin: 'bytex.refer_check'
 <!--<img src="wiki/icons/feiliao.png" height="45" width="122"  alt="飞聊" style="margin:17px"/>-->
 <img src="wiki/KnownUsers.png" height="171" width="503"  alt="飞聊" style="margin:10px"/>
 
-
 ## Contribution
 
 如果你有一些关于字节码的相关需求或脑洞，完全可以基于ByteX来开发新的字节码插件。
@@ -132,6 +131,14 @@ apply plugin: 'bytex.refer_check'
 请参考研发WIKI：[Developer API](wiki/ByteX-Developer-API-zh.md)
 
 
+
+## 联系我们
+
+如果你有任何关于ByteX的问题或建议，可以加入到微信群与我们沟通交流，我们会及时回复你哒。
+
+![wechat_group](wiki/wechat_group.png)
+
+除此之外，你也可以发邮件到邮箱：yangzhiqian@bytedance.com、tanlehua@bytedance.com，在邮件中详细描述你的问题。
 
 ## License
 
