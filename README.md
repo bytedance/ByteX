@@ -8,7 +8,7 @@ English | **[简体中文](README_zh.md)**
   <img src="wiki/bytex-logo.png" height="111" width="340"  alt="logo" />
  </h1>
 
-![version](https://img.shields.io/badge/version-0.1.0-green) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
+[![Download](https://api.bintray.com/packages/tellh/maven/common/images/download.svg)](https://bintray.com/tellh/maven/common/_latestVersion) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
 
 > Powered by ByteDance TikTok(Douyin) Android team.
 
