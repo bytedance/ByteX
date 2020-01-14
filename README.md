@@ -10,7 +10,7 @@ English | **[简体中文](README_zh.md)**
 
 [![Download](https://api.bintray.com/packages/tellh/maven/common/images/download.svg)](https://bintray.com/tellh/maven/common/_latestVersion) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
 
-> Powered by ByteDance TikTok(Douyin) Android team.
+> Powered by ByteDance TikTok & Douyin Android team.
 
 
 ByteX is a bytecode plugin platform based on Android Gradle Transform Api and ASM. 
