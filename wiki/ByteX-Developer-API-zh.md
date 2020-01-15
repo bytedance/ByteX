@@ -452,7 +452,7 @@ public class DoAfterProguardPlugin extends CommonPlugin<Extension, Context> {
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addFile的第一个参数affinity,可以随意设定.如果两次addFile调用的affinity是一致的话,那么这两个文件将会在同一个输出目录里.
 
-**[English](ByteX Developer API-en.md)** | [简体中文](ByteX Developer API-zh.md)
+
 ### Incremental增量编译
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ByteX的插件默认使用增量编译,如果你的插件不能支持增量模式,请在插件中声明不使用增量构建,声明方式如下:
