@@ -146,7 +146,7 @@ apply plugin: 'bytex.refer_check'
 
 如果你有任何关于ByteX的问题或建议，可以加入到微信群与我们沟通交流，我们会及时回复你哒。
 
-![wechat_group](wiki/wechat_group.jpeg)
+<img src="https://github.com/yangzhiqian/StaticResource/blob/master/ByteX/wechat_group.jpeg" alt="WeChat Group" />
 
 除此之外，你也可以发邮件到邮箱：yangzhiqian@bytedance.com、tanlehua@bytedance.com，在邮件中详细描述你的问题。
 

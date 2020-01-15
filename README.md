@@ -156,7 +156,7 @@ Please read through our [Developer API](wiki/ByteX-Developer-API-en.md).
 
 If you have any question or advice about ByteX, feel free to join our WeChat group.
 
-![wechat_group](wiki/wechat_group.jpeg)
+<img src="https://github.com/yangzhiqian/StaticResource/blob/master/ByteX/wechat_group.jpeg" alt="WeChat Group" />
 
 Besides,  sending email to yangzhiqian@bytedance.com or  tanlehua@bytedance.com  is also available for you.
 
