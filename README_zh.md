@@ -110,19 +110,26 @@ apply plugin: 'bytex.refer_check'
 - [coverage-plugin](coverage/README-zh.md)（线上代码覆盖率）
 - [refer-check-plugin](refer-check-plugin/README-zh.md)（检查是否有调用不存在的方法和引用不存在的字段）
 - [serialization-check-plugin](serialization-check-plugin/README-zh.md)（序列化检查）
-- [SourceFileKiller](SourceFileKiller/README.md)（删除SourceFile和行号属性）
+- [SourceFileKiller](SourceFileKiller/README.md)（删除SourceFile和行号属性，作为示例）
 
 ## 已知接入方
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" height="60" width="60"  alt="抖音" style="margin:10px"/>-->
-<!--<img src="wiki/icons/tiktok.png" height="60" width="150"  alt="tiktok" style="margin: 10px"/>-->
-<!--<img src="https://sf6-ttcdn-tos.pstatp.com/img/ee-finolhu/034e2e9d3cfe49f8bb0a3367c9afec47~noop.image" height="60" width="60"  alt="今日头条" style="margin: 10px"/>-->
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/6f2b3dc9b3e945a89565dd67a3e1a3b3~noop.image" height="60" width="60"  alt="火山小视频" style="margin: 10px"/>-->
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/d9a7c17402164799becb3b62676e5f88~noop.image" height="60" width="60"  alt="Lark" style="margin: 10px"/><br/>-->
-<!--<img src="wiki/icons/duoshan.png" height="60" width="120"  alt="多闪" style="margin: 10px"/>-->
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/2b49de98334a4c05b875a7d56df9abab~noop.image" height="60" width="60"  alt="FaceU" style="margin: 10px"/>-->
-<!--<img src="https://sf3-ttcdn-tos.pstatp.com/img/ee-finolhu/5f2b63d1fc904c47a37c89dd439e2b7a~noop.image" height="60" width="60"  alt="轻颜" style="margin: 10px"/>-->
-<!--<img src="wiki/icons/feiliao.png" height="45" width="122"  alt="飞聊" style="margin:17px"/>-->
-<img src="wiki/KnownUsers.png" height="171" width="503"  alt="飞聊" style="margin:10px"/>
+
+| <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" alt="抖音" height="60"/> | <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" alt="tiktok" height="60"/> | <img src="https://sf6-ttcdn-tos.pstatp.com/img/ee-finolhu/034e2e9d3cfe49f8bb0a3367c9afec47~noop.image" alt="今日头条" height="60"/> |
+|:-----------:|:-------:|:-------:|
+| 抖音 | Tik Tok | 今日头条 |
+| <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/6f2b3dc9b3e945a89565dd67a3e1a3b3~noop.image" height="60" width="60"  alt="火山小视频" style="margin: 10px"/> | <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/d9a7c17402164799becb3b62676e5f88~noop.image"  alt="lark" height="60"/> | <img src="wiki/icons/duoshan.png" height="60" width="60"  alt="多闪" style="margin: 10px"/> | 
+| 火山小视频 | 飞书 | 多闪 |
+|<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/2b49de98334a4c05b875a7d56df9abab~noop.image" height="60" alt="FaceU" /> | <img src="https://sf3-ttcdn-tos.pstatp.com/img/ee-finolhu/5f2b63d1fc904c47a37c89dd439e2b7a~noop.image" height="60" alt="轻颜"/> | <img src="wiki/icons/feiliao.png" height="60" width="60"  alt="飞聊" style="margin:17px"/> |
+| FaceU激萌 | 轻颜| 飞聊|
+
+## ByteX框架还能做什么？
+在字节跳动公司内基于ByteX开发的插件超过25个(只开源了部分)，你可以基于ByteX快速开发出以下几点相关的插件:
+- 性能优化(SPI...)
+- 优化包大小(xxx-inline...)
+- 修复bug
+- 代码分析检查/安全扫描
+- AOP(SharedPreferences替换...)
+- 其他
 
 ## Contribution
 
@@ -139,7 +146,7 @@ apply plugin: 'bytex.refer_check'
 
 如果你有任何关于ByteX的问题或建议，可以加入到微信群与我们沟通交流，我们会及时回复你哒。
 
-![wechat_group](wiki/wechat_group.jpeg)
+<img src="https://github.com/yangzhiqian/StaticResource/blob/master/ByteX/wechat_group.jpeg" alt="WeChat Group" />
 
 除此之外，你也可以发邮件到邮箱：yangzhiqian@bytedance.com、tanlehua@bytedance.com，在邮件中详细描述你的问题。
 

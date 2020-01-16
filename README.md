@@ -122,17 +122,22 @@ Note: If ByteX host is not applied, there is no difference between ByteX plugins
 
 ## Apps Using ByteX
 
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" height="60" width="60"  alt="抖音" style="margin:10px"/>-->
-<!--<img src="wiki/icons/tiktok.png" height="60" width="150"  alt="tiktok" style="margin: 10px"/>-->
-<!--<img src="https://sf6-ttcdn-tos.pstatp.com/img/ee-finolhu/034e2e9d3cfe49f8bb0a3367c9afec47~noop.image" height="60" width="60"  alt="今日头条" style="margin: 10px"/>-->
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/6f2b3dc9b3e945a89565dd67a3e1a3b3~noop.image" height="60" width="60"  alt="火山小视频" style="margin: 10px"/>-->
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/d9a7c17402164799becb3b62676e5f88~noop.image" height="60" width="60"  alt="Lark" style="margin: 10px"/><br/>-->
-<!--<img src="wiki/icons/duoshan.png" height="60" width="120"  alt="多闪" style="margin: 10px"/>-->
-<!--<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/2b49de98334a4c05b875a7d56df9abab~noop.image" height="60" width="60"  alt="FaceU" style="margin: 10px"/>-->
-<!--<img src="https://sf3-ttcdn-tos.pstatp.com/img/ee-finolhu/5f2b63d1fc904c47a37c89dd439e2b7a~noop.image" height="60" width="60"  alt="轻颜" style="margin: 10px"/>-->
-<!--<img src="wiki/icons/feiliao.png" height="45" width="122"  alt="飞聊" style="margin:17px"/>-->
+| <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" alt="抖音" height="60"/> | <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/a0ca113c9c6d4fb49c9b8bb54a392a00~noop.image" alt="tiktok" height="60"/> | <img src="https://sf6-ttcdn-tos.pstatp.com/img/ee-finolhu/034e2e9d3cfe49f8bb0a3367c9afec47~noop.image" alt="今日头条" height="60"/> |
+|:-----------:|:-------:|:-------:|
+| 抖音 | Tik Tok | 今日头条 |
+| <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/6f2b3dc9b3e945a89565dd67a3e1a3b3~noop.image" height="60" width="60"  alt="火山小视频" style="margin: 10px"/> | <img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/d9a7c17402164799becb3b62676e5f88~noop.image"  alt="lark" height="60"/> | <img src="wiki/icons/duoshan.png" height="60" width="60"  alt="多闪" style="margin: 10px"/> | 
+| 火山小视频 | 飞书 | 多闪 |
+|<img src="https://sf1-ttcdn-tos.pstatp.com/img/ee-finolhu/2b49de98334a4c05b875a7d56df9abab~noop.image" height="60" alt="FaceU" /> | <img src="https://sf3-ttcdn-tos.pstatp.com/img/ee-finolhu/5f2b63d1fc904c47a37c89dd439e2b7a~noop.image" height="60" alt="轻颜"/> | <img src="wiki/icons/feiliao.png" height="60" width="60"  alt="飞聊" style="margin:17px"/> |
+| FaceU激萌 | 轻颜| 飞聊|
 
-<img src="wiki/KnownUsers.png" height="171" width="503"  alt="Apps" style="margin:10px"/>
+## What else can the ByteX do?
+There are more than 25 plugins developed based on ByteX in ByteDance (We only open sourced some of them). You can quickly develop the following related plugins based on ByteX:
+- Performance optimization(SPI...)
+- Optimize apk size(xxx-inline...)
+- Fix Bug
+- Code analysis / security scan
+- AOP(replace SharedPreferences...)
+- and so on
 
 ## Contribution
 
@@ -151,7 +156,7 @@ Please read through our [Developer API](wiki/ByteX-Developer-API-en.md).
 
 If you have any question or advice about ByteX, feel free to join our WeChat group.
 
-![wechat_group](wiki/wechat_group.jpeg)
+<img src="https://github.com/yangzhiqian/StaticResource/blob/master/ByteX/wechat_group.jpeg" alt="WeChat Group" />
 
 Besides,  sending email to yangzhiqian@bytedance.com or  tanlehua@bytedance.com  is also available for you.
 
