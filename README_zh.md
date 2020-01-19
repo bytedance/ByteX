@@ -149,6 +149,10 @@ apply plugin: 'bytex.refer_check'
 
 除此之外，你也可以发邮件到邮箱：yangzhiqian@bytedance.com、tanlehua@bytedance.com，在邮件中详细描述你的问题。
 
+## Change Log
+
+[Change Log](CHANGELOG.md)
+
 ## License
 
 Apache 2.0

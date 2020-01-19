@@ -159,6 +159,10 @@ If you have any question or advice about ByteX, feel free to join our WeChat gro
 
 Besides,  sending email to yangzhiqian@bytedance.com or  tanlehua@bytedance.com  is also available for you.
 
+## Change Log
+
+[Change Log](CHANGELOG.md)
+
 ## License
 
 Apache 2.0
