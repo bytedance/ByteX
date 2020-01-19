@@ -40,8 +40,13 @@ getter_setter_inline {
     enable true
     enableInDebug false
     logLevel "DEBUG"
+    // 跳过Proguard的Keep规则，强制内联这些包名下的类的getter/setter方法
     shouldInline = [
         "com/ss/android/ugc/bytex/example/getter_setter/"
+    ]
+    // 除了可以通过Proguard的keep规则来避免一些方法被内联外，还可以自定义一些注解，标注到这些方法上
+    keepWithAnnotations = [
+        "com/ss/android/ugc/bytex/example/CalledByNative"
     ]
 }
 ```
