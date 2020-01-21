@@ -19,7 +19,7 @@ classpath "com.bytedance.android.byteX:refer-check-plugin:${plugin_version}"
 
 ```groovy
 apply plugin: 'bytex.refer_check'
-no_such_method_check {
+refer_check {
     enable true
     enableInDebug false
     logLevel "INFO"
@@ -27,10 +27,10 @@ no_such_method_check {
     // check whitelist. Class names and method names must be separated by a '#', and both support regular matching.
     whiteList = [
             "com/google/+", // Skip classes prefixed with 'com/google'
-           // Skip checking the method named 'init$abc' in the class 'com/ss/android/statistic/channel/AppLogChannel'. Don't forget the escape before '$'.
-            "com/ss/android/statistic/channel/AppLogChannel#init\$abc",
-           // Skip checking the method named 'init' in the  class named 'com/ss/android/common/applog/AppLog'
-            "com/ss/android/common/applog/AppLog#init"
+           // Skip checking the method named 'init' in the  class named 'com/tellh/Foo'
+            "com/tellh/Foo#init",
+           // Skip checking the method named 'init' in the inner class 'Abc' of 'com/tellh/Foo'. Don't forget the escape before '$'.
+            "com/tellh/Foo\$Abc#init",
     ]
 }
 ```

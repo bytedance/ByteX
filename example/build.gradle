@@ -7,7 +7,6 @@ buildscript {
         maven {
             url uri('../gradle_plugins')
         }
-        maven { url "https://dl.bintray.com/tellh/maven" }
         google()
         jcenter()
     }

@@ -48,7 +48,6 @@ public class ErrorLogGenerator {
                     "建议你把下面类堆栈的日志copy下来，利用AndroidStudio的Analyse Stacktrace可以定位到具体的Class和Method。\n" +
                     "If you're building your apk locally, please make sure you've appended \'--no-daemon\' to the build command. \n" +
                     "如果你用的是本地命令行打包，请你在打包命令后面拼上--no-daemon再试试。\n" +
-                    "More information is available in this docs: https://bytedance.feishu.cn/space/doc/doccnkJ1tXrNPkoZnp9eu77h6Eb#f2VZTB \n" +
                     turn2Helper());
             Set<String> relativeClasses = new HashSet<>();
             notFoundMethods.forEach((k, v) -> {

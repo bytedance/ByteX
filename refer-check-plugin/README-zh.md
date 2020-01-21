@@ -21,7 +21,7 @@ classpath "com.bytedance.android.byteX:refer-check-plugin:${plugin_version}"
 
 ```groovy
 apply plugin: 'bytex.refer_check'
-no_such_method_check {
+refer_check {
     enable true
     enableInDebug false
     logLevel "INFO"
@@ -29,10 +29,10 @@ no_such_method_check {
     // check白名单。类名和方法名要用#号分隔开，都支持正则匹配。
     whiteList = [
             "com/google/+", // 跳过com/google为包名前缀的类
-           // 跳过AppLogChannel这个类里方法名为init$abc的检查，注意$符号要转义
-            "com/ss/android/statistic/channel/AppLogChannel#init\$abc",
-           // 跳过AppLog这个类里方法名为init的检查
-            "com/ss/android/common/applog/AppLog#init"
+           // 跳过com/tellh/Foo这个类里方法名为init的检查
+            "com/tellh/Foo#init",
+           // 跳过com/tellh/Foo里的内部类Abc，方法名为init的检查，注意$符号要转义
+            "com/tellh/Foo\$Abc#init",
     ]
 }
 ```

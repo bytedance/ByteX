@@ -74,9 +74,8 @@ Add those configuration code to your build.gradle, and apply your plugins on dem
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.1.0"
+    ext.plugin_version="0.1.1"
     repositories {
-        maven { url "https://dl.bintray.com/tellh/maven" }
         google()
         jcenter()
     }
@@ -159,6 +158,10 @@ If you have any question or advice about ByteX, feel free to join our WeChat gro
 <img src="https://github.com/yangzhiqian/StaticResource/blob/master/ByteX/wechat_group.jpeg" alt="WeChat Group" />
 
 Besides,  sending email to yangzhiqian@bytedance.com or  tanlehua@bytedance.com  is also available for you.
+
+## Change Log
+
+[Change Log](CHANGELOG.md)
 
 ## License
 

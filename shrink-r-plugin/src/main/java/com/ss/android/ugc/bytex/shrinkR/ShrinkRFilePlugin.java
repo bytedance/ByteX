@@ -96,7 +96,6 @@ public class ShrinkRFilePlugin extends CommonPlugin<ShrinkRExtension, Context> {
         if (!filteredUnReachRes.isEmpty()) {
             RuntimeException exception = new RuntimeException("There are some unused resource, please review those resource and try to delete them, you can check it out in file shrinkR/unused_res.json. \n " +
                     "在你的commit上发现了一些无用的资源，辛苦你review一下这些资源，如果发现确实没有引用，可以尝试删掉，再rebuild。" +
-                    "如果该资源确实是有用的，请辛苦参考文档https://bytedance.feishu.cn/space/doc/doccnkJ1tXrNPkoZnp9eu77h6Eb#KNZnLQ 配一下白名单" +
                     "如果有问题请@谭乐华。\n" + context.getChecker().getUnusedAttr(filteredUnReachRes));
             context.getLogger().e("在你的commit上发现了一些无用的资源", exception);
             throw exception;

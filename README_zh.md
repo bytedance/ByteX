@@ -65,9 +65,8 @@ ByteX是一个基于gradle transform api和ASM的字节码插件平台（或许�
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.1.0"
+    ext.plugin_version="0.1.1"
     repositories {
-        maven { url "https://dl.bintray.com/tellh/maven" }
         google()
         jcenter()
     }
@@ -149,6 +148,10 @@ apply plugin: 'bytex.refer_check'
 <img src="https://github.com/yangzhiqian/StaticResource/blob/master/ByteX/wechat_group.jpeg" alt="WeChat Group" />
 
 除此之外，你也可以发邮件到邮箱：yangzhiqian@bytedance.com、tanlehua@bytedance.com，在邮件中详细描述你的问题。
+
+## Change Log
+
+[Change Log](CHANGELOG.md)
 
 ## License
 

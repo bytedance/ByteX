@@ -40,8 +40,13 @@ getter_setter_inline {
     enable true
     enableInDebug false
     logLevel "DEBUG"
+    // Ignore the keep rules configuration of Proguard, force to inline the getters/setters of the classes in those packages.
     shouldInline = [
         "com/ss/android/ugc/bytex/example/getter_setter/"
+    ]
+    // besides the keep rules of Proguard, we can customize some annotations to keep some getters/setters methods from being inlined.
+    keepWithAnnotations = [
+        "com/ss/android/ugc/bytex/example/CalledByNative"
     ]
 }
 ```

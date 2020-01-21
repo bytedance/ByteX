@@ -70,6 +70,7 @@ publishing {
 
                 "maven${variant.name.capitalize()}Aar"(MavenPublication) {
                     from components.findByName("android${variant.name.capitalize()}")
+                    artifact androidsourcesJar_
                     groupId pomGroupId
                     artifactId pomArtifactId
                     version pomVersion
