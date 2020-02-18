@@ -20,8 +20,8 @@ import javax.annotation.Nonnull;
 
 public abstract class AbsMainProcessPlugin<E extends BaseExtension> extends AbsPlugin<E> implements MainProcessHandler {
     private TransformFlow transformFlow;
-    private final Processor[] processorAnnotations = getClass().getAnnotationsByType(Processor.class);
-    private final Handler[] handlerAnnotations = getClass().getAnnotationsByType(Handler.class);
+    private Processor[] processorAnnotations = getClass().getAnnotationsByType(Processor.class);
+    private Handler[] handlerAnnotations = getClass().getAnnotationsByType(Handler.class);
 
     @Override
     public boolean alone() {
@@ -134,5 +134,13 @@ public abstract class AbsMainProcessPlugin<E extends BaseExtension> extends AbsP
     @Override
     public boolean needVerify() {
         return extension.isNeedVerify();
+    }
+
+    @Override
+    public void afterExecute() throws Throwable {
+        super.afterExecute();
+        transformFlow = null;
+        processorAnnotations = null;
+        handlerAnnotations = null;
     }
 }

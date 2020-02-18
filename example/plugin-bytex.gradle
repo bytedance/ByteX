@@ -6,6 +6,15 @@ apply plugin: 'bytex'
 ByteX {
     enable pluginEnable
     enableInDebug pluginEnableInDebug
+    //是否需要让ByteX构建增量编译的graph缓存(生成在$project/app/build/ByteX/variant/graphCache.json路径下)，
+    //对于release构建它通常是没有用的，而且耗时耗内存，甚至会造成oom问题(抖音大约需要最少300MB的内存耗费)
+    //每个插件都可以单独配置这个开关，如果多个插件是联合在一块执行，则该值用个插件值进行与操作(& and),默认true
+    //whether to let ByteX generate graph cache(locate at $project/app/build/ByteX/variant/graphCache.json)
+    //which is used by incremental build .It is useless while release build, it costs much time and memory,
+    //and may even cause oom.
+    //Each plugin can configure this switch separately. If multiple plugins are executed jointly, the final
+    // value is ANDed with each plugin value.True by default
+    shouldSaveCache false
     logLevel pluginLogLevel
 }
 
@@ -250,7 +259,7 @@ SourceFile {
 }
 
 apply plugin: "bytex.coverage"
-CoveragePlugin{
+CoveragePlugin {
     // we perfer input from CI
     enable pluginEnable
     enableInDebug pluginEnableInDebug

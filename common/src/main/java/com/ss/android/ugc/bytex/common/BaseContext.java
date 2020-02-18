@@ -1,6 +1,7 @@
 package com.ss.android.ugc.bytex.common;
 
 import com.android.build.gradle.AppExtension;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.log.ILogger;
 import com.ss.android.ugc.bytex.common.log.Impl.FileLoggerImpl;
@@ -25,7 +26,6 @@ public class BaseContext<E extends BaseExtension> {
     protected final AppExtension android;
     public final E extension;
     private ILogger logger;
-    private HtmlLoggerImpl htmlLog;
     private Graph classGraph;
     private File logFile;
     private boolean hasInitialized;
@@ -44,7 +44,6 @@ public class BaseContext<E extends BaseExtension> {
         hasInitialized = true;
         //init logger
         getLogger().d("init");
-        HtmlReporter.getInstance().registerHtmlFragment(htmlLog);
     }
 
     private String getSdkJarDir() {
@@ -81,10 +80,13 @@ public class BaseContext<E extends BaseExtension> {
                     } catch (IOException e) {
                         throw new RuntimeException("can not create log file", e);
                     }
-                    htmlLog = new HtmlLoggerImpl(extension.getName());
                     LogDistributor logDistributor = new LogDistributor();
                     logDistributor.addLogger(fileLog);
-                    logDistributor.addLogger(htmlLog);
+                    if (BooleanProperty.ENABLE_HTML_LOG.value()) {
+                        HtmlLoggerImpl htmlLog = new HtmlLoggerImpl(extension.getName());
+                        logDistributor.addLogger(htmlLog);
+                        HtmlReporter.getInstance().registerHtmlFragment(htmlLog);
+                    }
                     LevelLog levelLog = new LevelLog(logDistributor);
                     levelLog.setLevel(extension.getLogLevel());
                     levelLog.setTag(extension.getName());
