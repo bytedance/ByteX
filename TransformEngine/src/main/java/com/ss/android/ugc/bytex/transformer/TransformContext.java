@@ -39,16 +39,16 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 public class TransformContext implements GradleEnv {
-    private final TransformInvocation invocation;
-    private final TransformEnv transformEnv;
-    private final Locator locator;
+    private TransformInvocation invocation;
+    private TransformEnv transformEnv;
+    private Locator locator;
     private Collection<JarCache> allJars;
     private Collection<DirCache> allDirs;
     private Map<String, NewFileCache> newDirs;
-    protected final Project project;
-    protected final AppExtension android;
+    protected Project project;
+    protected AppExtension android;
     private boolean isIncremental;
-    private final boolean shouldSaveCache;
+    private boolean shouldSaveCache;
     private File graphCacheFile;
     private String temporaryDirName;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -207,4 +207,18 @@ public class TransformContext implements GradleEnv {
     void markRunningState(boolean running) {
         this.running.set(running);
     }
+
+    public void release() {
+        invocation = null;
+        transformEnv = null;
+        locator = null;
+        allJars = null;
+        allDirs = null;
+        newDirs = null;
+        project = null;
+        android = null;
+        graphCacheFile = null;
+        temporaryDirName = null;
+    }
 }
+

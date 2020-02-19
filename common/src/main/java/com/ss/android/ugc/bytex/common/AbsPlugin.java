@@ -96,4 +96,11 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
 
     protected void onApply(@Nonnull Project project) {
     }
+
+    @Override
+    public void afterExecute() throws Throwable {
+        project = null;
+        android = null;
+        extension = null;
+    }
 }

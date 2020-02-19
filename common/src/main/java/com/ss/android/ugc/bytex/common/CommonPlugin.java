@@ -44,4 +44,12 @@ public abstract class CommonPlugin<E extends BaseExtension, X extends BaseContex
         super.onApply(project);
         context = getContext(project, android, extension);
     }
+
+    @Override
+    public void afterExecute() throws Throwable {
+        super.afterExecute();
+        context.setTransformContext(null);
+        context.setClassGraph(null);
+        context = null;
+    }
 }

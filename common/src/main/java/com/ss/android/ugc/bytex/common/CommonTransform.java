@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.flow.TransformFlow;
 import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
 import com.ss.android.ugc.bytex.common.graph.Graph;
@@ -211,15 +212,25 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             } else {
                 transformEngine.skip();
             }
+            afterTransform(transformInvocation);
         } catch (Throwable throwable) {
             LevelLog.sDefaultLogger.e(throwable.getClass().getName(), throwable);
             throw throwable;
         } finally {
+            for (IPlugin plugin : getPlugins()) {
+                try {
+                    plugin.afterExecute();
+                } catch (Throwable throwable) {
+                    LevelLog.sDefaultLogger.e("do afterExecute", throwable);
+                }
+            }
+            transformContext.release();
             timer.record("Total cost time = [%s ms]");
-            HtmlReporter.getInstance().createHtmlReporter(getName());
-            HtmlReporter.getInstance().reset();
+            if (BooleanProperty.ENABLE_HTML_LOG.value()) {
+                HtmlReporter.getInstance().createHtmlReporter(getName());
+                HtmlReporter.getInstance().reset();
+            }
         }
-        afterTransform(transformInvocation);
     }
 
     protected TransformContext getTransformContext(TransformInvocation transformInvocation) {
@@ -231,33 +242,34 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
 
     protected void init(TransformInvocation transformInvocation) {
         context.init();
-        String applicationId = "unknow";
-        String versionName = "unknow";
-        String versionCode = "unknow";
-        com.android.builder.model.ProductFlavor flavor = TransformInvocationKt.getVariant(transformInvocation).getMergedFlavor();
-        if (flavor != null) {
-            String flavorApplicationId = flavor.getApplicationId();
-            if (flavorApplicationId != null && !flavorApplicationId.isEmpty()) {
-                applicationId = flavorApplicationId;
-            }
-            String flavorVersionName = flavor.getVersionName();
-            if (flavorVersionName != null && !flavorVersionName.isEmpty()) {
-                versionName = flavorVersionName;
-            }
-            Integer flavorVersionCode = flavor.getVersionCode();
-            if (flavorVersionCode != null) {
-                versionCode = String.valueOf(flavorVersionCode);
-            }
-        }
-        HtmlReporter.getInstance().init(
-                new File(context.project.getBuildDir(), "ByteX").getAbsolutePath(),
-                "ByteX",
-                applicationId,
-                versionName,
-                versionCode
-        );
-
         LevelLog.sDefaultLogger = context.getLogger();
+        if (BooleanProperty.ENABLE_HTML_LOG.value()) {
+            String applicationId = "unknow";
+            String versionName = "unknow";
+            String versionCode = "unknow";
+            com.android.builder.model.ProductFlavor flavor = TransformInvocationKt.getVariant(transformInvocation).getMergedFlavor();
+            if (flavor != null) {
+                String flavorApplicationId = flavor.getApplicationId();
+                if (flavorApplicationId != null && !flavorApplicationId.isEmpty()) {
+                    applicationId = flavorApplicationId;
+                }
+                String flavorVersionName = flavor.getVersionName();
+                if (flavorVersionName != null && !flavorVersionName.isEmpty()) {
+                    versionName = flavorVersionName;
+                }
+                Integer flavorVersionCode = flavor.getVersionCode();
+                if (flavorVersionCode != null) {
+                    versionCode = String.valueOf(flavorVersionCode);
+                }
+            }
+            HtmlReporter.getInstance().init(
+                    new File(context.project.getBuildDir(), "ByteX").getAbsolutePath(),
+                    "ByteX",
+                    applicationId,
+                    versionName,
+                    versionCode
+            );
+        }
     }
 
     protected abstract List<IPlugin> getPlugins();

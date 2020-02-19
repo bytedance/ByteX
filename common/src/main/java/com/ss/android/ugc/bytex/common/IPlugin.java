@@ -56,4 +56,10 @@ public interface IPlugin {
     default boolean shouldSaveCache() {
         return true;
     }
+
+    /**
+     * 插件执行执行结束后的回调，不管成功和失败都会执行.做一些数据回收处理工作
+     */
+    default void afterExecute() throws Throwable {
+    }
 }
