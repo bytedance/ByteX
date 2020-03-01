@@ -35,12 +35,6 @@ public class ShrinkRFilePlugin extends CommonPlugin<ShrinkRExtension, Context> {
     }
 
     @Override
-    public void init() {
-        super.init();
-        context.initWithWhiteList(extension.getKeepList());
-    }
-
-    @Override
     public void traverse(@NotNull String relativePath, @NotNull ClassVisitorChain chain) {
         super.traverse(relativePath, chain);
         if (Utils.isRFile(relativePath)) {
@@ -51,6 +45,7 @@ public class ShrinkRFilePlugin extends CommonPlugin<ShrinkRExtension, Context> {
     @Override
     public void beforeTransform(@NotNull TransformEngine engine) {
         super.beforeTransform(engine);
+        context.calculateDiscardableRClasses();
         context.resolveResource();
     }
 
@@ -85,7 +80,7 @@ public class ShrinkRFilePlugin extends CommonPlugin<ShrinkRExtension, Context> {
         filter.add("plurals");
         filter.add("array");
         List<Substance> filteredUnReachRes = allUnReachRes.stream().filter(substance -> {
-            if (substance instanceof Resource){
+            if (substance instanceof Resource) {
                 return !filter.contains(((Resource) substance).getType());
             }
             return true;

@@ -7,11 +7,8 @@ import com.ss.android.ugc.bytex.common.graph.Graph
 import com.ss.android.ugc.bytex.common.graph.GraphBuilder
 import com.ss.android.ugc.bytex.common.graph.IGraphCache
 import com.ss.android.ugc.bytex.common.log.LevelLog
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
+import java.io.*
 import java.lang.reflect.Modifier
-import java.util.function.Consumer
 import java.util.stream.Collectors
 
 /**
@@ -30,13 +27,15 @@ object GsonGraphCache : IGraphCache<File> {
         }
         try {
             System.out.println("Load ByteX Cache:" + t.absolutePath)
-            val classEntities = GSON.fromJson<List<ClassEntity>>(t.readText(), object : TypeToken<List<ClassEntity>>() {
-            }.type)
-            classEntities.parallelStream().forEach(Consumer<ClassEntity> { graphBuilder.add(it) })
-            System.out.println("Load ByteX Cache Success:" + t.absolutePath)
+            BufferedReader(FileReader(t)).use { reader ->
+                GSON.fromJson<List<ClassEntity>>(reader, object : TypeToken<List<ClassEntity>>() {
+                }.type).parallelStream().forEach { graphBuilder.add(it) }
+            }
+            println("Load ByteX Cache Success:" + t.absolutePath)
             return true
-        } catch (e: FileNotFoundException) {
-            System.out.println("Load ByteX Cache Fail:" + t.absolutePath)
+        } catch (e: Exception) {
+            t.delete()
+            println("Load ByteX Cache Fail:" + t.absolutePath)
             LevelLog.sDefaultLogger.e("loadCache failure", e)
         }
         return false
@@ -50,9 +49,13 @@ object GsonGraphCache : IGraphCache<File> {
             t.parentFile.mkdirs()
             t.delete()
             t.createNewFile()
-            t.writeText(GSON.toJson(graph.nodes.values.stream().map { node -> node.entity }.collect(Collectors.toList<ClassEntity>())))
+            BufferedWriter(FileWriter(t)).use { writer ->
+                GSON.toJson(graph.nodes.values.stream().map { node -> node.entity }.collect(Collectors.toList<ClassEntity>()), writer)
+                writer.flush()
+            }
             return true
-        } catch (e: IOException) {
+        } catch (e: Exception) {
+            t.delete()
             e.printStackTrace()
             LevelLog.sDefaultLogger.e("saveCache failure", e)
         }

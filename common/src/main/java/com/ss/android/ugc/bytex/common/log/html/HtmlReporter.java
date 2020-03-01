@@ -3,9 +3,11 @@ package com.ss.android.ugc.bytex.common.log.html;
 import com.ss.android.ugc.bytex.common.log.LevelLog;
 import com.ss.android.ugc.bytex.common.utils.CalendarUtils;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,9 +78,42 @@ public class HtmlReporter {
      * @return absolutePath
      */
     public String createHtmlReporter(String transformName) {
-        StringBuilder sb = new StringBuilder();
+        File htmlDir = new File(htmlFileDir);
+        if (!htmlDir.exists()) {
+            htmlDir.mkdirs();
+        }
+        String fileName = "ByteX_report_" + transformName + ".html";
+        File htmlFile = new File(htmlDir, fileName);
+        Writer writer = null;
+        try {
+            if (htmlFile.exists()) {
+                htmlFile.delete();
+            }
+            htmlFile.createNewFile();
+            writer = new BufferedWriter(new FileWriter(htmlFile));
+            appendHtml(writer);
+            writer.flush();
+            writer.close();
+            return htmlFile.getAbsolutePath();
+        } catch (IOException e) {
+            LevelLog.sDefaultLogger.e(TAG, e.getMessage(), e);
+            if (htmlFile.exists()) {
+                htmlFile.delete();
+            }
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            return null;
+        }
+    }
+
+    private void appendHtml(Appendable appendable) throws IOException {
         //构建头部
-        sb.append("<!DOCTYPE html>")
+        appendable.append("<!DOCTYPE html>")
                 .append("<html>")
                 .append("<head>").append("<meta charset=\"utf-8\">")
                 .append("<style type=\"text/css\">")
@@ -96,48 +131,15 @@ public class HtmlReporter {
                 .append(String.format("Total modules: %s: ", String.valueOf(htmlFragmentProviders.size()))).append("<br>");
 
         //构建主体日志
-        sb.append("<h2>").append(" Transform or check result: ").append("</h2>").append("<ul>\n");
-        htmlFragmentProviders.forEach((it) -> {
-            sb.append(it.provide());
-        });
-        sb.append("</ul>");
+        appendable.append("<h2>").append(" Transform or check result: ").append("</h2>").append("<ul>\n");
+        for (HtmlFragmentProvider provider : htmlFragmentProviders) {
+            provider.provideHtmlCode(appendable);
+        }
+        appendable.append("</ul>");
 
-        sb.append("<div class=\"side-bar\">\n" +
+        appendable.append("<div class=\"side-bar\">\n" +
                 "    <a href=\"#\" class=\"icon-chat\">Back To Top</a>\n" +
                 "</div>");
-        sb.append("</body>").append("</html>");
-
-        String result = sb.toString();
-        File htmlDir = new File(htmlFileDir);
-        if (!htmlDir.exists()) {
-            htmlDir.mkdirs();
-        }
-        String fileName = "ByteX_report_" + transformName + ".html";
-        File htmlFile = new File(htmlDir, fileName);
-        FileWriter fileWriter = null;
-        try {
-            if (htmlFile.exists()) {
-                htmlFile.delete();
-            }
-            htmlFile.createNewFile();
-            fileWriter = new FileWriter(htmlFile);
-            fileWriter.write(result);
-            fileWriter.flush();
-            fileWriter.close();
-            return htmlFile.getAbsolutePath();
-        } catch (IOException e) {
-            LevelLog.sDefaultLogger.e(TAG, e.getMessage(), e);
-            if (htmlFile.exists()) {
-                htmlFile.delete();
-            }
-            if (fileWriter != null) {
-                try {
-                    fileWriter.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-            return null;
-        }
+        appendable.append("</body>").append("</html>");
     }
 }

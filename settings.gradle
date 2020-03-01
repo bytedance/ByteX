@@ -39,6 +39,7 @@ include ':const-inline-plugin'
 include ':field-assign-opt-plugin'
 include ':method-call-opt-plugin'
 include ':SourceFileKiller'
+include ':butterknife-check-plugin'
 
 include ':coverage-plugin'
 project(':coverage-plugin').projectDir = new File('coverage/coverage-plugin')

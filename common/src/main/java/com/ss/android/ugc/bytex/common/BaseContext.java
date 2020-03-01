@@ -17,9 +17,7 @@ import org.gradle.api.logging.LogLevel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
+import java.util.function.Supplier;
 
 public class BaseContext<E extends BaseExtension> {
     protected final Project project;
@@ -42,6 +40,10 @@ public class BaseContext<E extends BaseExtension> {
             return;
         }
         hasInitialized = true;
+        if (logFile != null) {
+            logFile.delete();
+            logFile = null;
+        }
         //init logger
         getLogger().d("init");
     }
@@ -68,66 +70,52 @@ public class BaseContext<E extends BaseExtension> {
     }
 
     public final ILogger getLogger() {
-        if (logger == null) {
+        if (logger == null || logFile == null || !logFile.exists()) {
             synchronized (this) {
-                if (logger == null) {
-                    ILogger fileLog;
+                if (logger == null || logFile == null || !logFile.exists()) {
+                    logFile = new File(String.join(File.separator, buildDir().getAbsolutePath(), extension.getLogFile()));
+                    logFile.delete();
+                    Supplier<HtmlLoggerImpl> htmlLoggerSupplier = () -> {
+                        if (BooleanProperty.ENABLE_HTML_LOG.value()) {
+                            return new HtmlLoggerImpl(extension.getName());
+                        } else {
+                            return null;
+                        }
+                    };
+                    HtmlLoggerImpl htmlLogger = logger == null ? htmlLoggerSupplier.get() :
+                            ((LogDistributor) ((LevelLog) logger).getImpl()).getLoggers()
+                                    .stream()
+                                    .filter(iLogger -> iLogger instanceof HtmlLoggerImpl)
+                                    .map(iLogger -> (HtmlLoggerImpl) iLogger)
+                                    .findFirst()
+                                    .orElseGet(htmlLoggerSupplier);
+                    ILogger fileLogger;
                     try {
-                        String fileName = String.join(File.separator, buildDir().getAbsolutePath(), extension.getLogFile());
-                        Files.deleteIfExists(Paths.get(fileName));
-                        logFile = new File(fileName);
-                        fileLog = FileLoggerImpl.of(fileName);
+                        fileLogger = FileLoggerImpl.of(logFile.getAbsolutePath());
                     } catch (IOException e) {
                         throw new RuntimeException("can not create log file", e);
                     }
                     LogDistributor logDistributor = new LogDistributor();
-                    logDistributor.addLogger(fileLog);
-                    if (BooleanProperty.ENABLE_HTML_LOG.value()) {
-                        HtmlLoggerImpl htmlLog = new HtmlLoggerImpl(extension.getName());
-                        logDistributor.addLogger(htmlLog);
-                        HtmlReporter.getInstance().registerHtmlFragment(htmlLog);
+                    logDistributor.addLogger(fileLogger);
+                    if (htmlLogger != null) {
+                        htmlLogger.acceptAllCachedLog((logLevel, tag, msg, throwable) -> {
+                            if (logLevel == LogLevel.DEBUG) {
+                                fileLogger.d(tag, msg);
+                            } else if (logLevel == LogLevel.INFO) {
+                                fileLogger.i(tag, msg);
+                            } else if (logLevel == LogLevel.WARN) {
+                                fileLogger.w(tag, msg, throwable);
+                            } else if (logLevel == LogLevel.ERROR) {
+                                fileLogger.e(tag, msg, throwable);
+                            }
+                        });
+                        logDistributor.addLogger(htmlLogger);
+                        HtmlReporter.getInstance().registerHtmlFragment(htmlLogger);
                     }
                     LevelLog levelLog = new LevelLog(logDistributor);
                     levelLog.setLevel(extension.getLogLevel());
                     levelLog.setTag(extension.getName());
                     logger = levelLog;
-                }
-            }
-        }
-        if (!logFile.exists()) {
-            //be deleted? bad case.get cached logs and write to logfile
-            synchronized (this) {
-                if (!logFile.exists()) {
-                    //ignore ClassCastException
-                    LogDistributor logDistributor = (LogDistributor) ((LevelLog) logger).getImpl();
-                    List<ILogger> loggers = logDistributor.getLoggers();
-                    loggers.stream().filter(it -> it instanceof HtmlLoggerImpl).findFirst().ifPresent(hlog -> {
-                        final HtmlLoggerImpl htmlLog = (HtmlLoggerImpl) hlog;
-                        //lock htmllogger
-                        synchronized (htmlLog) {
-                            loggers.stream().filter(it -> it instanceof FileLoggerImpl).map(flog -> {
-                                try {
-                                    ((FileLoggerImpl) flog).redirectLogFile(logFile.getAbsolutePath());
-                                    return flog;
-                                } catch (IOException e) {
-                                    throw new RuntimeException("can not create log file", e);
-                                }
-                            }).forEach(flog -> {
-                                //ignore level
-                                htmlLog.acceptAllCachedLog((logLevel, tag, msg, throwable) -> {
-                                    if (logLevel == LogLevel.DEBUG) {
-                                        flog.d(tag, msg);
-                                    } else if (logLevel == LogLevel.INFO) {
-                                        flog.i(tag, msg);
-                                    } else if (logLevel == LogLevel.WARN) {
-                                        flog.w(tag, msg, throwable);
-                                    } else if (logLevel == LogLevel.ERROR) {
-                                        flog.e(tag, msg, throwable);
-                                    }
-                                });
-                            });
-                        }
-                    });
                 }
             }
         }

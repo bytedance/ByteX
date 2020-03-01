@@ -25,12 +25,7 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
     protected E extension;
 
     protected Transform getTransform() {
-        return new CommonTransform<BaseContext>(new BaseContext<>(project, android, extension)) {
-            @Override
-            protected List<IPlugin> getPlugins() {
-                return Collections.singletonList(AbsPlugin.this);
-            }
-        };
+        return new SimpleTransform<>(new BaseContext<>(project, android, extension), this);
     }
 
     @Override

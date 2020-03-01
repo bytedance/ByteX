@@ -65,7 +65,7 @@ ByteX是一个基于gradle transform api和ASM的字节码插件平台（或许�
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.1.1"
+    ext.plugin_version="0.1.3"
     repositories {
         google()
         jcenter()
@@ -109,7 +109,9 @@ apply plugin: 'bytex.refer_check'
 - [coverage-plugin](coverage/README-zh.md)（线上代码覆盖率）
 - [refer-check-plugin](refer-check-plugin/README-zh.md)（检查是否有调用不存在的方法和引用不存在的字段）
 - [serialization-check-plugin](serialization-check-plugin/README-zh.md)（序列化检查）
-- [SourceFileKiller](SourceFileKiller/README.md)（删除SourceFile和行号属性，作为示例）
+- [SourceFileKiller](SourceFileKiller/README-zh.md)（删除SourceFile和行号属性，作为示例）
+- [ButterKnifeChecker](butterknife-check-plugin/README-zh.md)（检测跨module使用ButterKnife可能导致的问题）
+- [RFileKnife](shrink-r-plugin/RFileKnife-README-zh.md)（修复R.java太大编译报code too large的问题）
 
 ## 已知接入方
 

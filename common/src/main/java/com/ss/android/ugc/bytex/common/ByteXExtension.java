@@ -17,6 +17,10 @@ public class ByteXExtension extends BaseExtension {
         return ImmutableList.copyOf(plugins);
     }
 
+    public void clearPlugins() {
+        plugins.clear();
+    }
+
     @Override
     public String getName() {
         return "byteX";
