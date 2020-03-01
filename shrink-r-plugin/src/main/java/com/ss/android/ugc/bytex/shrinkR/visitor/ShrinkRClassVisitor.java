@@ -31,7 +31,7 @@ public class ShrinkRClassVisitor extends BaseClassVisitor {
 
     @Override
     public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        if (isRClass && context.containRField(className, name)/* && !context.shouldKeep(className, name)*/) {
+        if (isRClass && context.shouldBeInlined(className, name)/* && !context.shouldKeep(className, name)*/) {
             context.getLogger().i("DeleteField", String.format("Delete field = [ %s ] in R class = [ %s ]", name, className));
             return null;
         } else if (isRClass) {

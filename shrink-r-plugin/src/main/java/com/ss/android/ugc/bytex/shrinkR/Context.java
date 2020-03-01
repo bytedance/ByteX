@@ -3,12 +3,14 @@ package com.ss.android.ugc.bytex.shrinkR;
 import com.android.build.gradle.AppExtension;
 import com.android.utils.Pair;
 import com.ss.android.ugc.bytex.common.BaseContext;
+import com.ss.android.ugc.bytex.common.graph.ClassNode;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.shrinkR.exception.NotFoundRField;
 import com.ss.android.ugc.bytex.shrinkR.exception.RFieldNotFoundException;
 import com.ss.android.ugc.bytex.shrinkR.res_check.AssetsCheckExtension;
 import com.ss.android.ugc.bytex.shrinkR.res_check.Checker;
 import com.ss.android.ugc.bytex.shrinkR.res_check.ResourceCheckExtension;
+import com.ss.android.ugc.bytex.shrinkR.source.RFileWhiteList;
 
 import org.gradle.api.Project;
 
@@ -21,11 +23,12 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.ss.android.ugc.bytex.common.utils.Utils.resolveDollarChar;
 
 public class Context extends BaseContext<ShrinkRExtension> {
-    private final Set<String> RClasses = ConcurrentHashMap.newKeySet(1000);
+    private final Set<String> shouldDiscardRClasses = ConcurrentHashMap.newKeySet(1000);
     // key is class name, value is R class static field.
     private final Map<String, Map<String, Object>> shouldBeInlinedRFields = new ConcurrentHashMap<>(3000);
     private final Map<String, Map<String, Object>> shouldSkipInlineRFields = new ConcurrentHashMap<>(3000);
@@ -37,71 +40,23 @@ public class Context extends BaseContext<ShrinkRExtension> {
     private Checker checker;
     private Set<NotFoundRField> notFoundRFields = ConcurrentHashMap.newKeySet();
 
-    public Checker getChecker() {
-        if (checker == null) {
-            this.checker = new Checker(this);
-        }
-        return checker;
-    }
-    //    private static final Pattern rClassNamePattern = Pattern.compile("([\\w]+\\.)+R(\\$.+)?");
-    //    private static final Pattern rClassPattern = Pattern.compile("([\\w]+/)*R(\\$.+)?");
-//    private static final Pattern rFilePattern = Pattern.compile("([\\w]+/)*R(\\$.+)?\\.class");
-
-
     public Context(Project project, AppExtension android, ShrinkRExtension extension) {
         super(project, android, extension);
     }
 
-    public boolean discardable(String relatviePath) {
-        int end = relatviePath.lastIndexOf(".class");
-        return end > 0 && RClasses.contains(relatviePath.substring(0, end));
+    @Override
+    public void init() {
+        super.init();
+        initWithWhiteList(extension.getKeepList());
     }
 
-    public void addRClass(String className) {
-        RClasses.add(className);
-    }
-
-    public void addRField(String owner, String name, Object value) {
-        shouldBeInlinedRFields.computeIfAbsent(owner, k -> new HashMap<>(100)).put(name, value);
-    }
-
-    public void addSkipRField(String owner, String name, Object value) {
-        shouldSkipInlineRFields.computeIfAbsent(owner, k -> new HashMap<>(100)).put(name, value);
-    }
-
-    public boolean containRField(String owner, String name) {
-        Map<String, Object> fields = shouldBeInlinedRFields.get(owner);
-        return fields != null && !fields.isEmpty() && fields.containsKey(name);
-    }
-
-    public Object getRFieldValue(String owner, String name) {
-        Map<String, Object> fields = shouldBeInlinedRFields.get(owner);
-        if (fields == null || fields.isEmpty()) {
-            return null;
-        }
-        Object value = fields.get(name);
-        if (value == null) {
-            if (!shouldSkipInlineRFields.getOrDefault(owner, Collections.emptyMap()).containsKey(name)) {
-                throw new RFieldNotFoundException();
-            }
-        }
-        return value;
-    }
-
-    public void initWithWhiteList(List<String> whiteList) {
+    private void initWithWhiteList(List<String> whiteList) {
+        mWhiteList.clear();
         if (whiteList == null) {
             return;
         }
         for (String item : whiteList) {
             addWhiteList(item);
-        }
-    }
-
-    public static String getMatchByGroup(Matcher m, String name) {
-        try {
-            return m.group(name);
-        } catch (Exception e) {
-            return "";
         }
     }
 
@@ -141,8 +96,78 @@ public class Context extends BaseContext<ShrinkRExtension> {
         }
     }
 
+    public Checker getChecker() {
+        if (checker == null) {
+            this.checker = new Checker(this);
+        }
+        return checker;
+    }
+
+    public boolean discardable(String relatviePath) {
+        int end = relatviePath.lastIndexOf(".class");
+        return end > 0 && shouldDiscardRClasses.contains(relatviePath.substring(0, end));
+    }
+
+    public void calculateDiscardableRClasses() {
+        if (extension.isCompatRFileAssignInherit()) {
+            //必须全部是可以被移除的
+            shouldDiscardRClasses.removeAll(
+                    shouldDiscardRClasses.stream().filter(
+                            className -> {
+                                Set<String> relativeClassNames = new HashSet<>();
+                                ClassNode node = (ClassNode) getClassGraph().get(className);
+                                getClassGraph().traverseAllChild(node, classNode -> relativeClassNames.add(classNode.entity.name));
+                                while ((node = node.parent) != null) {
+                                    if (!"java/lang/Object".equals(node.entity.name)) {
+                                        relativeClassNames.add(node.entity.name);
+                                    }
+                                }
+                                return !shouldDiscardRClasses.containsAll(relativeClassNames);
+                            }
+
+                    ).collect(Collectors.toSet())
+            );
+        }
+    }
+
+    public void addShouldDiscardRClasses(String className) {
+        shouldDiscardRClasses.add(className);
+    }
+
+    public void addShouldBeInlinedRField(String owner, String name, Object value) {
+        owner = getRealRClassName(owner);
+        shouldBeInlinedRFields.computeIfAbsent(owner, k -> new ConcurrentHashMap<>(100)).put(name, value);
+    }
+
+    public void addSkipInlineRField(String owner, String name, Object value) {
+        owner = getRealRClassName(owner);
+        shouldSkipInlineRFields.computeIfAbsent(owner, k -> new ConcurrentHashMap<>(100)).put(name, value == null ? 0 : value);
+    }
+
+    public boolean shouldBeInlined(String owner, String name) {
+        owner = getRealRClassName(owner);
+        Map<String, Object> fields = shouldBeInlinedRFields.get(owner);
+        return fields != null && !fields.isEmpty() && fields.containsKey(name);
+    }
+
+    public Object getRFieldValue(String owner, String name) {
+        owner = getRealRClassName(owner);
+        Map<String, Object> fields = shouldBeInlinedRFields.get(owner);
+        if (fields == null || fields.isEmpty()) {
+            return null;
+        }
+        Object value = fields.get(name);
+        if (value == null) {
+            if (!shouldSkipInlineRFields.getOrDefault(owner, Collections.emptyMap()).containsKey(name)) {
+                throw new RFieldNotFoundException();
+            }
+        }
+        return value;
+    }
+
     public boolean shouldKeep(String className, String fieldName) {
         boolean matched = false;
+        className = getRealRClassName(className);
         Set<Pair<Pattern, Pattern>> whiteList = mWhiteList.get(Utils.getInnerRClass(className));
         if (whiteList == null || whiteList.isEmpty()) {
             return false;
@@ -177,5 +202,20 @@ public class Context extends BaseContext<ShrinkRExtension> {
 
     public void addNotFoundRField(String className, String methodName, String owner, String name) {
         notFoundRFields.add(new NotFoundRField(className, methodName, owner, name));
+    }
+
+    public String getRealRClassName(String className) {
+        if (!extension.isCompatRFileAssignInherit()) {
+            return className;
+        }
+        return RFileWhiteList.Companion.getRealRClassName(className);
+    }
+
+    public static String getMatchByGroup(Matcher m, String name) {
+        try {
+            return m.group(name);
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

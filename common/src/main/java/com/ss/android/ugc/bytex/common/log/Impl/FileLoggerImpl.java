@@ -27,19 +27,27 @@ public class FileLoggerImpl extends BaseLogger {
         this.pr = pr;
     }
 
-    public synchronized void redirectLogFile(String fileName) throws IOException {
-        File logFile = new File(fileName);
-        if (!logFile.exists()) {
-            Files.createParentDirs(logFile);
-        }
-        pr = new PrintWriter(new FileOutputStream(fileName), true);
-    }
-
     @Override
     protected void write(LogLevel level, String prefix, String msg, Throwable t) {
         pr.println(String.format("%s [%-10s] %s", level.name(), prefix, msg));
         if (t != null) {
             t.printStackTrace(pr);
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        close();
+        super.finalize();
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        if (pr != null) {
+            pr.flush();
+            pr.close();
+            pr = null;
         }
     }
 }

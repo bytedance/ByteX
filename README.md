@@ -74,7 +74,7 @@ Add those configuration code to your build.gradle, and apply your plugins on dem
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.1.1"
+    ext.plugin_version="0.1.3"
     repositories {
         google()
         jcenter()
@@ -117,6 +117,8 @@ Note: If ByteX host is not applied, there is no difference between ByteX plugins
 - [refer-check-plugin](refer-check-plugin/README.md)（Detect if there is a invocation to a non-existent method and a reference to a non-existent field）
 - [serialization-check-plugin](serialization-check-plugin/README.md)（Serialization check）
 - [SourceFileKiller](SourceFileKiller/README.md)（Shrink SourceFile and linenumber）
+- [ButterKnifeChecker](butterknife-check-plugin/README.md)（detect exceptions caused by cross-module use of ButterKnife）
+- [RFileKnife](shrink-r-plugin/RFileKnife-README.md)（Fix R.java code too large）
 
 
 ## Apps Using ByteX

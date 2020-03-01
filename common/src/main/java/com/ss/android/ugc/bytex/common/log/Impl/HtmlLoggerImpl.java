@@ -5,6 +5,7 @@ import com.ss.android.ugc.bytex.common.utils.CalendarUtils;
 
 import org.gradle.api.logging.LogLevel;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -30,18 +31,17 @@ public class HtmlLoggerImpl extends BaseLogger implements HtmlFragmentProvider {
     }
 
     @Override
-    public synchronized String provide() {
-
-        return "<li>\n" +
-                String.format("%s Check Results:E(%s),W(%s),I(%s),D(%s)",
+    public synchronized void provideHtmlCode(Appendable appendable) throws IOException {
+        appendable.append("<li>\n")
+                .append(String.format("%s Check Results:E(%s),W(%s),I(%s),D(%s)",
                         moduleName,
                         getSize(LogLevel.ERROR),
                         getSize(LogLevel.WARN),
                         getSize(LogLevel.INFO),
                         getSize(LogLevel.DEBUG)
-                ) +
-                "</li>\n" +
-                getExpandableCodeString("Click To Expend for details", getTable());
+                ))
+                .append("</li>\n");
+        getExpandableCodeString(appendable, "Click To Expend for details", this::getTable);
     }
 
     @Override
@@ -61,9 +61,8 @@ public class HtmlLoggerImpl extends BaseLogger implements HtmlFragmentProvider {
         }
     }
 
-    private String getTable() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<table border=\"1\" cellpadding=\"8\">")
+    private void getTable(Appendable appendable) throws IOException {
+        appendable.append("<table border=\"1\" cellpadding=\"8\">")
                 .append("<tr>")
                 .append("<th>").append("Module").append("</th>")
                 .append("<th>").append("Time").append("</th>")
@@ -75,52 +74,53 @@ public class HtmlLoggerImpl extends BaseLogger implements HtmlFragmentProvider {
         Map<String, List<Triple<String, Throwable, Long>>> error = logs.get(LogLevel.ERROR);
         boolean needAppendModuleName = true;
         if (error != null) {
-            sb.append(getLevelLog(true, "ERROR", "ERROR", error));
+            appendLevelLog(appendable, true, "ERROR", "ERROR", error);
             needAppendModuleName = false;
         }
         Map<String, List<Triple<String, Throwable, Long>>> warn = logs.get(LogLevel.WARN);
         if (warn != null) {
-            sb.append(getLevelLog(needAppendModuleName, "WARNING", "WARN", warn));
+            appendLevelLog(appendable, needAppendModuleName, "WARNING", "WARN", warn);
             needAppendModuleName = false;
         }
         Map<String, List<Triple<String, Throwable, Long>>> info = logs.get(LogLevel.INFO);
         if (info != null) {
-            sb.append(getLevelLog(needAppendModuleName, "INFO", "INFO", info));
+            appendLevelLog(appendable, needAppendModuleName, "INFO", "INFO", info);
             needAppendModuleName = false;
         }
         Map<String, List<Triple<String, Throwable, Long>>> debug = logs.get(LogLevel.DEBUG);
         if (debug != null) {
-            sb.append(getLevelLog(needAppendModuleName, "DEBUG", "DEBUG", debug));
+            appendLevelLog(appendable, needAppendModuleName, "DEBUG", "DEBUG", debug);
         }
-        sb.append("</table>");
-
-        return sb.toString();
+        appendable.append("</table>");
     }
 
-    private String getLevelLog(boolean needAppendModuleName, String ssc, String levelName, Map<String, List<Triple<String, Throwable, Long>>> levelLogs) {
-        StringBuilder sb = new StringBuilder();
+    private void appendLevelLog(Appendable appendable, boolean needAppendModuleName, String ssc, String levelName, Map<String, List<Triple<String, Throwable, Long>>> levelLogs) throws IOException {
         for (String key : levelLogs.keySet()) {
             List<Triple<String, Throwable, Long>> value = levelLogs.get(key);
             for (Triple<String, Throwable, Long> triple : value) {
-                sb.append("<tr>");
+                appendable.append("<tr>");
                 if (needAppendModuleName) {
-                    sb.append("<td").append(" rowspan=\"").append(getTotalRows()).append("\"").append(">").append(moduleName).append("</td>");
+                    appendable.append("<td").append(" rowspan=\"").append(String.valueOf(getTotalRows())).append("\"").append(">").append(moduleName).append("</td>");
                     needAppendModuleName = false;
                 }
-                sb.append("<td").append(" class=\"").append(ssc).append("\">").append(CalendarUtils.getDateAndTimeString(triple.getThird(), true)).append("</td>");
-                sb.append("<td").append(" class=\"").append(ssc).append("\">").append(levelName).append("</td>");
-                sb.append("<td").append(" class=\"").append(ssc).append("\">").append(key).append("</td>");
+                appendable.append("<td").append(" class=\"").append(ssc).append("\">").append(CalendarUtils.getDateAndTimeString(triple.getThird(), true)).append("</td>");
+                appendable.append("<td").append(" class=\"").append(ssc).append("\">").append(levelName).append("</td>");
+                appendable.append("<td").append(" class=\"").append(ssc).append("\">").append(key).append("</td>");
                 if (triple.getSecond() != null) {
-                    StringWriter stackTraceHolder = new StringWriter();
-                    triple.getSecond().printStackTrace(new PrintWriter(stackTraceHolder));
-                    sb.append("<td").append(" class=\"").append(ssc).append("\">").append("<p>").append(getExpandableCodeString(triple.getFirst(), stackTraceHolder.toString())).append("</p></td>");
+
+                    appendable.append("<td").append(" class=\"").append(ssc).append("\">").append("<p>");
+                    getExpandableCodeString(appendable, triple.getFirst(), appendable1 -> {
+                        StringWriter stackTraceHolder = new StringWriter();
+                        triple.getSecond().printStackTrace(new PrintWriter(stackTraceHolder));
+                        appendable1.append(stackTraceHolder.toString());
+                    });
+                    appendable.append("</p></td>");
                 } else {
-                    sb.append("<td").append(" class=\"").append(ssc).append("\">").append(triple.getFirst()).append("</td>");
+                    appendable.append("<td").append(" class=\"").append(ssc).append("\">").append(triple.getFirst()).append("</td>");
                 }
-                sb.append("</tr>");
+                appendable.append("</tr>");
             }
         }
-        return sb.toString();
     }
 
     private int getTotalRows() {
@@ -139,20 +139,23 @@ public class HtmlLoggerImpl extends BaseLogger implements HtmlFragmentProvider {
         return size.get();
     }
 
-    private static String getExpandableCodeString(String title, String code) {
-        return "<details>\n" +
-                "<summary>" +
-                title +
-                "</summary>\n" +
-                "<pre><code>" +
-                code +
-                "</code></pre>\n" +
-                "</details>\n";
+    private static void getExpandableCodeString(Appendable appendable, String title, Func1<Appendable> action) throws IOException {
+        appendable.append("<details>\n")
+                .append("<summary>")
+                .append(title)
+                .append("</summary>\n")
+                .append("<pre><code>");
+        action.apply(appendable);
+        appendable.append("</code></pre>\n")
+                .append("</details>\n");
     }
 
-    @FunctionalInterface
-    public
-    interface Func4<F, S, T, FO> {
+    public interface Func4<F, S, T, FO> {
         void apply(F f, S s, T t, FO fo);
     }
+
+    public interface Func1<F> {
+        void apply(F f) throws IOException;
+    }
+
 }

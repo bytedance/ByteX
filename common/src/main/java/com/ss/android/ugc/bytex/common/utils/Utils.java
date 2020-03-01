@@ -151,6 +151,12 @@ public class Utils {
         return rClassSimpleNamePattern.matcher(name.substring(classNameStart + 1)).matches();
     }
 
+    public static boolean isRStyleableClass(String name) {
+        if (name == null || name.isEmpty()) return false;
+        int classNameStart = name.lastIndexOf("/");
+        return "R$styleable".equals(name.substring(classNameStart + 1));
+    }
+
     public static String getInnerRClass(String className) {
         if (className == null || className.isEmpty()) return "";
         int innerClassStart = className.lastIndexOf("$");
@@ -215,8 +221,11 @@ public class Utils {
         return result.toString();
     }
 
-
     public static boolean inSamePackage(String classA, String classB) {
         return Objects.equals(getPackage(classA), getPackage(classB));
+    }
+
+    public static boolean isClassInit(String name) {
+        return "<clinit>".equals(name);
     }
 }

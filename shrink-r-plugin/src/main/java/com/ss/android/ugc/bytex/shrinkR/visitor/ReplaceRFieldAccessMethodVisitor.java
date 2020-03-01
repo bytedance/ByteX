@@ -11,6 +11,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.util.List;
+
 class ReplaceRFieldAccessMethodVisitor extends MethodVisitor {
     private final Context context;
     private final ResManager resManager;
@@ -38,10 +40,12 @@ class ReplaceRFieldAccessMethodVisitor extends MethodVisitor {
                 context.addNotFoundRField(className, methodName, owner, name);
             }
             if (value != null) {
-                if (value instanceof Integer) {
+                if (value instanceof List) {
+                    replaceStyleableNewArrayCode((List<Integer>) value);
+                } else if (value instanceof Integer) {
                     resManager.reachResource((Integer) value);
+                    mv.visitLdcInsn(value);
                 }
-                mv.visitLdcInsn(value);
                 return;
             }
         }
@@ -87,5 +91,48 @@ class ReplaceRFieldAccessMethodVisitor extends MethodVisitor {
             resManager.reachResource((Integer) value);
         }
         super.visitLdcInsn(value);
+    }
+
+    private void replaceStyleableNewArrayCode(List<Integer> valList) {
+        int size = valList.size();
+        visitConstInsByVal(mv, size);
+        mv.visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_INT);
+        for (int i = 0; i < size; i++) {
+            mv.visitInsn(Opcodes.DUP);
+            visitConstInsByVal(mv, i);
+            mv.visitLdcInsn(valList.get(i));
+            mv.visitInsn(Opcodes.IASTORE);
+        }
+    }
+
+    private void visitConstInsByVal(MethodVisitor mv, int constVal) {
+        int opcodes;
+        if (constVal == 0) {
+            opcodes = Opcodes.ICONST_0;
+        } else if (constVal == 1) {
+            opcodes = Opcodes.ICONST_1;
+        } else if (constVal == 2) {
+            opcodes = Opcodes.ICONST_2;
+        } else if (constVal == 3) {
+            opcodes = Opcodes.ICONST_3;
+        } else if (constVal == 4) {
+            opcodes = Opcodes.ICONST_4;
+        } else if (constVal == 5) {
+            opcodes = Opcodes.ICONST_5;
+        } else if (constVal < 128) {
+            opcodes = Opcodes.BIPUSH;
+        } else if (constVal < 32768) {
+            opcodes = Opcodes.SIPUSH;
+        } else {
+            opcodes = Opcodes.LDC;
+        }
+        if (opcodes == Opcodes.LDC) {
+            mv.visitLdcInsn(constVal);
+        }
+        if (opcodes == Opcodes.SIPUSH || opcodes == Opcodes.BIPUSH) {
+            mv.visitIntInsn(opcodes, constVal);
+        } else {
+            mv.visitInsn(opcodes);
+        }
     }
 }

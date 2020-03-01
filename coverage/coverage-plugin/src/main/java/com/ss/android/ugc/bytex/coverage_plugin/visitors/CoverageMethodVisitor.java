@@ -36,14 +36,17 @@ public class CoverageMethodVisitor extends MethodNode {
         }
         if (instructions != null) {
             boolean needInsert = true;
-            for (int i = 0; i < instructions.size(); i++) {
-                AbstractInsnNode ins = instructions.get(i);
-                if (Opcodes.INVOKESPECIAL == ins.getOpcode()) {
-                    MethodInsnNode methodInsnNode = (MethodInsnNode) ins;
-                    if (methodInsnNode.owner.equals(className) && methodInsnNode.name.equals("<init>")) {
-                        // skip if contains this(...)
-                        needInsert = false;
-                        break;
+            // static块一定插桩
+            if (!name.equals("<clinit>")){
+                for (int i = 0; i < instructions.size(); i++) {
+                    AbstractInsnNode ins = instructions.get(i);
+                    if (Opcodes.INVOKESPECIAL == ins.getOpcode()) {
+                        MethodInsnNode methodInsnNode = (MethodInsnNode) ins;
+                        if (methodInsnNode.owner.equals(className) && methodInsnNode.name.equals("<init>")) {
+                            // skip if contains this(...)
+                            needInsert = false;
+                            break;
+                        }
                     }
                 }
             }

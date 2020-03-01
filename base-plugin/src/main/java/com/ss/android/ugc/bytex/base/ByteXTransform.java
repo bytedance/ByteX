@@ -11,9 +11,8 @@ import java.util.List;
  */
 
 public class ByteXTransform extends CommonTransform<Context> {
-    private List<IPlugin> plugins;
 
-    public ByteXTransform(Context context) {
+    ByteXTransform(Context context) {
         super(context);
     }
 
@@ -29,12 +28,15 @@ public class ByteXTransform extends CommonTransform<Context> {
 
     @Override
     protected List<IPlugin> getPlugins() {
-        if (!context.isEnable()) {
+        if (!context.extension.isEnable()) {
             return Collections.emptyList();
         }
-        if (plugins == null || plugins.isEmpty()) {
-            plugins = context.extension.getPlugins();
-        }
-        return plugins;
+        return context.extension.getPlugins();
+    }
+
+    @Override
+    protected void release() {
+        context.extension.clearPlugins();
+        super.release();
     }
 }

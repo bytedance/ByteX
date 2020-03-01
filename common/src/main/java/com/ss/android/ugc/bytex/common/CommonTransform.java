@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 
 public abstract class CommonTransform<X extends BaseContext> extends Transform {
-    protected X context;
+    protected final X context;
     private Set<TransformConfiguration> configurations;
 
     public CommonTransform(X context) {
@@ -217,7 +217,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             LevelLog.sDefaultLogger.e(throwable.getClass().getName(), throwable);
             throw throwable;
         } finally {
-            for (IPlugin plugin : getPlugins()) {
+            for (IPlugin plugin : plugins) {
                 try {
                     plugin.afterExecute();
                 } catch (Throwable throwable) {
@@ -225,6 +225,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                 }
             }
             transformContext.release();
+            release();
             timer.record("Total cost time = [%s ms]");
             if (BooleanProperty.ENABLE_HTML_LOG.value()) {
                 HtmlReporter.getInstance().createHtmlReporter(getName());
@@ -238,6 +239,10 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     }
 
     protected void afterTransform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+    }
+
+    protected void release() {
+
     }
 
     protected void init(TransformInvocation transformInvocation) {

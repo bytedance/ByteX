@@ -27,6 +27,7 @@ buildscript {
         classpath "com.bytedance.android.byteX:SourceFileKiller:${plugin_version}"
         classpath "com.bytedance.android.byteX:coverage-lib:${plugin_version}"
         classpath "com.bytedance.android.byteX:coverage-plugin:${plugin_version}"
+        classpath "com.bytedance.android.byteX:butterknife-check-plugin:${plugin_version}"
     }
 }
 

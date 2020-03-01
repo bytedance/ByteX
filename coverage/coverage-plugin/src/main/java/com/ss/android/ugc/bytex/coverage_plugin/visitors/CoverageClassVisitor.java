@@ -5,6 +5,7 @@ import com.ss.android.ugc.bytex.coverage_plugin.Context;
 import com.ss.android.ugc.bytex.coverage_plugin.util.MappingIdGen;
 
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 public class CoverageClassVisitor extends BaseClassVisitor {
 
@@ -12,10 +13,16 @@ public class CoverageClassVisitor extends BaseClassVisitor {
 
     private Context context;
     private MappingIdGen mappingIdGen;
+    private boolean hasClinit = false;
 
     public CoverageClassVisitor(Context context, MappingIdGen mappingIdGen) {
         this.context = context;
         this.mappingIdGen = mappingIdGen;
+        String rawClassName = context.getProguardMap().get(className);
+        // 没有找到mapping对应值时，按混淆的类名插桩
+        if (rawClassName != null) {
+            className = rawClassName;
+        }
     }
 
     @Override
@@ -33,21 +40,30 @@ public class CoverageClassVisitor extends BaseClassVisitor {
         // only insert <clinit> to improve performance
         if (context.isClInitOnly() && name.equals("<clinit>")) {
             visit = true;
+            hasClinit = true;
         } else if (!context.isClInitOnly() && (name.equals("<init>") || name.equals("<clinit>"))) {
             visit = true;
         }
         if (visit) {
-            String rawClassName = context.getProguardMap().get(className);
-            // 没有找到mapping对应值时，按混淆的类名插桩
-            // just use the raw className if there is no mapping
-            if (rawClassName == null) {
-                rawClassName = className;
-            }
-            final int id = mappingIdGen.genMappingId(rawClassName, name, String.valueOf(index));
+            final int id = mappingIdGen.genMappingId(className, name, String.valueOf(index));
             index++;
             MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
             return new CoverageMethodVisitor(access, name, descriptor, signature, exceptions, context, id, className, mv);
         }
         return super.visitMethod(access, name, descriptor, signature, exceptions);
+    }
+
+
+    @Override public void visitEnd() {
+        if (!hasClinit){
+            final int id = mappingIdGen.genMappingId(className, "<clinit>", String.valueOf(index));
+            index++;
+            MethodVisitor methodVisitor = super.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+            methodVisitor.visitLdcInsn(id);
+            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "com/ss/android/ugc/bytex/coverage_lib/CoverageLogger", "Log", "(I)V", false);
+            methodVisitor.visitInsn(Opcodes.RETURN);
+            methodVisitor.visitEnd();
+        }
+        super.visitEnd();
     }
 }

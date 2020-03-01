@@ -6,6 +6,8 @@ import java.util.List;
 
 public class ShrinkRExtension extends BaseExtension {
 
+    private boolean compatRFileAssignInherit = false;
+
     private List<String> keepList;
 
     public List<String> getKeepList() {
@@ -33,5 +35,13 @@ public class ShrinkRExtension extends BaseExtension {
 
     public boolean isStrictCheckMode() {
         return "strict".equals(checkMode);
+    }
+
+    public boolean isCompatRFileAssignInherit() {
+        return compatRFileAssignInherit;
+    }
+
+    public void setCompatRFileAssignInherit(boolean compatRFileAssignInherit) {
+        this.compatRFileAssignInherit = compatRFileAssignInherit;
     }
 }

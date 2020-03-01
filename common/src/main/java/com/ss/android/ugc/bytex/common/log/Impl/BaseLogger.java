@@ -5,11 +5,13 @@ import com.ss.android.ugc.bytex.common.log.ILogger;
 
 import org.gradle.api.logging.LogLevel;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 
-public abstract class BaseLogger implements ILogger {
+public abstract class BaseLogger implements ILogger, Closeable {
     private static final String DEFAULT_TAG = "ByteX";
     private String tag = DEFAULT_TAG;
 
@@ -86,5 +88,10 @@ public abstract class BaseLogger implements ILogger {
         t.printStackTrace(ps);
         ps.flush();
         return sw.toString();
+    }
+
+    @Override
+    public void close() throws IOException {
+
     }
 }

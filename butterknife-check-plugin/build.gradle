@@ -1,0 +1,4 @@
+apply from: rootProject.file('gradle/plugin.gradle')
+dependencies {
+
+}

@@ -175,6 +175,10 @@ public class TypeUtil {
         return "I".equals(desc);
     }
 
+    public static boolean isIntArray(String desc) {
+        return "[I".equals(desc);
+    }
+
     public static boolean isFinal(int access) {
         return (access & Opcodes.ACC_FINAL) == Opcodes.ACC_FINAL;
     }
