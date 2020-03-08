@@ -158,6 +158,8 @@ gradle clean :aweme:assembleRelease -Dorg.gradle.debug=true --no-daemon
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;如果需要在外部工程,基于ByteX开发插件,只需要引入common依赖即可.
 
 ```groovy
+compile gradleApi()
+compileOnly "com.android.tools.build:gradle:$gradle_version"
 compile "com.bytedance.android.byteX:common:${bytex_version}"
 ```
 
