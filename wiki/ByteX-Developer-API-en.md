@@ -160,6 +160,8 @@ gradle clean :aweme:assembleRelease -Dorg.gradle.debug=true --no-daemon
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you need to develop a plugin based on ByteX in external project , you need to configure dependencies like below:
 
 ```groovy
+compile gradleApi()
+compileOnly "com.android.tools.build:gradle:$gradle_version"
 compile "com.bytedance.android.byteX:common:${bytex_version}"
 ```
 
