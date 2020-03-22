@@ -20,6 +20,10 @@ public abstract class AbsTransformFlow implements TransformFlow {
         transformEngine.beginRun();
     }
 
+    protected void running() {
+        transformEngine.running();
+    }
+
     protected AbsTransformFlow traverse(FileProcessor... processors) throws IOException, InterruptedException {
         traverseArtifactOnly(processors);
         traverseAndroidJarOnly(processors);

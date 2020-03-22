@@ -459,7 +459,39 @@ public class DoAfterProguardPlugin extends CommonPlugin<Extension, Context> {
 
 ### Incremental Plugin
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plugin base on bytex configuared incremental by default.If your plugin can't provide incremental compilation,please configuare as follows:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plugin base on bytex configuared incremental by default.During incremental build, the ByteX framework will call the plugin‘s traverseIncremental method (two overloaded methods.Note: this method is called before the beforeTraverse), and will pass all files except the NotChanged.It will be decompressed if it is a Jar file and pass each entry as a single file (abstract into a FileData) in. The two methods are defined below:
+
+```java
+    /**
+     * traverse all incremental file which status is ADD,REMOVE or CHANGED
+     * file will be uncompressed which is jar input.
+     * only valid while during incremental build
+     *
+     * @param fileData incremental file
+     * @param chain  	If it is a class, the corresponding ClassVisitorChain will be passed to add a custom ClassVisitor, or null if there is not a class
+     */
+    default void traverseIncremental(@Nonnull FileData fileData, @Nullable ClassVisitorChain chain) {
+    }
+
+    /**
+     * traverse all incremental file which status is ADD,REMOVE or CHANGED
+     * file will be uncompressed which is jar input.
+     * only valid while during incremental build
+     *
+     * @param fileData Incremental file, and the file must be a class file.
+     * @param node     Tree Node
+     */
+    default void traverseIncremental(@Nonnull FileData fileData, @Nonnull ClassNode node) {
+    }
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If your plugin supports incremental mode, but finds that incremental processing cannot be continued in the incremental mode, you can request full compilation from bytex in the beforeTraverse method or before:
+
+```java
+	context.getTransformContext().requestNotIncremental();
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If your plugin can't provide incremental compilation,please configuare as follows:
 
 ```java
 public class SourceFileKillerPlugin extends CommonPlugin<SourceFileExtension, SourceFileContext> {

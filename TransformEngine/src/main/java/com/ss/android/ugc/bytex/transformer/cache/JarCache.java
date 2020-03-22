@@ -5,8 +5,8 @@ import com.android.build.api.transform.QualifiedContent;
 import com.android.build.api.transform.Status;
 import com.android.utils.FileUtils;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
+import com.ss.android.ugc.bytex.transformer.TransformOutputs;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -16,8 +16,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -41,108 +47,170 @@ public class JarCache extends FileCache {
     }
 
     public JarCache(File jar, TransformContext context) {
+        this(jar, Status.ADDED, context);
+    }
+
+    public JarCache(File jar, Status status, TransformContext context) {
         super(null, context);
         this.jar = jar;
-        status = Status.ADDED;
+        this.status = status;
         outputFile = null;
     }
 
     @Override
     public void transformOutput(Consumer<FileData> visitor) throws IOException {
-        if (context.isIncremental()) {
-            switch (status) {
-                case NOTCHANGED:
-                    return;
-                case REMOVED:
-                    throw new IllegalStateException("REMOVED File Can Not Output:" + outputFile.getAbsolutePath());
-                case CHANGED:
-                    FileUtils.deleteIfExists(outputFile);
-                    break;
-                case ADDED:
-                    break;
-            }
-        }
-        if (!outputFile.exists()) {
-            Files.createParentDirs(outputFile);
-        }
-        JarOutputStream jos = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
-        try {
-            forEach(file -> {
-                try {
-                    if (visitor != null) visitor.accept(file);
-                    String relativePath = file.getRelativePath();
-                    byte[] raw = file.getBytes();
-                    if (raw != null && raw.length > 0) {
-                        ZipEntry entry = new ZipEntry(relativePath);
-                        jos.putNextEntry(entry);
-                        jos.write(raw);
-                    }
-                    for (FileData attachment : file.getAttachment()) {
-                        raw = attachment.getBytes();
-                        relativePath = attachment.getRelativePath();
-                        if (raw != null && raw.length > 0) {
-                            ZipEntry entry = new ZipEntry(relativePath);
-                            jos.putNextEntry(entry);
-                            jos.write(raw);
-                        }
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+        List<FileData> dataList = Collections.synchronizedList(new LinkedList<>());
+        AtomicBoolean needOutput = new AtomicBoolean(!context.getInvocation().isIncremental());
+        forEach(item -> {
+            if (visitor != null) visitor.accept(item);
+            dataList.add(item);
+            item.traverseAll(fileData -> {
+                if (fileData.getStatus() != Status.NOTCHANGED) {
+                    needOutput.set(true);
                 }
             });
-        } finally {
-            jos.close();
+        });
+        String outputRelativePath = context.getTransformOutputs().relativeToProject(outputFile);
+        String inputRelativePath = context.getTransformOutputs().relativeToProject(getFile());
+        TransformOutputs.Entry outputs = context.getTransformOutputs().getLastTransformOutputs().get(outputRelativePath);
+        if (needOutput.get() || dataList.isEmpty()) {
+            if (dataList.isEmpty()) {
+                FileUtils.deleteIfExists(outputFile);
+            }
+            TransformOutputs.Entry mapToEntry = new TransformOutputs.Entry(
+                    inputRelativePath,
+                    outputRelativePath,
+                    outputFile.exists() ? TransformOutputs.Entry.Companion.hash(outputFile) : TransformOutputs.Entry.INVALID_HASH,
+                    dataList.stream().map(fileData -> TransformOutputs.Entry.Companion.outputEntry(fileData, outputRelativePath)).sorted().collect(Collectors.toList()));
+            if (dataList.size() > 0 && (!outputFile.exists() || outputs == null || outputs.getIdentify() != mapToEntry.getIdentify())) {
+                //输出的结果不一样
+                AtomicBoolean hasOutput = new AtomicBoolean(false);
+                try (JarOutputStream jos = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)))) {
+                    for (FileData item : dataList) {
+                        item.traverseAll(fileData -> {
+                            try {
+                                if (fileData.getStatus() != Status.REMOVED) {
+                                    byte[] bytes = fileData.getBytes();
+                                    if (bytes != null && bytes.length > 0) {
+                                        ZipEntry entry = new ZipEntry(fileData.getRelativePath());
+                                        jos.putNextEntry(entry);
+                                        jos.write(bytes);
+                                        hasOutput.set(true);
+                                    }
+                                }
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    }
+                }
+                if (!hasOutput.get()) {
+                    FileUtils.deleteIfExists(outputFile);
+                }
+                mapToEntry = new TransformOutputs.Entry(
+                        mapToEntry.getInput(),
+                        mapToEntry.getPath(),
+                        outputFile.exists() ? TransformOutputs.Entry.Companion.hash(outputFile) : TransformOutputs.Entry.INVALID_HASH,
+                        mapToEntry.getExtras());
+            }
+            outputs = mapToEntry;
+
         }
+        context.getTransformOutputs().getTransformOutputs().put(outputRelativePath, outputs);
     }
 
     @Override
     protected List<FileData> resolve(ObservableEmitter<FileData> emitter) throws IOException {
-        if (context.isIncremental()) {
-            // Skip NOTCHANGED
-            if (status == Status.NOTCHANGED) {
-                return Collections.emptyList();
-            } else if (status == Status.REMOVED) {
-                FileUtils.deleteIfExists(outputFile);
-                return Collections.emptyList();
-            }
-        }
-        if (!jar.exists()) {
-            return Collections.emptyList();
-        }
-        List<FileData> dataList = new ArrayList<>();
-        ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(jar)));
-        ZipEntry zipEntry;
-        try {
-            while ((zipEntry = zin.getNextEntry()) != null) {
-                if (zipEntry.isDirectory()) {
-                    continue;
+        if (context.getInvocation().isIncremental()) {
+            Set<String> items = context.getTransformInputs().getLastTransformInputs().get(getFile().getAbsolutePath());
+            if (status == Status.REMOVED) {
+                if (outputFile != null) {
+                    FileUtils.deleteIfExists(outputFile);
                 }
-                byte[] raw = ByteStreams.toByteArray(zin);
-                FileData data = new FileData(raw, zipEntry.getName(), context.isIncremental() ? status : Status.ADDED);
-                if (emitter != null) {
-                    emitter.onNext(data);
+                if (items == null) {
+                    return Collections.emptyList();
+                } else {
+                    return items.stream().map(s -> {
+                        FileData fileData = new FileData((byte[]) null, s, Status.REMOVED);
+                        if (emitter != null) {
+                            emitter.onNext(fileData);
+                        }
+                        return fileData;
+                    }).collect(Collectors.toList());
                 }
-                dataList.add(data);
             }
-        } finally {
-            zin.close();
+            final Map<String, FileData> dataMap = new ConcurrentHashMap<>();
+            final AtomicBoolean once = new AtomicBoolean(false);
+            FileData.LoadFunction loadFunction = fileData -> {
+                synchronized (dataMap) {
+                    if (once.compareAndSet(false, true)) {
+                        try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
+                            ZipEntry zipEntry;
+                            while ((zipEntry = zin.getNextEntry()) != null) {
+                                if (!zipEntry.isDirectory()) {
+                                    FileData item = dataMap.get(zipEntry.getName());
+                                    if (!item.contentLoaded()) {
+                                        item.setBytes(ByteStreams.toByteArray(zin), item.getStatus());
+                                    }
+                                }
+                            }
+                        }
+                        for (FileData value : dataMap.values()) {
+                            if (!value.contentLoaded()) {
+                                throw new RuntimeException(value.getRelativePath() + "unloaded");
+                            }
+                        }
+                    }
+                }
+                return fileData.getBytes();
+            };
+            //读所有的entry
+            try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
+                ZipEntry zipEntry;
+                while ((zipEntry = zin.getNextEntry()) != null) {
+                    if (!zipEntry.isDirectory()) {
+                        Status thisStatus = status;
+                        if (status == Status.CHANGED && items != null && !items.contains(zipEntry.getName())) {
+                            //修改了，并且上次输入中没有，算是新增
+                            thisStatus = Status.ADDED;
+                        }
+                        dataMap.put(zipEntry.getName(), new FileData(loadFunction, zipEntry.getName(), thisStatus));
+                    }
+                }
+            }
+            if (status == Status.CHANGED && items != null) {
+                //上次有但本次没有的算是删除
+                for (String item : items) {
+                    if (!dataMap.containsKey(item)) {
+                        dataMap.put(item, new FileData((byte[]) null, item, Status.REMOVED));
+                    }
+                }
+            }
+            if (emitter != null) {
+                dataMap.values().forEach(emitter::onNext);
+            }
+            return new ArrayList<>(dataMap.values());
+        } else {
+            List<FileData> dataList = new ArrayList<>();
+            try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
+                ZipEntry zipEntry;
+                while ((zipEntry = zin.getNextEntry()) != null) {
+                    if (!zipEntry.isDirectory()) {
+                        FileData data = new FileData(ByteStreams.toByteArray(zin), zipEntry.getName(), Status.ADDED);
+                        if (emitter != null) {
+                            emitter.onNext(data);
+                        }
+                        dataList.add(data);
+                    }
+                }
+            }
+            return dataList;
         }
-        return dataList;
     }
 
     @Override
     public void skip() throws IOException {
-        File dest = context.getOutputFile(content);
-        FileUtils.copyFile(jar, dest);
-    }
-
-    @Override
-    public List<FileData> getChangedFiles() {
-        try {
-            return resolve(null);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        FileUtils.copyFile(getFile(), outputFile);
     }
 
     @Override

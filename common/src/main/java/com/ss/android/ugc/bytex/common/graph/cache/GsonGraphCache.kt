@@ -7,6 +7,7 @@ import com.ss.android.ugc.bytex.common.graph.Graph
 import com.ss.android.ugc.bytex.common.graph.GraphBuilder
 import com.ss.android.ugc.bytex.common.graph.IGraphCache
 import com.ss.android.ugc.bytex.common.log.LevelLog
+import com.ss.android.ugc.bytex.transformer.concurrent.Schedulers
 import java.io.*
 import java.lang.reflect.Modifier
 import java.util.stream.Collectors
@@ -18,15 +19,34 @@ object GsonGraphCache : IGraphCache<File> {
     private val GSON by lazy {
         GsonBuilder()
                 .excludeFieldsWithModifiers(Modifier.TRANSIENT)
-                .disableHtmlEscaping().create()
+                .disableHtmlEscaping()
+                .registerTypeAdapterFactory(GraphTypeAdapterFactory())
+                .create()
+    }
+    private var ramCaches: RAMGraphCache? = null
+    var asyncSaveCache = true
+
+    fun useRamCache(use: Boolean) {
+        ramCaches = if (use) {
+            RAMGraphCache
+        } else {
+            RAMGraphCache.clear()
+            null
+        }
     }
 
     override fun loadCache(t: File?, graphBuilder: GraphBuilder): Boolean {
-        if (t == null || !t.exists() || !t.isFile) {
+        if (t == null) {
             return false
         }
         try {
-            System.out.println("Load ByteX Cache:" + t.absolutePath)
+            if (ramCaches?.loadCache(t, graphBuilder) == true) {
+                println("Load ByteX Cache Success:from RAM")
+                return true
+            }
+            if (!t.exists() || !t.isFile) {
+                return false
+            }
             BufferedReader(FileReader(t)).use { reader ->
                 GSON.fromJson<List<ClassEntity>>(reader, object : TypeToken<List<ClassEntity>>() {
                 }.type).parallelStream().forEach { graphBuilder.add(it) }
@@ -46,18 +66,33 @@ object GsonGraphCache : IGraphCache<File> {
             return false
         }
         try {
-            t.parentFile.mkdirs()
-            t.delete()
-            t.createNewFile()
-            BufferedWriter(FileWriter(t)).use { writer ->
-                GSON.toJson(graph.nodes.values.stream().map { node -> node.entity }.collect(Collectors.toList<ClassEntity>()), writer)
-                writer.flush()
+            if (ramCaches?.saveCache(t, graph) == true) {
+                println("Save ByteX Cache Succeed:RAW")
             }
+            graph.nodes.values.stream()
+                    .map { node -> node.entity }
+                    .collect(Collectors.toList<ClassEntity>())
+                    .let { list ->
+                        t.parentFile.mkdirs()
+                        t.delete()
+                        t.createNewFile()
+                        Schedulers.IO().submit {
+                            BufferedWriter(FileWriter(t)).use { writer ->
+                                GSON.toJson(list, writer)
+                                writer.flush()
+                            }
+                            println("Save ByteX Cache Succeed:" + t.absolutePath)
+                        }
+                    }.apply {
+                        if (!asyncSaveCache) {
+                            get()
+                        }
+                    }
             return true
         } catch (e: Exception) {
             t.delete()
             e.printStackTrace()
-            LevelLog.sDefaultLogger.e("saveCache failure", e)
+            LevelLog.sDefaultLogger.e("Save ByteX Cache failure", e)
         }
         return false
     }

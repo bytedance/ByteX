@@ -1,11 +1,13 @@
 package com.ss.android.ugc.bytex.transformer.cache;
 
 import com.android.build.api.transform.QualifiedContent;
+import com.android.build.api.transform.Status;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -23,15 +25,39 @@ public abstract class FileCache implements Serializable {
     }
 
     public void forEach(Consumer<FileData> visitor) {
-        stream().forEach(visitor);
+        parallelForEach(false, visitor);
     }
 
-    public Observable<FileData> stream() {
+    public void parallelForEach(boolean parallel, Consumer<FileData> visitor) {
+        stream(parallel).subscribe(visitor, throwable -> {
+            throw new RuntimeException(throwable);
+        });
+    }
+
+    public final Observable<FileData> stream() {
+        return stream(false);
+    }
+
+    public final Observable<FileData> stream(boolean tryParallel) {
         return Observable.create(emitter -> {
             if (files == null) {
-                files = resolve(emitter);
+                synchronized (this) {
+                    if (files == null) {
+                        files = resolve(emitter);
+                    } else {
+                        if (tryParallel) {
+                            files.parallelStream().forEach(emitter::onNext);
+                        } else {
+                            files.forEach(emitter::onNext);
+                        }
+                    }
+                }
             } else {
-                files.stream().filter(fileData -> !fileData.isDeleted()).forEach(emitter::onNext);
+                if (tryParallel) {
+                    files.parallelStream().forEach(emitter::onNext);
+                } else {
+                    files.forEach(emitter::onNext);
+                }
             }
             emitter.onComplete();
         });
@@ -51,16 +77,20 @@ public abstract class FileCache implements Serializable {
         return content;
     }
 
-    public abstract List<FileData> getChangedFiles();
+    public List<FileData> getChangedFiles() {
+        if (context.isIncremental()) {
+            return stream().filter(fileData -> fileData.getStatus() != Status.NOTCHANGED).toList().blockingGet();
+        } else return Collections.emptyList();
+    }
 
-    public File getFile(){
-        if(content!=null){
+    public File getFile() {
+        if (content != null) {
             return content.getFile();
         }
         return null;
     }
 
     public boolean containsFileData(String relativePath) {
-        return stream().filter(fileData -> fileData.getRelativePath().equals(relativePath)).firstElement().blockingGet() != null;
+        return stream().filter(fileData -> fileData.getStatus() != Status.REMOVED && fileData.getRelativePath().equals(relativePath)).firstElement().blockingGet() != null;
     }
 }

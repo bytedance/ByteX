@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.hookproguard;
 import com.android.build.gradle.internal.pipeline.TransformTask;
 import com.android.build.gradle.internal.transforms.ProGuardTransform;
 import com.android.build.gradle.internal.transforms.ProguardConfigurable;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.graph.Node;
 
@@ -13,7 +14,10 @@ import org.gradle.api.file.FileCollection;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import proguard.ClassSpecification;
 import proguard.Configuration;
@@ -34,8 +38,9 @@ public class ProguardConfigurationAnalyzer {
     private final List<KeepClassSpecificationHolder> classSpecificationsForMethod = new ArrayList<>();
     // specification with the class hierarchy
     private final List<KeepClassSpecificationHolder> classHierarchySpecifications = new ArrayList<>();
+    private final Map<String, Long> configurationFiles = new HashMap<>();
     private static final MemberSpecification defaultMemberSpecification = new MemberSpecification();
-    private static ProGuardTransform proGuardTransform;
+    private ProGuardTransform proGuardTransform;
     private static volatile ProguardConfigurationAnalyzer INSTANCE;
 
     private ProguardConfigurationAnalyzer() {
@@ -50,8 +55,7 @@ public class ProguardConfigurationAnalyzer {
                         for (Task task : taskGraph.getAllTasks()) {
                             if (task instanceof TransformTask
                                     && ((TransformTask) task).getTransform() instanceof ProGuardTransform) {
-                                proGuardTransform = (ProGuardTransform) ((TransformTask) task).getTransform();
-                                break;
+                                INSTANCE.configProguard((TransformTask) task, (ProGuardTransform) ((TransformTask) task).getTransform());
                             }
                         }
                     });
@@ -62,26 +66,76 @@ public class ProguardConfigurationAnalyzer {
         return INSTANCE;
     }
 
-    public synchronized void prepare() {
-        parseProguardRules(proGuardTransform);
+    private void configProguard(TransformTask task, ProGuardTransform proGuardTransform) {
+        if (this.proGuardTransform != null) {
+            throw new IllegalStateException();
+        }
+        this.proGuardTransform = proGuardTransform;
+        if (BooleanProperty.ENABLE_VERIFY_PROGUARD_CONFIGURATION_CHANGED.value()) {
+            task.doFirst(task1 -> verifyProguardConfiguration());
+            task.doLast(task12 -> verifyProguardConfiguration());
+        }
     }
 
+    private void verifyProguardConfiguration() {
+        if (configuration == null) {
+            return;
+        }
+        List<File> files = getAllConfigurationFiles();
+        boolean matchAll = true;
+        if (files.size() == configurationFiles.size()) {
+            for (File file : files) {
+                if (configurationFiles.get(file.getAbsolutePath()) != file.length()) {
+                    matchAll = false;
+                    break;
+                }
+            }
+        } else {
+            matchAll = false;
+        }
+        if (!matchAll) {
+            StringBuilder errMsg = new StringBuilder();
+            errMsg.append("Proguard Configuration Files:\n");
+            for (File file : files) {
+                errMsg.append(file.getAbsolutePath()).append(":").append(file.length()).append("\n");
+            }
+            errMsg.append("Parsed Configuration Files:\n");
+            configurationFiles.forEach((path, length) -> errMsg.append(path).append(":").append(length).append("\n"));
+            throw new IllegalStateException(errMsg.toString());
+        }
+    }
 
-    private void parseProguardRules(ProGuardTransform transform) {
-        if (configuration != null) return;
-        if (transform == null) {
+    public synchronized void prepare() {
+        parseProguardRules();
+    }
+
+    private List<File> getAllConfigurationFiles() {
+        if (proGuardTransform == null) {
             throw new RuntimeException("This plugin can only be applied in release build or when proguard is enabled.");
         }
         try {
-            configuration = new Configuration();
+            List<File> allFiles = new LinkedList<>();
             Method method = ProguardConfigurable.class.getDeclaredMethod("getAllConfigurationFiles");
             method.setAccessible(true);
-            FileCollection files = (FileCollection) method.invoke(transform);
+            FileCollection files = (FileCollection) method.invoke(proGuardTransform);
             for (File file : files) {
-                if (!file.isFile()) {
-                    continue;
+                if (file.exists()) {
+                    allFiles.add(file);
                 }
+            }
+            return allFiles;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private synchronized void parseProguardRules() {
+        if (configuration != null) return;
+        try {
+            configuration = new Configuration();
+            for (File file : getAllConfigurationFiles()) {
                 System.out.println("[ProguardConfigurationAnalyzer] proguard configuration file : " + file.getAbsolutePath());
+                configurationFiles.put(file.getAbsolutePath(), file.length());
                 ConfigurationParser parser = new ConfigurationParser(file, System.getProperties());
                 try {
                     parser.parse(configuration);

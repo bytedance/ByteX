@@ -26,7 +26,6 @@ public class BaseContext<E extends BaseExtension> {
     private ILogger logger;
     private Graph classGraph;
     private File logFile;
-    private boolean hasInitialized;
     private TransformContext transformContext;
 
     public BaseContext(Project project, AppExtension android, E extension) {
@@ -36,16 +35,7 @@ public class BaseContext<E extends BaseExtension> {
     }
 
     public void init() {
-        if (hasInitialized) {
-            return;
-        }
-        hasInitialized = true;
-        if (logFile != null) {
-            logFile.delete();
-            logFile = null;
-        }
-        //init logger
-        getLogger().d("init");
+        getLogger().i("init");
     }
 
     private String getSdkJarDir() {
@@ -72,8 +62,9 @@ public class BaseContext<E extends BaseExtension> {
     public final ILogger getLogger() {
         if (logger == null || logFile == null || !logFile.exists()) {
             synchronized (this) {
+                //忽略线程安全
                 if (logger == null || logFile == null || !logFile.exists()) {
-                    logFile = new File(String.join(File.separator, buildDir().getAbsolutePath(), extension.getLogFile()));
+                    logFile = new File(buildDir(), extension.getLogFile());
                     logFile.delete();
                     Supplier<HtmlLoggerImpl> htmlLoggerSupplier = () -> {
                         if (BooleanProperty.ENABLE_HTML_LOG.value()) {
@@ -135,7 +126,19 @@ public class BaseContext<E extends BaseExtension> {
     }
 
     void setTransformContext(TransformContext transformContext) {
+        if (transformContext == null) {
+            this.transformContext = null;
+            return;
+        }
+        if (this.transformContext != null && this.transformContext != transformContext) {
+            throw new IllegalStateException("transformContext configured twice");
+        }
         this.transformContext = transformContext;
+        if (logFile != null && !logFile.getAbsolutePath().equals(new File(buildDir(), extension.getLogFile()).getAbsolutePath())) {
+            logFile.delete();
+            logFile = null;
+            getLogger().i("rebuild logger");
+        }
     }
 
     public Project getProject() {

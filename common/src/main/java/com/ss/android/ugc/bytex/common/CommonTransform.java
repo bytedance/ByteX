@@ -176,8 +176,11 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     @Override
     public final void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
         super.transform(transformInvocation);
-        init(transformInvocation);
+        if (!transformInvocation.isIncremental()) {
+            transformInvocation.getOutputProvider().deleteAll();
+        }
         TransformContext transformContext = getTransformContext(transformInvocation);
+        init(transformContext);
         List<IPlugin> plugins = getPlugins().stream().filter(p -> p.enable(transformContext)).collect(Collectors.toList());
 
         Timer timer = new Timer();
@@ -235,7 +238,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     }
 
     protected TransformContext getTransformContext(TransformInvocation transformInvocation) {
-        return new TransformContext(transformInvocation, context.project, context.android, isIncremental(), shouldSaveCache());
+        return new TransformContext(transformInvocation, context.project, context.android, isIncremental(), shouldSaveCache(), BooleanProperty.ENABLE_RAM_CACHE.value());
     }
 
     protected void afterTransform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
@@ -245,14 +248,14 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
 
     }
 
-    protected void init(TransformInvocation transformInvocation) {
-        context.init();
+    private void init(TransformContext transformContext) {
+        context.setTransformContext(transformContext);
         LevelLog.sDefaultLogger = context.getLogger();
         if (BooleanProperty.ENABLE_HTML_LOG.value()) {
             String applicationId = "unknow";
             String versionName = "unknow";
             String versionCode = "unknow";
-            com.android.builder.model.ProductFlavor flavor = TransformInvocationKt.getVariant(transformInvocation).getMergedFlavor();
+            com.android.builder.model.ProductFlavor flavor = TransformInvocationKt.getVariant(transformContext.getInvocation()).getMergedFlavor();
             if (flavor != null) {
                 String flavorApplicationId = flavor.getApplicationId();
                 if (flavorApplicationId != null && !flavorApplicationId.isEmpty()) {
@@ -275,6 +278,11 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                     versionCode
             );
         }
+        init(transformContext.getInvocation());
+    }
+
+    protected void init(TransformInvocation transformInvocation) {
+
     }
 
     protected abstract List<IPlugin> getPlugins();

@@ -9,6 +9,7 @@ import com.ss.android.ugc.bytex.common.BaseContext;
 import com.ss.android.ugc.bytex.common.ByteXExtension;
 import com.ss.android.ugc.bytex.common.CommonTransform;
 import com.ss.android.ugc.bytex.common.IPlugin;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 
 import org.gradle.api.Project;
@@ -75,7 +76,7 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
     private static class ProxyTransformContext extends TransformContext {
 
         ProxyTransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isIncremental, boolean shouldSaveCache) {
-            super(invocation, project, android, isIncremental, shouldSaveCache);
+            super(invocation, project, android, isIncremental, shouldSaveCache, BooleanProperty.ENABLE_RAM_CACHE.value());
         }
 
         @Override

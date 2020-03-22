@@ -1,9 +1,11 @@
 package com.ss.android.ugc.bytex.common.processor;
 
 
+import com.android.build.api.transform.Status;
 import com.ss.android.ugc.bytex.common.exception.ByteXException;
 import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager;
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandler;
+import com.ss.android.ugc.bytex.common.flow.main.Process;
 import com.ss.android.ugc.bytex.common.graph.GraphBuilder;
 import com.ss.android.ugc.bytex.common.log.LevelLog;
 import com.ss.android.ugc.bytex.common.utils.Utils;
@@ -28,13 +30,21 @@ import static com.ss.android.ugc.bytex.common.flow.main.Process.TRAVERSE_ANDROID
  */
 
 public class ClassFileAnalyzer extends MainProcessFileHandler {
-    private final boolean fromAndroid;
-    private GraphBuilder mGraphBuilder;
-    private TransformContext context;
+    private final Process process;
+    private final GraphBuilder mGraphBuilder;
+    private final TransformContext context;
 
+    @Deprecated
     public ClassFileAnalyzer(TransformContext context, boolean fromAndroid, @Nullable GraphBuilder graphBuilder, List<MainProcessHandler> handlers) {
+        this(context, fromAndroid ? TRAVERSE_ANDROID : TRAVERSE, graphBuilder, handlers);
+    }
+
+    public ClassFileAnalyzer(TransformContext context,
+                             Process process,
+                             @Nullable GraphBuilder graphBuilder,
+                             List<MainProcessHandler> handlers) {
         super(handlers);
-        this.fromAndroid = fromAndroid;
+        this.process = process;
         this.mGraphBuilder = graphBuilder;
         this.context = context;
     }
@@ -42,31 +52,56 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
     @Override
     public void handle(FileData fileData) {
         try {
+            List<MainProcessHandler> pluginList = handlers;
+            if (fileData.getStatus() == Status.REMOVED) {
+                if (process != Process.TRAVERSE_INCREMENTAL) {
+                    throw new IllegalStateException("REMOVED State is only valid in TRAVERSE_INCREMENTAL process");
+                }
+                for (MainProcessHandler handler : pluginList) {
+                    handler.traverseIncremental(fileData, (ClassVisitorChain) null);
+                }
+                return;
+            }
             byte[] raw = fileData.getBytes();
             String relativePath = fileData.getRelativePath();
             ClassReader cr = new ClassReader(raw);
-            List<MainProcessHandler> pluginList = handlers;
             int flag = getFlag(handlers);
             ClassVisitorChain chain = getClassVisitorChain(relativePath);
             pluginList.forEach(plugin -> {
-                if (fromAndroid) {
-                    plugin.traverseAndroidJar(relativePath, chain);
-                } else {
-                    plugin.traverse(relativePath, chain);
+                switch (process) {
+                    case TRAVERSE_INCREMENTAL:
+                        plugin.traverseIncremental(fileData, chain);
+                        break;
+                    case TRAVERSE:
+                        plugin.traverse(relativePath, chain);
+                        break;
+                    case TRAVERSE_ANDROID:
+                        plugin.traverseAndroidJar(relativePath, chain);
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported Process");
                 }
             });
             if (this.mGraphBuilder != null) {
                 //do generate class diagram
-                chain.connect(new GenerateGraphClassVisitor(fromAndroid, mGraphBuilder));
+                chain.connect(new GenerateGraphClassVisitor(process == TRAVERSE_ANDROID, mGraphBuilder));
             }
             ClassNode cn = new SafeClassNode();
             chain.append(cn);
             chain.accept(cr, flag);
             pluginList.forEach(plugin -> {
-                if (fromAndroid) {
-                    plugin.traverseAndroidJar(relativePath, cn);
-                } else {
-                    plugin.traverse(relativePath, cn);
+                switch (process) {
+                    case TRAVERSE_INCREMENTAL:
+                        plugin.traverseIncremental(fileData, cn);
+                        break;
+                    case TRAVERSE:
+                        plugin.traverse(relativePath, cn);
+                        break;
+                    case TRAVERSE_ANDROID:
+                        plugin.traverseAndroidJar(relativePath, cn);
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported Process");
                 }
             });
         } catch (ByteXException e) {
@@ -86,7 +121,7 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
         boolean needSkipDebug = true;
         boolean needSkipFrame = true;
         for (MainProcessHandler handler : handlers) {
-            int flagForClassReader = handler.flagForClassReader(fromAndroid ? TRAVERSE_ANDROID : TRAVERSE);
+            int flagForClassReader = handler.flagForClassReader(process);
             flag |= flagForClassReader;
             needSkipCode = needSkipCode && (flagForClassReader & ClassReader.SKIP_CODE) != 0;
             needSkipDebug = needSkipDebug && (flagForClassReader & ClassReader.SKIP_DEBUG) != 0;
