@@ -274,7 +274,7 @@ apply plugin: 'bytex.butterknife-check'
 apply plugin: "bytex.RFileKnife"
 RFileKnife {
     //限制一个R.XXX中有多少个字段 默认10000,请不要超过10943,也不能太低(500)，否则数组无法容下，默认值最好
-    limitSize 200 //demo代码少，此处用200测试
+    limitSize 10000
     //分割方法  value|inherit 默认value ；inherit模式需要shrinkR开启compatRFileAssignInherit
     assignType "inherit"
     //是否做一次校验，防止兼容性问题 默认false

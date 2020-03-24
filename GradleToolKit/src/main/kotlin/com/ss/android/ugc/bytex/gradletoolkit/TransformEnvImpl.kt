@@ -6,6 +6,7 @@ import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.api.ApplicationVariant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.didiglobal.booster.gradle.*
+import com.didiglobal.booster.kotlinx.stream
 import com.google.auto.service.AutoService
 import org.gradle.api.UnknownDomainObjectException
 import java.io.File
@@ -37,7 +38,7 @@ class TransformEnvImpl() : TransformEnv {
             Artifact.MERGED_RES -> invocation!!.variant.scope.mergedRes
             Artifact.MERGED_MANIFESTS -> invocation!!.variant.scope.mergedManifests.flatMap {
                 return when {
-                    it.isDirectory -> it.listFiles().toList()
+                    it.isDirectory -> it.walk().iterator().stream().filter { it.isFile }.toList()
                     it.isFile -> listOf(it)
                     else -> emptyList()
                 }.filter { file ->
@@ -73,7 +74,7 @@ class TransformEnvImpl() : TransformEnv {
                     }
                     .map {
                         when {
-                            it.isDirectory -> it.listFiles().toList()
+                            it.isDirectory -> it.walk().iterator().stream().filter { it.isFile }.toList()
                             it.isFile -> listOf(it)
                             else -> emptyList()
                         }

@@ -1,7 +1,11 @@
 package com.ss.android.ugc.bytex.common.graph;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -9,14 +13,7 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public abstract class Node {
-
-    public Node(ClassEntity entity, ClassNode parent, List<InterfaceNode> interfaces) {
-        this.entity = entity;
-        this.parent = parent;
-        this.interfaces = interfaces;
-    }
-
+public abstract class Node implements Jsonable {
     /**
      * parent class node of this class node<br/>
      * it could be null when it doesn't exists actually, it's a virtual class node
@@ -31,6 +28,11 @@ public abstract class Node {
      */
     public transient final AtomicBoolean defined = new AtomicBoolean(false);
 
+    public Node(ClassEntity entity, ClassNode parent, List<InterfaceNode> interfaces) {
+        this.entity = entity;
+        this.parent = parent;
+        this.interfaces = interfaces;
+    }
 
     /**
      * Determines if the class or interface represented by this
@@ -200,5 +202,15 @@ public abstract class Node {
             }
         }
         return null;
+    }
+
+    @Override
+    public void read(JsonReader jsonReader, Gson gson) throws IOException {
+        throw new UnsupportedOperationException("Jsonable Not Supported");
+    }
+
+    @Override
+    public void write(JsonWriter jsonWriter, Gson gson) throws IOException {
+        throw new UnsupportedOperationException("Jsonable Not Supported");
     }
 }

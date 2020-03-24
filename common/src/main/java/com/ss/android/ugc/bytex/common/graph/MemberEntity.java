@@ -1,14 +1,19 @@
 package com.ss.android.ugc.bytex.common.graph;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+
+import java.io.IOException;
 import java.util.Objects;
 
-public abstract class MemberEntity {
+public abstract class MemberEntity implements Jsonable {
     public static final transient int ACCESS_UNKNOWN = -1;
     protected int access;
     protected String className;
-    protected final String name;
-    protected final String desc;
-    protected final String signature;
+    protected String name;
+    protected String desc;
+    protected String signature;
 
     public MemberEntity(int access, String className, String name, String desc, String signature) {
         this.access = access;
@@ -76,5 +81,15 @@ public abstract class MemberEntity {
                 ", name='" + name + '\'' +
                 ", desc='" + desc + '\'' +
                 '}';
+    }
+
+    @Override
+    public void read(JsonReader jsonReader, Gson gson) throws IOException {
+        throw new UnsupportedOperationException("Jsonable Not Supported");
+    }
+
+    @Override
+    public void write(JsonWriter jsonWriter, Gson gson) throws IOException {
+        throw new UnsupportedOperationException("Jsonable Not Supported");
     }
 }

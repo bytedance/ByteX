@@ -1,14 +1,9 @@
 package com.ss.android.ugc.bytex.transformer;
 
-import com.android.build.api.transform.Format;
-import com.android.build.api.transform.JarInput;
 import com.android.build.api.transform.QualifiedContent;
 import com.android.build.api.transform.TransformInvocation;
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.api.BaseVariant;
-import com.android.build.gradle.internal.pipeline.TransformManager;
-import com.google.common.collect.Streams;
-import com.google.common.io.Files;
 import com.ss.android.ugc.bytex.gradletoolkit.Artifact;
 import com.ss.android.ugc.bytex.gradletoolkit.GradleEnv;
 import com.ss.android.ugc.bytex.gradletoolkit.TransformEnv;
@@ -17,7 +12,6 @@ import com.ss.android.ugc.bytex.transformer.cache.DirCache;
 import com.ss.android.ugc.bytex.transformer.cache.FileCache;
 import com.ss.android.ugc.bytex.transformer.cache.FileData;
 import com.ss.android.ugc.bytex.transformer.cache.JarCache;
-import com.ss.android.ugc.bytex.transformer.cache.NewFileCache;
 import com.ss.android.ugc.bytex.transformer.location.Locator;
 import com.ss.android.ugc.bytex.transformer.utils.Service;
 
@@ -26,14 +20,10 @@ import org.gradle.api.Project;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
@@ -42,22 +32,29 @@ public class TransformContext implements GradleEnv {
     private TransformInvocation invocation;
     private TransformEnv transformEnv;
     private Locator locator;
-    private Collection<JarCache> allJars;
-    private Collection<DirCache> allDirs;
-    private Map<String, NewFileCache> newDirs;
+    private TransformInputs transformInputs;
+    private TransformOutputs transformOutputs;
     protected Project project;
     protected AppExtension android;
-    private boolean isIncremental;
+    private boolean isPluginIncremental;
     private boolean shouldSaveCache;
     private File graphCacheFile;
     private String temporaryDirName;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    public TransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isIncremental, boolean shouldSaveCache) {
+    public TransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isPluginIncremental) {
+        this(invocation, project, android, isPluginIncremental, true);
+    }
+
+    public TransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isPluginIncremental, boolean shouldSaveCache) {
+        this(invocation, project, android, isPluginIncremental, shouldSaveCache, false);
+    }
+
+    public TransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isPluginIncremental, boolean shouldSaveCache, boolean useRawCache) {
         this.invocation = invocation;
         this.project = project;
         this.android = android;
-        this.isIncremental = isIncremental;
+        this.isPluginIncremental = isPluginIncremental;
         this.transformEnv = Service.load(TransformEnv.class);
         if (transformEnv != null) {
             transformEnv.setTransformInvocation(invocation);
@@ -65,68 +62,51 @@ public class TransformContext implements GradleEnv {
         temporaryDirName = invocation.getContext().getTemporaryDir().getName();
         temporaryDirName = temporaryDirName.replace("transformClassesAndResourcesWith", "");
         temporaryDirName = temporaryDirName.replace("transformClassesWith", "");
-        if (isIncremental) {
-            graphCacheFile = new File(byteXBuildDir(), "graphCache.json");
-        }
+        graphCacheFile = new File(byteXBuildDir(), "graphCache.json");
         this.shouldSaveCache = shouldSaveCache;
         this.locator = new Locator(this);
-        init();
+        this.transformOutputs = new TransformOutputs(this, invocation, new File(byteXBuildDir(), "outputs.txt"), isPluginIncremental, shouldSaveCache, useRawCache);
+        this.transformInputs = new TransformInputs(this, invocation, new File(byteXBuildDir(), "inputs.txt"), isPluginIncremental, shouldSaveCache, useRawCache);
     }
 
-    private void init() {
-        allJars = new ArrayList<>(invocation.getInputs().size());
-        allDirs = new ArrayList<>(invocation.getInputs().size());
-        newDirs = new HashMap<>();
-        invocation.getInputs().forEach(input -> {
-            allJars.addAll(input.getJarInputs().stream().map(i -> new JarCache(i, this)).collect(Collectors.toList()));
-            allDirs.addAll(input.getDirectoryInputs().stream().map(i -> new DirCache(i, this)).collect(Collectors.toList()));
-        });
+    public TransformInputs getTransformInputs() {
+        return transformInputs;
     }
 
     public Collection<DirCache> getAllDirs() {
-        return Collections.unmodifiableCollection(allDirs);
+        return transformInputs.getAllDirs();
     }
 
     public Collection<JarCache> getAllJars() {
-        return Collections.unmodifiableCollection(allJars);
+        return transformInputs.getAllJars();
     }
 
     public Stream<FileCache> allFiles() {
-        return Streams.concat(allDirs.stream(), allJars.stream(), newDirs.values().stream());
+        return transformInputs.allFiles();
+    }
+
+    public TransformOutputs getTransformOutputs() {
+        return transformOutputs;
     }
 
     public File getOutputFile(QualifiedContent content) throws IOException {
-        return getOutputFile(content, true);
+        return transformOutputs.getOutputFile(content);
     }
 
     public File getOutputFile(QualifiedContent content, boolean createIfNeed) throws IOException {
-        File target = invocation.getOutputProvider().getContentLocation(content.getName(), content.getContentTypes(), content.getScopes(),
-                content instanceof JarInput ? Format.JAR : Format.DIRECTORY);
-        if (createIfNeed && !target.exists()) {
-            Files.createParentDirs(target);
-        }
-        return target;
+        return transformOutputs.getOutputFile(content, createIfNeed);
     }
 
     public static File getOutputTarget(File root, String relativePath) throws IOException {
-        File target = new File(root, relativePath.replace('/', File.separatorChar));
-        if (!target.exists()) {
-            Files.createParentDirs(target);
-        }
-        return target;
+        return TransformOutputs.getOutputTarget(root, relativePath);
     }
 
     public File getOutputDir(String affinity) throws IOException {
-        File root = invocation.getOutputProvider().getContentLocation(affinity, Collections.singleton(QualifiedContent.DefaultContentType.CLASSES),
-                TransformManager.SCOPE_FULL_PROJECT, Format.DIRECTORY);
-        if (!root.exists()) {
-            Files.createParentDirs(root);
-        }
-        return root;
+        return transformOutputs.getOutputDir(affinity);
     }
 
     public boolean isIncremental() {
-        return invocation.isIncremental() && isIncremental;
+        return invocation.isIncremental() && isPluginIncremental;
     }
 
     public boolean shouldSaveCache() {
@@ -140,7 +120,8 @@ public class TransformContext implements GradleEnv {
         if (running.get()) {
             throw new RuntimeException("You Should request for not incremental before traversing.");
         }
-        this.isIncremental = false;
+        this.isPluginIncremental = false;
+        this.transformInputs.requestNotIncremental();
     }
 
     public boolean isReleaseBuild() {
@@ -183,11 +164,15 @@ public class TransformContext implements GradleEnv {
     }
 
     void addFile(String affinity, FileData file) {
-        newDirs.computeIfAbsent(affinity, k -> new NewFileCache(this, affinity)).addFile(file);
+        transformInputs.addFile(affinity, file);
     }
 
     public List<FileData> getChangedFiles() {
-        return allFiles().flatMap(fileCache -> fileCache.getChangedFiles().stream()).collect(Collectors.toList());
+        if (isIncremental()) {
+            return transformInputs.getChangedFiles();
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     public Locator getLocator() {
@@ -209,12 +194,15 @@ public class TransformContext implements GradleEnv {
     }
 
     public void release() {
+        transformInputs.saveCache();
+        transformInputs.release();
+        transformInputs = null;
+        transformOutputs.saveCache();
+        transformOutputs.release();
+        transformOutputs = null;
         invocation = null;
         transformEnv = null;
         locator = null;
-        allJars = null;
-        allDirs = null;
-        newDirs = null;
         project = null;
         android = null;
         graphCacheFile = null;

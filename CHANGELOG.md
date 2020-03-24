@@ -1,4 +1,9 @@
 # Change Log
+### Version 0.1.4
+- Fixed a bug caused by incorrectly processing removed input file.
+- Optimize graph cache reading and writing efficiency and  size
+- More efficient and convenient way for creating a [incremental](wiki/ByteX-Developer-API-en.md#incremental-plugin) plugin 
+
 ### Version 0.1.3
 - shrink styleable(shrink 500KB+ on douyin)
 - RFileKnife(fix R.java code to large)

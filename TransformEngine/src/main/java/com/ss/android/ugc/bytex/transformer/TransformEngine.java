@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.transformer;
 
+import com.android.build.api.transform.Status;
 import com.ss.android.ugc.bytex.transformer.cache.FileData;
 import com.ss.android.ugc.bytex.transformer.cache.JarCache;
 import com.ss.android.ugc.bytex.transformer.concurrent.Schedulers;
@@ -31,17 +32,19 @@ public class TransformEngine {
         context.markRunningState(false);
     }
 
+    public void running(){
+        context.markRunningState(true);
+    }
+
     public void transform(FileProcessor... processors) {
         transform(false, processors);
     }
 
     public void transform(boolean isLast, FileProcessor... processors) {
-        context.markRunningState(true);
         Schedulers.FORKJOINPOOL().invoke(new PerformTransformTask(context.allFiles(), getProcessorList(processors), isLast, context));
     }
 
     public void skip() throws IOException {
-        context.markRunningState(true);
         Worker worker = Schedulers.IO();
         context.allFiles()
                 .map(f -> (Callable<Void>) () -> {
@@ -53,13 +56,11 @@ public class TransformEngine {
     }
 
     public void traverseOnly(FileProcessor... processors) {
-        context.markRunningState(true);
         Schedulers.FORKJOINPOOL().invoke(new PerformTraverseTask(context.allFiles(), getProcessorList(processors)));
     }
 
     public void traverseAndroidJar(File jar, FileProcessor... processors) {
-        context.markRunningState(true);
-        Schedulers.FORKJOINPOOL().invoke(new PerformTraverseTask(Stream.of(new JarCache(jar, context)), getProcessorList(processors)));
+        Schedulers.FORKJOINPOOL().invoke(new PerformTraverseTask(Stream.of(new JarCache(jar, context.isIncremental() ? Status.NOTCHANGED : Status.ADDED, context)), getProcessorList(processors)));
     }
 
     private static List<FileProcessor> getProcessorList(FileProcessor[] processors) {

@@ -10,6 +10,9 @@ class CachedGraphBuilder(private val graphCacheFile: File?, shouldLoadCache: Boo
 
     init {
         graphCacheFile?.delete()
+        if (graphCacheFile != null) {
+            RAMGraphCache.clearCache(graphCacheFile)
+        }
     }
 
     override fun isCacheValid(): Boolean = isCacheValid

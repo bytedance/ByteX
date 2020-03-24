@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.common.flow.main;
 
+import com.android.build.api.transform.Status;
 import com.ss.android.ugc.bytex.common.flow.AbsTransformFlow;
 import com.ss.android.ugc.bytex.common.flow.TransformFlow;
 import com.ss.android.ugc.bytex.common.graph.Graph;
@@ -12,6 +13,7 @@ import com.ss.android.ugc.bytex.transformer.TransformEngine;
 import com.ss.android.ugc.bytex.transformer.processor.ClassFileProcessor;
 import com.ss.android.ugc.bytex.transformer.processor.FileHandler;
 import com.ss.android.ugc.bytex.transformer.processor.FileProcessor;
+import com.ss.android.ugc.bytex.transformer.processor.FilterFileProcessor;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,21 +53,29 @@ public class MainTransformFlow extends AbsTransformFlow {
         }
         timer.stopRecord("INIT", "Process init cost time = [%s ms]");
         if (!isOnePassEnough()) {
+            if (!handlers.isEmpty() && context.isIncremental()) {
+                timer.startRecord("TRAVERSE_INCREMENTAL");
+                traverseArtifactOnly(getProcessors(Process.TRAVERSE_INCREMENTAL, new ClassFileAnalyzer(context, Process.TRAVERSE_INCREMENTAL, null, handlers)));
+                timer.stopRecord("TRAVERSE_INCREMENTAL", "Process project all .class files cost time = [%s ms]");
+            }
+
+            handlers.forEach(plugin -> plugin.beforeTraverse(transformEngine));
             timer.startRecord("LOADCACHE");
             GraphBuilder graphBuilder = new CachedGraphBuilder(context.getGraphCache(), context.isIncremental(), context.shouldSaveCache());
-            if (!graphBuilder.isCacheValid()) {
+            if (context.isIncremental() && !graphBuilder.isCacheValid()) {
                 context.requestNotIncremental();
             }
             timer.stopRecord("LOADCACHE", "Process loading cache cost time = [%s ms]");
+            running();
             if (!handlers.isEmpty()) {
                 timer.startRecord("PROJECT_CLASS");
-                traverseArtifactOnly(getProcessors(Process.TRAVERSE, new ClassFileAnalyzer(context, false, graphBuilder, handlers)));
+                traverseArtifactOnly(getProcessors(Process.TRAVERSE, new ClassFileAnalyzer(context, Process.TRAVERSE, graphBuilder, handlers)));
                 timer.stopRecord("PROJECT_CLASS", "Process project all .class files cost time = [%s ms]");
             }
 
             if (!handlers.isEmpty()) {
                 timer.startRecord("ANDROID");
-                traverseAndroidJarOnly(getProcessors(Process.TRAVERSE_ANDROID, new ClassFileAnalyzer(context, true, graphBuilder, handlers)));
+                traverseAndroidJarOnly(getProcessors(Process.TRAVERSE_ANDROID, new ClassFileAnalyzer(context, Process.TRAVERSE_ANDROID, graphBuilder, handlers)));
                 timer.stopRecord("ANDROID", "Process android jar cost time = [%s ms]");
             }
             timer.startRecord("SAVECACHE");
@@ -90,7 +100,20 @@ public class MainTransformFlow extends AbsTransformFlow {
         List<FileProcessor> processors = handlers.stream()
                 .flatMap((Function<MainProcessHandler, Stream<FileProcessor>>) handler -> handler.process(process).stream())
                 .collect(Collectors.toList());
-        processors.add(ClassFileProcessor.newInstance(fileHandler));
+        switch (process) {
+            case TRAVERSE_INCREMENTAL:
+                processors.add(0, new FilterFileProcessor(fileData -> fileData.getStatus() != Status.NOTCHANGED));
+                processors.add(new IncrementalFileProcessor(handlers, ClassFileProcessor.newInstance(fileHandler)));
+                break;
+            case TRAVERSE:
+            case TRAVERSE_ANDROID:
+            case TRANSFORM:
+                processors.add(ClassFileProcessor.newInstance(fileHandler));
+                processors.add(0, new FilterFileProcessor(fileData -> fileData.getStatus() != Status.NOTCHANGED && fileData.getStatus() != Status.REMOVED));
+                break;
+            default:
+                throw new RuntimeException("Unknow Process:" + process);
+        }
         return processors.toArray(new FileProcessor[0]);
     }
 
