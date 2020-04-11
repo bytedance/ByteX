@@ -1,4 +1,7 @@
 # Change Log
+### Version 0.1.5
+- Fix bugs with getter-setter-inline plugins
+
 ### Version 0.1.4
 - Fixed a bug caused by incorrectly processing removed input file.
 - Optimize graph cache reading and writing efficiency and  size

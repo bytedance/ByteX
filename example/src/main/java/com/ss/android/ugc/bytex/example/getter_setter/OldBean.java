@@ -29,4 +29,8 @@ public class OldBean extends Bean {
     public String getNameAndAge() {
         return getName() + getAge();
     }
+
+    public String test() {
+        return new Child().getName();
+    }
 }

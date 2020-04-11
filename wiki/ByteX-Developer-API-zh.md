@@ -187,38 +187,30 @@ kapt "com.bytedance.android.byteX:PluginConfigProcessor:${bytex_version}"
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;回到我们之前新建的Plugin类,它是直接继承自CommonPlugin的,如果我们需要在transform阶段（对应上面的第三步）处理class文件,Plugin类需要Override下面两个方法的一个：
 
 ```java
-    /**
-     * 遍历工程中所有的增量文件，不仅仅是class，如果是jar则会解压之后将entry传递进来
-     * 状态可能为ADD,REMOVE,CHANGED这几种状态,只在增量构建时有效
-     * <p>
-     * traverse all incremental file which status is ADD,REMOVE or CHANGED
-     * file will be uncompressed which is jar input.
-     * only valid while during incremental build
-     *
-     * @param fileData 增量文件
-     *                 incremental file
-     * @param chain    如果是class，则会传递对应的ClassVisitorChain用于加入自定义的ClassVisitor，如果有不是class 则为null
-     *                 If it is a class, the corresponding ClassVisitorChain will be passed to add a custom ClassVisitor, or null if there is not a class
-     */
-    default void traverseIncremental(@Nonnull FileData fileData, @Nullable ClassVisitorChain chain) {
-    }
-
-    /**
-     * 遍历工程中所有的增量文件，不仅仅是class，如果是jar则会解压之后将entry传递进来
-     * 状态可能为ADD,REMOVE,CHANGED这几种状态,只在增量构建时有效
-     * <p>
-     * traverse all incremental file which status is ADD,REMOVE or CHANGED
-     * file will be uncompressed which is jar input.
-     * only valid while during incremental build
-     *
-     * @param fileData 增量文件，该文件一定是class文件。
-     *                 Incremental file, and the file must be a class file.
-     * @param node     对应的Class解析后的的Tree Node结构
-     *                 Tree Node
-     */
-    default void traverseIncremental(@Nonnull FileData fileData, @Nonnull ClassNode node) {
-    }
-
+/**
+ * transform 工程中的所有class
+ *
+ * @param relativePath class的相对路径
+ * @param chain        ClassVisitorChain用于注册自定义的ClassVisitor
+ * @return if true, 这个class文件会正常输出；if false, 这个class文件会被删除
+ */
+@Override
+public boolean transform(String relativePath, ClassVisitorChain chain) {
+    chain.connect(new HookFlavorClassVisitor(context));
+    return true;
+}
+/**
+ * transform 工程中的所有class
+ *
+ * @param relativePath class的相对路径
+ * @param node         class的数据结构（照顾喜欢用tree api的同学）.
+ * @return if true, 这个class文件会正常输出；if false, 这个class文件会被删除
+ */
+@Override
+public boolean transform(String relativePath, ClassNode node) {
+    // do something with ClassNode
+    return true;
+}
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;我们可以看到,这两个重载方法的区别在于他们的输入参数,前者用的是ASM的ClassVisitor,后者用的是ASM 的Tree API,可以直接处理ClassNode.
