@@ -3,17 +3,18 @@ package com.ss.android.ugc.bytex.getter_setter_inline;
 import com.android.build.gradle.AppExtension;
 import com.android.utils.Pair;
 import com.ss.android.ugc.bytex.common.BaseContext;
+import com.ss.android.ugc.bytex.common.ByteXExtension;
 import com.ss.android.ugc.bytex.common.graph.FieldEntity;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.graph.MemberEntity;
 import com.ss.android.ugc.bytex.common.graph.Node;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.utils.Utils;
+import com.ss.android.ugc.bytex.getter_setter_inline.visitor.GetterOrSetterMethod;
+import com.ss.android.ugc.bytex.getter_setter_inline.visitor.RefFieldEntity;
 import com.ss.android.ugc.bytex.hookproguard.ClassInfo;
 import com.ss.android.ugc.bytex.hookproguard.MethodInfo;
 import com.ss.android.ugc.bytex.hookproguard.ProguardConfigurationAnalyzer;
-import com.ss.android.ugc.bytex.getter_setter_inline.visitor.GetterOrSetterMethod;
-import com.ss.android.ugc.bytex.getter_setter_inline.visitor.RefFieldEntity;
 
 import org.gradle.api.Project;
 import org.objectweb.asm.Opcodes;
@@ -33,17 +34,24 @@ import static com.ss.android.ugc.bytex.common.utils.Utils.convertToPatternString
 import static com.ss.android.ugc.bytex.common.utils.Utils.resolveDollarChar;
 
 public final class Context extends BaseContext<GetterSettingInlineExtension> {
+    private static final String SEPARATOR = "#";
     private final Map<String, GetterOrSetterMethod> gettersAndSetters = new ConcurrentHashMap<>(2 << 10);
     private final Map<String, RefFieldEntity> targetFields = new ConcurrentHashMap<>(512);
+    private final Map<String, List<Pair<Pattern, Pattern>>> excludeClass = new HashMap<>(); // 白名单，keep住这些类的方法
+    private final Set<String> keepAnnotationDescriptors = new HashSet<>();
+    private ProguardConfigurationAnalyzer proguardConfigurationAnalyzer;
 
     Context(Project project, AppExtension android, GetterSettingInlineExtension extension) {
         super(project, android, extension);
     }
 
-    private final Map<String, List<Pair<Pattern, Pattern>>> excludeClass = new HashMap<>(); // 白名单，keep住这些类的方法
-    private final Set<String> keepAnnotationDescriptors = new HashSet<>();
-
-    private static final String SEPARATOR = "#";
+    @Override
+    public void init() {
+        super.init();
+        proguardConfigurationAnalyzer.prepare(getTransformContext().getVariantName());
+        initWithKeepList(extension.getKeepList());
+        initKeepAnnotations();
+    }
 
     private static String getKey(String owner, String name, String desc) {
         return owner + SEPARATOR + name + SEPARATOR + desc;
@@ -104,31 +112,32 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
                         RefFieldEntity realRefField = new RefFieldEntity(realField);
                         realRefField.setCount(target.getCount());
                         method.setTarget(realRefField);
+                        RefFieldEntity refFieldEntity = targetFields.get(getKey(realField.className(), realField.name(), realField.desc()));
+                        if (refFieldEntity != null) {
+                            refFieldEntity.setCount(refFieldEntity.getCount() + target.getCount());
+                        } else {
+                            targetFields.put(getKey(realField.className(), realField.name(), realField.desc()), realRefField);
+                        }
                         target.setCount(0);
-                        tryRemoveTargetField(target);
-                        targetFields.put(getKey(realField.className(), realField.name(), realField.desc()), realRefField);
+                        targetFields.remove(getKey(target.className(), target.name(), target.desc()));
                     }
                 }
-                if (proguardConfigurationAnalyzer.shouldKeep(graph, method.getMethodInfo())) {
+                if (proguardConfigurationAnalyzer.shouldKeep(getTransformContext().getVariantName(), graph, method.getMethodInfo())) {
                     throw new ShouldSkipInlineException("The class and method are kept by Proguard.");
                 }
                 graph.childrenOf(method.className())
                         .forEach(c -> temp.putIfAbsent(getKey(c.entity.name, method.name(), method.desc()), method));
             } catch (ShouldSkipInlineException e) {
                 it.remove();
-                tryRemoveTargetField(target);
+                target.dec();
+                if (target.isFree()) {
+                    targetFields.remove(getKey(target.className(), target.name(), target.desc()));
+                }
                 getLogger().d("ShouldSkipInline", String.format("Skip inline getter or setter method (owner = [%s], name = [%s], desc = [%s])",
                         method.className(), method.name(), method.desc()));
             }
         }
         gettersAndSetters.putAll(temp);
-    }
-
-    private void tryRemoveTargetField(RefFieldEntity target) {
-        target.dec();
-        if (target.isFree()) {
-            targetFields.remove(getKey(target.className(), target.name(), target.desc()));
-        }
     }
 
     private boolean isShouldSkipInline(Graph graph, GetterOrSetterMethod method, RefFieldEntity target) {
@@ -139,7 +148,7 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
         return graph.overrideFromSuper(method.className(), method.name(), method.desc()) || graph.overridedBySubclass(method.className(), method.name(), method.desc());
     }
 
-    public void initWithKeepList(List<String> keepList) {
+    private void initWithKeepList(List<String> keepList) {
         if (!excludeClass.isEmpty()) {
             excludeClass.clear();
         }
@@ -175,7 +184,7 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
 //        }
     }
 
-    public void initKeepAnnotations() {
+    private void initKeepAnnotations() {
         List<String> keepWithAnnotations = extension.getKeepWithAnnotations();
         if (keepWithAnnotations == null || keepWithAnnotations.isEmpty()) return;
         for (String annotation : keepWithAnnotations) {
@@ -224,22 +233,22 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
         return keepAnnotationDescriptors.contains(descriptor);
     }
 
-    private ProguardConfigurationAnalyzer proguardConfigurationAnalyzer;
-
-    public ProguardConfigurationAnalyzer getProguardConfigurationAnalyzer() {
-        return proguardConfigurationAnalyzer;
-    }
-
     public void hookProguard(Project project) {
-        proguardConfigurationAnalyzer = ProguardConfigurationAnalyzer.hook(project);
+        if (project.getExtensions().findByType(ByteXExtension.class) == null) {
+            proguardConfigurationAnalyzer = ProguardConfigurationAnalyzer.hook(project,
+                    "transformClassesAndResourcesWith" + extension.getName().substring(0, 1).toUpperCase() + extension.getName().substring(1) + "For",
+                    "transformClassesWith" + extension.getName().substring(0, 1).toUpperCase() + extension.getName().substring(1) + "For");
+        } else {
+            proguardConfigurationAnalyzer = ProguardConfigurationAnalyzer.hook(project);
+        }
     }
 
     public boolean shouldKeep(ClassInfo classInfo) {
-        return !shouldInlineMethodsInClass(classInfo.getName()) && proguardConfigurationAnalyzer.shouldKeep(classInfo);
+        return !shouldInlineMethodsInClass(classInfo.getName()) && proguardConfigurationAnalyzer.shouldKeep(getTransformContext().getVariantName(), classInfo);
     }
 
     public boolean shouldKeep(ClassInfo classInfo, MethodInfo methodInfo) {
-        return proguardConfigurationAnalyzer.shouldKeep(classInfo, methodInfo);
+        return proguardConfigurationAnalyzer.shouldKeep(getTransformContext().getVariantName(), classInfo, methodInfo);
     }
 
     private boolean shouldInlineMethodsInClass(String className) {

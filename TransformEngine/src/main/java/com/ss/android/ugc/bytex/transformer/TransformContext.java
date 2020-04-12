@@ -12,10 +12,14 @@ import com.ss.android.ugc.bytex.transformer.cache.DirCache;
 import com.ss.android.ugc.bytex.transformer.cache.FileCache;
 import com.ss.android.ugc.bytex.transformer.cache.FileData;
 import com.ss.android.ugc.bytex.transformer.cache.JarCache;
+import com.ss.android.ugc.bytex.transformer.cache.NewFileCache;
+import com.ss.android.ugc.bytex.transformer.io.ClassFinder;
+import com.ss.android.ugc.bytex.transformer.io.ClassNodeLoader;
 import com.ss.android.ugc.bytex.transformer.location.Locator;
 import com.ss.android.ugc.bytex.transformer.utils.Service;
 
 import org.gradle.api.Project;
+import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,7 +32,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
-public class TransformContext implements GradleEnv {
+public class TransformContext implements GradleEnv, ClassFinder {
     private TransformInvocation invocation;
     private TransformEnv transformEnv;
     private Locator locator;
@@ -40,6 +44,7 @@ public class TransformContext implements GradleEnv {
     private boolean shouldSaveCache;
     private File graphCacheFile;
     private String temporaryDirName;
+    private ClassFinder finder;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public TransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isPluginIncremental) {
@@ -67,6 +72,7 @@ public class TransformContext implements GradleEnv {
         this.locator = new Locator(this);
         this.transformOutputs = new TransformOutputs(this, invocation, new File(byteXBuildDir(), "outputs.txt"), isPluginIncremental, shouldSaveCache, useRawCache);
         this.transformInputs = new TransformInputs(this, invocation, new File(byteXBuildDir(), "inputs.txt"), isPluginIncremental, shouldSaveCache, useRawCache);
+        this.finder = new ClassNodeLoader(this);
     }
 
     public TransformInputs getTransformInputs() {
@@ -207,6 +213,23 @@ public class TransformContext implements GradleEnv {
         android = null;
         graphCacheFile = null;
         temporaryDirName = null;
+        finder = null;
+    }
+
+    @Override
+    public ClassNode find(String className) {
+        if (finder != null) {
+            return finder.find(className);
+        }
+        return null;
+    }
+
+    @Override
+    public Class<?> loadClass(String className) {
+        if (finder != null) {
+            return finder.loadClass(className);
+        }
+        return null;
     }
 }
 

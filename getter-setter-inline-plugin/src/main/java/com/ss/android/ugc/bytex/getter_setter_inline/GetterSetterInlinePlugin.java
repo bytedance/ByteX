@@ -1,6 +1,5 @@
 package com.ss.android.ugc.bytex.getter_setter_inline;
 
-import com.android.build.api.transform.Transform;
 import com.android.build.gradle.AppExtension;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
@@ -15,19 +14,6 @@ public class GetterSetterInlinePlugin extends CommonPlugin<GetterSettingInlineEx
     @Override
     protected Context getContext(Project project, AppExtension android, GetterSettingInlineExtension extension) {
         return new Context(project, android, extension);
-    }
-
-    @Override
-    protected Transform getTransform() {
-        return new GetterSetterInlineTransform(context, this);
-    }
-
-    @Override
-    public void init() {
-        super.init();
-        context.getProguardConfigurationAnalyzer().prepare();
-        context.initWithKeepList(extension.getKeepList());
-        context.initKeepAnnotations();
     }
 
     @Override

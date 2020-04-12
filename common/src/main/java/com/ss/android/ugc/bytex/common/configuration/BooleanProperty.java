@@ -10,7 +10,7 @@ public enum BooleanProperty implements Property<Boolean> {
     ENABLE_HTML_LOG("bytex.enableHtmlLog", true),
     ENABLE_RAM_CACHE("bytex.enableRAMCache", true),
     ENABLE_ASYNC_CACHE("bytex.asyncSaveCache", true),
-    ENABLE_VERIFY_PROGUARD_CONFIGURATION_CHANGED("bytex.verifyProguardConfigurationChanged", false);
+    ENABLE_VERIFY_PROGUARD_CONFIGURATION_CHANGED("bytex.verifyProguardConfigurationChanged", true);
 
     @NonNull
     private final String propertyName;
