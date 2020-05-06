@@ -12,6 +12,7 @@ buildscript {
     }
     ext {
         plugin_version = upload_version
+        enableMinify = true
     }
     dependencies {
         classpath "com.bytedance.android.byteX:base-plugin:${plugin_version}"
@@ -34,6 +35,15 @@ buildscript {
 android {
     compileSdkVersion 28
     buildToolsVersion "29.0.0"
+
+    signingConfigs {
+        release {
+            keyAlias 'bytex'
+            keyPassword 'bytex-example'
+            storeFile project.file("bytex.keystore")
+            storePassword 'bytex-example'
+        }
+    }
 
     flavorDimensions "app", "mode"
     productFlavors {
@@ -62,15 +72,17 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled enableMinify
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
 
         debug {
-            minifyEnabled true
+            minifyEnabled enableMinify
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
 
         }
     }
@@ -85,3 +97,29 @@ dependencies {
     implementation "com.bytedance.android.byteX:coverage-lib:${plugin_version}"
 }
 apply from: project.file('plugin-bytex.gradle')
+
+Set<String> assembles = new HashSet<>()
+assembles.add("assembleDouyinCnDebug")
+assembles.add("assembleDouyinCnRelease")
+assembles.add("assembleDouyinI18nDebug")
+assembles.add("assembleDouyinI18nRelease")
+assembles.add("assembleBytexCnDebug")
+assembles.add("assembleBytexCnRelease")
+assembles.add("assembleBytexI18nDebug")
+assembles.add("assembleBytexI18nRelease")
+project.gradle
+        .startParameter
+        .taskRequests
+        .stream()
+        .flatMap() { it.args.stream() }
+        .filter { it.contains("assemble") }
+        .map { it.toLowerCase() }
+        .forEach {
+            if (!(
+                    (it.contains("douyin") || it.contains("bytex")) &&
+                            (it.contains("cn") || it.contains("i18n")) &&
+                            (it.contains("release") || it.contains("debug"))
+            )) {
+                throw new IllegalArgumentException(assembles.join(",") + " supportted only")
+            }
+        }

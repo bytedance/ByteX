@@ -118,11 +118,13 @@ shrinkR {
     }
 }
 
-apply plugin: 'bytex.getter_setter_inline'
-getter_setter_inline {
-    enable pluginEnable
-    enableInDebug pluginEnableInDebug
-    logLevel pluginLogLevel
+if (enableMinify) {
+    apply plugin: 'bytex.getter_setter_inline'
+    getter_setter_inline {
+        enable pluginEnable
+        enableInDebug pluginEnableInDebug
+        logLevel pluginLogLevel
+    }
 }
 
 apply plugin: 'bytex.closeable_checker'
@@ -252,7 +254,7 @@ field_assign_opt {
 apply plugin: 'bytex.sourcefile'
 SourceFile {
     enable pluginEnable
-    enableInDebug pluginEnableInDebug
+//    enableInDebug pluginEnableInDebug
     logLevel pluginLogLevel
     deleteSourceFile true
     deleteLineNumber true
