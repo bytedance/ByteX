@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.transformer.cache;
 import com.android.build.api.transform.QualifiedContent;
 import com.android.build.api.transform.Status;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
+import com.ss.android.ugc.bytex.transformer.concurrent.Schedulers;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,8 @@ public abstract class FileCache implements Serializable {
     protected QualifiedContent content;
     protected TransformContext context;
     protected List<FileData> files;
+    protected boolean hasRead = false;
+    protected boolean hasWritten = false;
 
     public FileCache(QualifiedContent content, TransformContext context) {
         this.content = content;
@@ -44,9 +47,10 @@ public abstract class FileCache implements Serializable {
                 synchronized (this) {
                     if (files == null) {
                         files = resolve(emitter);
+                        hasRead = true;
                     } else {
                         if (tryParallel) {
-                            files.parallelStream().forEach(emitter::onNext);
+                            Schedulers.IO().submitAndAwait(files, emitter::onNext);
                         } else {
                             files.forEach(emitter::onNext);
                         }
@@ -54,7 +58,7 @@ public abstract class FileCache implements Serializable {
                 }
             } else {
                 if (tryParallel) {
-                    files.parallelStream().forEach(emitter::onNext);
+                    Schedulers.IO().submitAndAwait(files, emitter::onNext);
                 } else {
                     files.forEach(emitter::onNext);
                 }
@@ -92,5 +96,9 @@ public abstract class FileCache implements Serializable {
 
     public boolean containsFileData(String relativePath) {
         return stream().filter(fileData -> fileData.getStatus() != Status.REMOVED && fileData.getRelativePath().equals(relativePath)).firstElement().blockingGet() != null;
+    }
+
+    public boolean isHasWritten() {
+        return hasWritten;
     }
 }

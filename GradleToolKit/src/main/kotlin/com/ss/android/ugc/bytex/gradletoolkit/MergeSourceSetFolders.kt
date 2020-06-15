@@ -1,6 +1,7 @@
 package com.ss.android.ugc.bytex.gradletoolkit
 
 import com.android.build.gradle.tasks.MergeSourceSetFolders
+import com.android.ide.common.resources.AssetSet
 import java.io.File
 
 /**
@@ -9,27 +10,37 @@ import java.io.File
 
 
 fun MergeSourceSetFolders.assetSetList(): List<File> {
+    val assetSets = try {
+        assetSetList1()
+    } catch (e: Exception) {
+        assetSetList2()
+    }
+    return assetSets.flatMap { it.sourceFiles }.toSet().toList()
+}
 
+
+fun MergeSourceSetFolders.assetSetList1(): Iterable<AssetSet> {
     val computeAssetSetListMethod = MergeSourceSetFolders::class.java.declaredMethods
-            .firstOrNull { it.name == "computeAssetSetList" && it.parameterCount == 0 }
-            ?: return emptyList()
+            .find { it.name == "computeAssetSetList" && it.parameterCount == 0 }!!
 
     val oldIsAccessible = computeAssetSetListMethod.isAccessible
     try {
         computeAssetSetListMethod.isAccessible = true
-
-        val assetSets = computeAssetSetListMethod.invoke(this) as? Iterable<*>
-                ?: return emptyList()
-
-        return assetSets.mapNotNull { assetSet ->
-            val getSourceFiles = assetSet?.javaClass?.methods?.find { it.name == "getSourceFiles" && it.parameterCount == 0 }
-            val files = getSourceFiles?.invoke(assetSet)
-            @Suppress("UNCHECKED_CAST")
-            files as? Iterable<File>
-        }.flatten()
-
+        return computeAssetSetListMethod.invoke(this) as Iterable<AssetSet>
     } finally {
         computeAssetSetListMethod.isAccessible = oldIsAccessible
     }
+}
 
+fun MergeSourceSetFolders.assetSetList2(): Iterable<AssetSet> {
+    val computeAssetSetListMethod = MergeSourceSetFolders::class.java.declaredMethods
+            .find { it.name == "computeAssetSetList\$gradle" && it.parameterCount == 0 }!!
+
+    val oldIsAccessible = computeAssetSetListMethod.isAccessible
+    try {
+        computeAssetSetListMethod.isAccessible = true
+        return computeAssetSetListMethod.invoke(this) as Iterable<AssetSet>
+    } finally {
+        computeAssetSetListMethod.isAccessible = oldIsAccessible
+    }
 }

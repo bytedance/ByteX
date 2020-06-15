@@ -29,8 +29,12 @@ object RAMGraphCache : IGraphCache<File> {
         }
         synchronized(caches) {
             caches.remove(t.absolutePath) ?: return false
-        }.parallelStream().forEach {
-            graphBuilder.add(it)
+        }.apply {
+            //经过抖音cache测试性能,结果多线程方案差不多，但大约结果是
+            // Schedulers.COMPUTATION().submitAndAwait<parallelStream().forEach<forEach
+            forEach {
+                graphBuilder.add(it)
+            }
         }
         return true
     }

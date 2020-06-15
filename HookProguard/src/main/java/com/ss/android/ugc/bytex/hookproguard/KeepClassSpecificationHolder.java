@@ -15,7 +15,6 @@ class KeepClassSpecificationHolder {
     private final KeepClassSpecification instance;
     private StringMatcher classNameMatcher;
     private List<MemberSpecificationHolder> methodSpecifications;
-    private Node extendsClassNode;
 
     KeepClassSpecificationHolder(KeepClassSpecification instance, StringParser parser) {
         this.instance = instance;
@@ -50,9 +49,6 @@ class KeepClassSpecificationHolder {
     }
 
     Node computeExtendsClassNode(Graph graph) {
-        if (extendsClassNode == null) {
-            extendsClassNode = graph.get(instance.extendsClassName);
-        }
-        return extendsClassNode;
+        return graph.get(instance.extendsClassName);
     }
 }

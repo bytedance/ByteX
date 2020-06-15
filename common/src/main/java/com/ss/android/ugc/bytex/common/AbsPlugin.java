@@ -13,6 +13,7 @@ import org.gradle.api.Project;
 import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.invocation.DefaultGradle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +45,10 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
     }
 
     @Override
-    public final void apply(Project project) {
+    public final void apply(@NotNull Project project) {
+        if(!transformConfiguration().isIncremental()){
+            System.err.println("[ByteX Warning]:"+this.getClass().getName()+" does not yet support incremental build");
+        }
         this.project = project;
         this.android = project.getExtensions().getByType(AppExtension.class);
         ProjectOptions.INSTANCE.init(project);

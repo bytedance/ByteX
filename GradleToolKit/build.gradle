@@ -6,15 +6,15 @@ group "$upload_group"
 version "$upload_version"
 dependencies {
     kapt 'com.google.auto.service:auto-service:1.0-rc4'
-    compile gradleApi()
+    compileOnly gradleApi()
     compileOnly "com.android.tools.build:gradle:$gradle_version"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile project(':GradleEnvApi')
 
-    compile ('com.google.auto.service:auto-service:1.0-rc4') {
+    compile('com.google.auto.service:auto-service:1.0-rc4') {
         exclude module: 'guava'
     }
-    implementation "com.didiglobal.booster:booster-android-gradle-api:1.2.0"
+    implementation "com.didiglobal.booster:booster-android-gradle-api:2.0.0"
 }
 sourceCompatibility = "1.8"
 targetCompatibility = "1.8"

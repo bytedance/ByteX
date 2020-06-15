@@ -11,7 +11,6 @@ import java.util.List;
 import io.reactivex.ObservableEmitter;
 
 public class NewFileCache extends DirCache {
-    private final List<FileData> newFiles;
     private final String affinity;
 
     public NewFileCache(TransformContext context, String affinity) {
@@ -20,13 +19,14 @@ public class NewFileCache extends DirCache {
 
     public NewFileCache(List<FileData> newFiles, String affinity, TransformContext context) {
         super(new File(affinity), getOutput(context, affinity), context);
-        this.newFiles = Collections.synchronizedList(newFiles);
+        this.files = Collections.synchronizedList(newFiles);
+        hasRead = true;
         this.affinity = affinity;
     }
 
     @Override
     protected List<FileData> resolve(ObservableEmitter<FileData> emitter) throws IOException {
-        return Collections.unmodifiableList(newFiles);
+        return Collections.unmodifiableList(files);
     }
 
     @Override
@@ -37,14 +37,17 @@ public class NewFileCache extends DirCache {
     @Override
     public List<FileData> getChangedFiles() {
         if (context.isIncremental()) {
-            return Collections.unmodifiableList(newFiles);
+            return Collections.unmodifiableList(files);
         } else {
             return Collections.emptyList();
         }
     }
 
     public void addFile(FileData file) {
-        newFiles.add(file);
+        if (hasWritten) {
+            throw new RuntimeException("can not add file after FileCache has been outputed");
+        }
+        files.add(file);
     }
 
     @Override

@@ -11,16 +11,19 @@ def USERNAME_SNAPSHOT = properties.getProperty('USERNAME_SNAPSHOT', "")
 def PASSWORD_SNAPSHOT = properties.getProperty('PASSWORD_SNAPSHOT', "")
 def BINTRAY_KEY = properties.getProperty('BINTRAY_KEY', "")
 def uploadToMaven = false
+def uploadToJCenter = false
 def useSnapshotMaven = false
 try {
     properties.load(project.rootProject.file('upload.properties').newDataInputStream())
     uploadToMaven = properties.getProperty('upload2Maven')
+    uploadToJCenter = properties.getProperty('upload2JCenter')
     useSnapshotMaven = properties.getProperty('useSnapshotMaven')
 } catch (e) {
 }
 
 ext {
     upload2Maven = uploadToMaven
+    upload2JCenter = uploadToJCenter
     useSnapshot = useSnapshotMaven
     upload_user_name = USERNAME
     upload_password = PASSWORD
@@ -31,7 +34,7 @@ ext {
     upload_group = 'com.bytedance.android.byteX'
     upload_version = "0.1.5${(useSnapshotMaven.toBoolean() ? "-${doSh("git config user.name")}-SNAPSHOT" : "")}"
     upload_dir = project.rootProject.file('gradle_plugins').path
-    gradle_version = '3.2.1'
+    gradle_version = '3.5.3'
     asm_version = '6.2.1'
     guava_version = '23.0'
     ByteX_Version = upload_version
