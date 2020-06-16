@@ -120,7 +120,8 @@ public class TransformContext implements GradleEnv, ClassFinder {
     }
 
     /**
-     * 请求非增量运行，必须在traverse时机之前调用
+     * 请求非增量运行，必须在traverse时机之前调用<br/>
+     * beforeTraverse及之前生命周期可调用，否则报RuntimeException<br/>
      */
     public void requestNotIncremental() {
         if (running.get()) {
@@ -128,6 +129,23 @@ public class TransformContext implements GradleEnv, ClassFinder {
         }
         this.isPluginIncremental = false;
         this.transformInputs.requestNotIncremental();
+    }
+
+    /**
+     * 请求某个文件进行非增量<br/>
+     * beforeTraverse及之前生命周期可调用，否则报RuntimeException<br/>
+     *
+     * @param relativePath 文件的相对路径,比如 com/bytedance/Demo.class
+     * @return 成功修改对应输入的状态，如果当前已经是非增量
+     */
+    public boolean requestNotIncremental(String relativePath) {
+        if (running.get()) {
+            throw new RuntimeException("You Should request for not incremental before traversing.");
+        }
+        if (!this.isIncremental()) {
+            return false;
+        }
+        return this.transformInputs.requestNotIncremental(relativePath);
     }
 
     public boolean isReleaseBuild() {

@@ -49,7 +49,13 @@ object GsonGraphCache : IGraphCache<File> {
             }
             BufferedReader(FileReader(t)).use { reader ->
                 GSON.fromJson<List<ClassEntity>>(reader, object : TypeToken<List<ClassEntity>>() {
-                }.type).parallelStream().forEach { graphBuilder.add(it) }
+                }.type).apply {
+                    //经过抖音cache测试性能,结果多线程方案差不多，但大约结果是
+                    // Schedulers.COMPUTATION().submitAndAwait<parallelStream().forEach<forEach
+                    forEach {
+                        graphBuilder.add(it)
+                    }
+                }
             }
             println("Load ByteX Cache Success:" + t.absolutePath)
             return true

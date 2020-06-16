@@ -142,7 +142,7 @@ PASSWORD_SNAPSHOT=xxx
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;After publishing the plugin locally and connecting it to the app project, append parameters at the end of the build-command before executing the build-command.For example:
 
 ```
-gradle clean :aweme:assembleRelease -Dorg.gradle.debug=true --no-daemon
+./gradlew clean :example:assembleDouyinCnRelease -Dorg.gradle.debug=true --no-daemon
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Then switch to the Configuration that you created just now, and click the debug button.

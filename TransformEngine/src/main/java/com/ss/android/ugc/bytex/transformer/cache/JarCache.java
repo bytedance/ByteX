@@ -58,7 +58,10 @@ public class JarCache extends FileCache {
     }
 
     @Override
-    public void transformOutput(Consumer<FileData> visitor) throws IOException {
+    public final synchronized void transformOutput(Consumer<FileData> visitor) throws IOException {
+        if (hasWritten) {
+            throw new RuntimeException("rewrite");
+        }
         List<FileData> dataList = Collections.synchronizedList(new LinkedList<>());
         AtomicBoolean needOutput = new AtomicBoolean(!context.getInvocation().isIncremental());
         forEach(item -> {
@@ -117,6 +120,7 @@ public class JarCache extends FileCache {
 
         }
         context.getTransformOutputs().getTransformOutputs().put(outputRelativePath, outputs);
+        hasWritten = true;
     }
 
     @Override
@@ -209,8 +213,12 @@ public class JarCache extends FileCache {
     }
 
     @Override
-    public void skip() throws IOException {
+    public synchronized void skip() throws IOException {
+        if (hasWritten) {
+            throw new RuntimeException("rewrite");
+        }
         FileUtils.copyFile(getFile(), outputFile);
+        hasWritten = true;
     }
 
     @Override

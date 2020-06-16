@@ -40,6 +40,7 @@ echo "excludeApp=true" >> upload.properties
 #./gradlew clean
 
 if [[ "$upload2JCenter" == "true" ]]; then
+    echo "upload2JCenter=$upload2JCenter" >> upload.properties
     ./gradlew bintrayUpload --stacktrace
 
 else

@@ -116,9 +116,22 @@ class TransformInputs internal constructor(private val context: TransformContext
     }
 
     protected fun requestNotIncremental() {
-        transformInputs.flatMap { it.value }.parallelStream().forEach {
-            it.status = Status.ADDED
+        transformInputs.flatMap { it.value }.forEach {
+            if (it.status == Status.NOTCHANGED) {
+                it.status = Status.CHANGED
+            }
         }
+    }
+
+    protected fun requestNotIncremental(relativePath: String): Boolean {
+        var r = false
+        transformInputs.flatMap { it.value }.forEach {
+            if (it.relativePath == relativePath && it.status == Status.NOTCHANGED) {
+                it.status = Status.CHANGED
+                r = true
+            }
+        }
+        return r
     }
 
     fun addFile(affinity: String, file: FileData) {

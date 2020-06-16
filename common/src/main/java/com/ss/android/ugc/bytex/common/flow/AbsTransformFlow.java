@@ -47,9 +47,9 @@ public abstract class AbsTransformFlow implements TransformFlow {
         return this;
     }
 
-    protected abstract AbsTransformFlow beforeTransform(TransformEngine transformEngine);
+    protected abstract AbsTransformFlow beforeTransform(TransformEngine transformEngine) throws IOException;
 
-    protected abstract AbsTransformFlow afterTransform(TransformEngine transformEngine);
+    protected abstract AbsTransformFlow afterTransform(TransformEngine transformEngine) throws IOException;
 
     public void endRun() {
         transformEngine.endRun();

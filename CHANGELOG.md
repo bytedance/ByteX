@@ -1,4 +1,10 @@
 # Change Log
+### Version 0.1.6
+- Upgrade AGP 3.5.3
+- Fix memory leak in HookProguard
+- Run refer-check-plugin in single flow in order to check any issues producted by bytex'plugin
+- Unified threadpool and run pipleline lifecycles in parallel
+
 ### Version 0.1.5
 - Fix bugs with getter-setter-inline plugins
 

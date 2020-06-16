@@ -50,7 +50,10 @@ public class DirCache extends FileCache {
     }
 
     @Override
-    public void transformOutput(Consumer<FileData> visitor) throws IOException {
+    public final synchronized void transformOutput(Consumer<FileData> visitor) throws IOException {
+        if (hasWritten) {
+            throw new RuntimeException("rewrite");
+        }
         Map<String, TransformOutputs.Entry> entryMap = new HashMap<>();
         String relativeToProject = context.getTransformOutputs().relativeToProject(outputFile);
         TransformOutputs.Entry entry = context.getTransformOutputs().getLastTransformOutputs().get(relativeToProject);
@@ -59,7 +62,7 @@ public class DirCache extends FileCache {
             entry.traverseAll(e -> entryMap.put(e.getPath(), e));
         }
         List<TransformOutputs.Entry> entries = Collections.synchronizedList(new LinkedList<>());
-        parallelForEach(true, item -> {
+        parallelForEach(false, item -> {
             if (visitor != null) visitor.accept(item);
             entries.add(
                     transformOutput(
@@ -76,6 +79,7 @@ public class DirCache extends FileCache {
                         0L,
                         Collections.unmodifiableList(entries))
         );
+        hasWritten = true;
     }
 
     private TransformOutputs.Entry transformOutput(String input, String parent, FileData fileData, Map<String, TransformOutputs.Entry> entryMap) throws IOException {
@@ -183,7 +187,11 @@ public class DirCache extends FileCache {
     }
 
     @Override
-    public void skip() throws IOException {
+    public synchronized void skip() throws IOException {
+        if (hasWritten) {
+            throw new RuntimeException("rewrite");
+        }
         FileUtils.copyDirectory(getFile(), outputFile);
+        hasWritten = true;
     }
 }

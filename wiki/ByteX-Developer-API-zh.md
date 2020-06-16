@@ -140,7 +140,7 @@ PASSWORD_SNAPSHOT=xxx
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;把插件本地发布然后接入到app工程里之后,在命令行执行构建命令,末尾拼上这一串参数,比如：
 
 ```
-gradle clean :aweme:assembleRelease -Dorg.gradle.debug=true --no-daemon
+./gradlew clean :example:assembleDouyinCnRelease -Dorg.gradle.debug=true --no-daemon
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;然后切换到刚刚创建的Configuration,点击debug按钮.

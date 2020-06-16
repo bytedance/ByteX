@@ -1,2 +1,5 @@
 apply from: "$rootDir/gradle/publish-maven.gradle"
-apply from: "$rootDir/gradle/publish-bintray.gradle"
+if (upload2JCenter) {
+    println("upload2JCenter=true")
+    apply from: "$rootDir/gradle/publish-bintray.gradle"
+}

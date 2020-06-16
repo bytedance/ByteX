@@ -1,15 +1,26 @@
 package com.ss.android.ugc.bytex.transformer.concurrent;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 public class Worker {
-    protected final List<Future<?>> futures = new ArrayList<>();
+    protected final LinkedList<Future<?>> futures = new LinkedList<Future<?>>() {
+        @Override
+        public synchronized boolean add(Future<?> future) {
+            return super.add(future);
+        }
+
+        @Override
+        public synchronized Future<?> pollFirst() {
+            return super.pollFirst();
+        }
+    };
     protected ExecutorService executor;
 
     Worker(ExecutorService executor) {
@@ -27,7 +38,8 @@ public class Worker {
     }
 
     public void await() throws IOException {
-        for (Future<?> future : futures) {
+        Future<?> future;
+        while ((future = futures.pollFirst()) != null) {
             try {
                 future.get();
             } catch (ExecutionException | InterruptedException e) {
@@ -41,6 +53,10 @@ public class Worker {
                 throw new RuntimeException(e.getCause());
             }
         }
-        futures.clear();
+    }
+
+    public <I> void submitAndAwait(Collection<I> is, Consumer<I> consumer) throws IOException {
+        is.stream().map(f -> (Runnable) () -> consumer.accept(f)).forEach(this::execute);
+        await();
     }
 }

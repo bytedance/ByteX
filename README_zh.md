@@ -65,7 +65,7 @@ ByteX是一个基于gradle transform api和ASM的字节码插件平台（或许�
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.1.4"
+    ext.plugin_version="0.1.6"
     repositories {
         google()
         jcenter()

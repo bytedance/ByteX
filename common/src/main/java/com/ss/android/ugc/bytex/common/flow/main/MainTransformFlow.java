@@ -10,6 +10,7 @@ import com.ss.android.ugc.bytex.common.log.Timer;
 import com.ss.android.ugc.bytex.common.processor.ClassFileAnalyzer;
 import com.ss.android.ugc.bytex.common.processor.ClassFileTransformer;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
+import com.ss.android.ugc.bytex.transformer.concurrent.Schedulers;
 import com.ss.android.ugc.bytex.transformer.processor.ClassFileProcessor;
 import com.ss.android.ugc.bytex.transformer.processor.FileHandler;
 import com.ss.android.ugc.bytex.transformer.processor.FileProcessor;
@@ -48,9 +49,7 @@ public class MainTransformFlow extends AbsTransformFlow {
         Timer timer = new Timer();
         timer.startRecord("PRE_PROCESS");
         timer.startRecord("INIT");
-        for (MainProcessHandler handler : handlers) {
-            handler.init(transformEngine);
-        }
+        Schedulers.COMPUTATION().submitAndAwait(handlers, handler -> handler.init(transformEngine));
         timer.stopRecord("INIT", "Process init cost time = [%s ms]");
         if (!isOnePassEnough()) {
             if (!handlers.isEmpty() && context.isIncremental()) {
@@ -59,7 +58,7 @@ public class MainTransformFlow extends AbsTransformFlow {
                 timer.stopRecord("TRAVERSE_INCREMENTAL", "Process project all .class files cost time = [%s ms]");
             }
 
-            handlers.forEach(plugin -> plugin.beforeTraverse(transformEngine));
+            Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.beforeTraverse(transformEngine));
             timer.startRecord("LOADCACHE");
             GraphBuilder graphBuilder = new CachedGraphBuilder(context.getGraphCache(), context.isIncremental(), context.shouldSaveCache());
             if (context.isIncremental() && !graphBuilder.isCacheValid()) {
@@ -141,14 +140,14 @@ public class MainTransformFlow extends AbsTransformFlow {
     }
 
     @Override
-    protected AbsTransformFlow beforeTransform(TransformEngine transformEngine) {
-        handlers.forEach(plugin -> plugin.beforeTransform(transformEngine));
+    protected AbsTransformFlow beforeTransform(TransformEngine transformEngine) throws IOException {
+        Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.beforeTransform(transformEngine));
         return this;
     }
 
     @Override
-    protected AbsTransformFlow afterTransform(TransformEngine transformEngine) {
-        handlers.forEach(plugin -> plugin.afterTransform(transformEngine));
+    protected AbsTransformFlow afterTransform(TransformEngine transformEngine) throws IOException {
+        Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.afterTransform(transformEngine));
         return this;
     }
 

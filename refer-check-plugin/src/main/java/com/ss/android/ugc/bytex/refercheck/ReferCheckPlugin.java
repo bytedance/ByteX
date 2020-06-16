@@ -2,10 +2,13 @@ package com.ss.android.ugc.bytex.refercheck;
 
 import com.android.build.gradle.AppExtension;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
+import com.ss.android.ugc.bytex.common.flow.TransformFlow;
+import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.pluginconfig.anno.PluginConfig;
 import com.ss.android.ugc.bytex.refercheck.log.ErrorLogGenerator;
 import com.ss.android.ugc.bytex.refercheck.visitor.ReferCheckClassVisitor;
+import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
 import org.gradle.api.Project;
@@ -46,5 +49,15 @@ public class ReferCheckPlugin extends CommonPlugin<ReferCheckExtension, ReferChe
             }
         }
         context.release();
+    }
+
+    @Override
+    protected TransformFlow provideTransformFlow(@Nonnull MainTransformFlow mainFlow, @Nonnull TransformContext transformContext) {
+        return new MainTransformFlow(new TransformEngine(transformContext)) {
+            @Override
+            public int getPriority() {
+                return Integer.MIN_VALUE;
+            }
+        }.appendHandler(this);
     }
 }

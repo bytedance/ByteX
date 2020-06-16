@@ -176,7 +176,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     @Override
     public final void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
         super.transform(transformInvocation);
-        if (!transformInvocation.isIncremental()) {
+        if (!transformInvocation.isIncremental() && transformInvocation.getOutputProvider() != null) {
             transformInvocation.getOutputProvider().deleteAll();
         }
         TransformContext transformContext = getTransformContext(transformInvocation);
@@ -212,6 +212,8 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                         }
                     }
                 }
+                //对某些后期新增但未输出的文件进行输出
+                transformEngine.transformOutput();
             } else {
                 transformEngine.skip();
             }
