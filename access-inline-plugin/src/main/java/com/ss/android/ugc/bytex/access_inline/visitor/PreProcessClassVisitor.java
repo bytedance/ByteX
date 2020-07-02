@@ -246,6 +246,14 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
                     if (insnNode.getOpcode() > Opcodes.MONITOREXIT) {
                         throw new ShouldSkipInlineException("Unexpected new instruction in access$ method body.");
                     }
+                    /*
+                     * 遇到LDC指令跳过
+                     * 暂时无法给access$MethodEntity 设置target
+                     * 导致使用target时候NPE问题
+                     */
+                    if (insnNode.getOpcode() == Opcodes.LDC) {
+                        throw new ShouldSkipInlineException("Unexpected LDC instruction in access$ method body.");
+                    }
                     if (shouldSkipVarInsn && insnNode.getOpcode() >= Opcodes.ILOAD && insnNode.getOpcode() <= Opcodes.SALOAD) {
                         varLoadInsnCount++;
                         continue;
