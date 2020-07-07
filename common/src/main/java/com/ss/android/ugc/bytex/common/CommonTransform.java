@@ -11,15 +11,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
-import com.ss.android.ugc.bytex.common.flow.TransformFlow;
-import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
-import com.ss.android.ugc.bytex.common.graph.Graph;
+import com.ss.android.ugc.bytex.common.internal.ITransformPipeline;
+import com.ss.android.ugc.bytex.common.internal.TransformFlowerManager;
 import com.ss.android.ugc.bytex.common.log.LevelLog;
 import com.ss.android.ugc.bytex.common.log.Timer;
 import com.ss.android.ugc.bytex.common.log.html.HtmlReporter;
 import com.ss.android.ugc.bytex.gradletoolkit.TransformInvocationKt;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
-import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,8 +26,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -174,7 +170,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     }
 
     @Override
-    public final void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+    public final synchronized void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
         super.transform(transformInvocation);
         if (!transformInvocation.isIncremental() && transformInvocation.getOutputProvider() != null) {
             transformInvocation.getOutputProvider().deleteAll();
@@ -184,38 +180,16 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
         List<IPlugin> plugins = getPlugins().stream().filter(p -> p.enable(transformContext)).collect(Collectors.toList());
 
         Timer timer = new Timer();
-        TransformEngine transformEngine = new TransformEngine(transformContext);
-
+        final ITransformPipeline manager = new TransformFlowerManager(transformContext);
         try {
             if (!plugins.isEmpty()) {
-                Queue<TransformFlow> flowSet = new PriorityQueue<>((o1, o2) -> o2.getPriority() - o1.getPriority());
-                MainTransformFlow commonFlow = new MainTransformFlow(transformEngine);
-//                flowSet.add(commonFlow);
-                for (int i = 0; i < plugins.size(); i++) {
-                    IPlugin plugin = plugins.get(i);
-                    TransformFlow flow = plugin.registerTransformFlow(commonFlow, transformContext);
-                    if (!flowSet.contains(flow)) {
-                        flowSet.add(flow);
-                    }
-                }
-                while (!flowSet.isEmpty()) {
-                    TransformFlow flow = flowSet.poll();
-                    if (flow != null) {
-                        if (flowSet.size() == 0) {
-                            flow.asTail();
-                        }
-                        flow.run();
-                        Graph graph = flow.getClassGraph();
-                        if (graph != null) {
-                            //clear the class diagram.we won’t use it anymore
-                            graph.clear();
-                        }
-                    }
-                }
-                //对某些后期新增但未输出的文件进行输出
-                transformEngine.transformOutput();
+                plugins.forEach(iPlugin -> iPlugin.startExecute(transformContext));
+                plugins.forEach(plugin -> manager.bind(manager1 -> plugin.registerTransformFlow(manager1.getCommonFlow(), transformContext)));
+                manager.onPreTransform();
+                manager.runTransform();
+                manager.onPostTransform();
             } else {
-                transformEngine.skip();
+                manager.skipTransform();
             }
             afterTransform(transformInvocation);
         } catch (Throwable throwable) {
@@ -229,13 +203,14 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                     LevelLog.sDefaultLogger.e("do afterExecute", throwable);
                 }
             }
+            context.releaseContext();
             transformContext.release();
-            release();
             timer.record("Total cost time = [%s ms]");
             if (BooleanProperty.ENABLE_HTML_LOG.value()) {
                 HtmlReporter.getInstance().createHtmlReporter(getName());
                 HtmlReporter.getInstance().reset();
             }
+            LevelLog.sDefaultLogger = new LevelLog();
         }
     }
 
@@ -246,11 +221,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     protected void afterTransform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
     }
 
-    protected void release() {
-
-    }
-
-    private void init(TransformContext transformContext) {
+    protected void init(TransformContext transformContext) {
         context.setTransformContext(transformContext);
         LevelLog.sDefaultLogger = context.getLogger();
         if (BooleanProperty.ENABLE_HTML_LOG.value()) {
@@ -273,18 +244,13 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                 }
             }
             HtmlReporter.getInstance().init(
-                    new File(context.project.getBuildDir(), "ByteX").getAbsolutePath(),
+                    transformContext.byteXBuildDir().getAbsolutePath(),
                     "ByteX",
                     applicationId,
                     versionName,
                     versionCode
             );
         }
-        init(transformContext.getInvocation());
-    }
-
-    protected void init(TransformInvocation transformInvocation) {
-
     }
 
     protected abstract List<IPlugin> getPlugins();

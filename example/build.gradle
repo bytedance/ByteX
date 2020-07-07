@@ -97,29 +97,3 @@ dependencies {
     implementation "com.bytedance.android.byteX:coverage-lib:${plugin_version}"
 }
 apply from: project.file('plugin-bytex.gradle')
-
-Set<String> assembles = new HashSet<>()
-assembles.add("assembleDouyinCnDebug")
-assembles.add("assembleDouyinCnRelease")
-assembles.add("assembleDouyinI18nDebug")
-assembles.add("assembleDouyinI18nRelease")
-assembles.add("assembleBytexCnDebug")
-assembles.add("assembleBytexCnRelease")
-assembles.add("assembleBytexI18nDebug")
-assembles.add("assembleBytexI18nRelease")
-project.gradle
-        .startParameter
-        .taskRequests
-        .stream()
-        .flatMap() { it.args.stream() }
-        .filter { it.contains("assemble") }
-        .map { it.toLowerCase() }
-        .forEach {
-            if (!(
-                    (it.contains("douyin") || it.contains("bytex")) &&
-                            (it.contains("cn") || it.contains("i18n")) &&
-                            (it.contains("release") || it.contains("debug"))
-            )) {
-                throw new IllegalArgumentException(assembles.join(",") + " supportted only")
-            }
-        }

@@ -2,6 +2,7 @@ package com.ss.android.ugc.bytex.const_inline;
 
 import com.android.build.gradle.AppExtension;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
+import com.ss.android.ugc.bytex.common.TransformConfiguration;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.const_inline.reflect.ReflectResolve;
@@ -94,9 +95,14 @@ public class ConstInlinePlugin extends CommonPlugin<ConstInlineExtension, Contex
         return super.transform(relativePath, chain);
     }
 
+    @Nonnull
     @Override
-    public void afterTransform(@NotNull @Nonnull TransformEngine engine) {
-        super.afterTransform(engine);
-        context.release();
+    public TransformConfiguration transformConfiguration() {
+        return new TransformConfiguration() {
+            @Override
+            public boolean isIncremental() {
+                return false;
+            }
+        };
     }
 }

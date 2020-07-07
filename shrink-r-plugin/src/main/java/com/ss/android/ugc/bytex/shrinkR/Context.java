@@ -218,4 +218,15 @@ public class Context extends BaseContext<ShrinkRExtension> {
             return "";
         }
     }
+
+    @Override
+    public void releaseContext() {
+        super.releaseContext();
+        shouldDiscardRClasses.clear();
+        shouldBeInlinedRFields.clear();
+        shouldSkipInlineRFields.clear();
+        mWhiteList.clear();
+        checker = null;
+        notFoundRFields.clear();
+    }
 }

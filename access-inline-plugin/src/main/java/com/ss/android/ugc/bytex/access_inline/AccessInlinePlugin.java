@@ -2,14 +2,17 @@ package com.ss.android.ugc.bytex.access_inline;
 
 import com.android.build.api.transform.Transform;
 import com.android.build.gradle.AppExtension;
-import com.ss.android.ugc.bytex.common.CommonPlugin;
-import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.access_inline.visitor.PreProcessClassVisitor;
 import com.ss.android.ugc.bytex.access_inline.visitor.ShrinkAccessClassVisitor;
+import com.ss.android.ugc.bytex.common.CommonPlugin;
+import com.ss.android.ugc.bytex.common.TransformConfiguration;
+import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nonnull;
 
 public class AccessInlinePlugin extends CommonPlugin<AccessInlineExtension, Context> {
     @Override
@@ -44,5 +47,16 @@ public class AccessInlinePlugin extends CommonPlugin<AccessInlineExtension, Cont
     public boolean transform(@NotNull String relativePath, @NotNull ClassVisitorChain chain) {
         chain.connect(new ShrinkAccessClassVisitor(this.context));
         return super.transform(relativePath, chain);
+    }
+
+    @Nonnull
+    @Override
+    public TransformConfiguration transformConfiguration() {
+        return new TransformConfiguration() {
+            @Override
+            public boolean isIncremental() {
+                return false;
+            }
+        };
     }
 }

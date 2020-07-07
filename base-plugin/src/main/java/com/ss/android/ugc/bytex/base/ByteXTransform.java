@@ -2,6 +2,8 @@ package com.ss.android.ugc.bytex.base;
 
 import com.ss.android.ugc.bytex.common.CommonTransform;
 import com.ss.android.ugc.bytex.common.IPlugin;
+import com.ss.android.ugc.bytex.common.log.LevelLog;
+import com.ss.android.ugc.bytex.transformer.TransformContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +24,12 @@ public class ByteXTransform extends CommonTransform<Context> {
     }
 
     @Override
+    protected void init(TransformContext transformContext) {
+        context.init(transformContext);
+        super.init(transformContext);
+    }
+
+    @Override
     public boolean shouldSaveCache() {
         return context.extension.isShouldSaveCache() && super.shouldSaveCache();
     }
@@ -32,11 +40,5 @@ public class ByteXTransform extends CommonTransform<Context> {
             return Collections.emptyList();
         }
         return context.extension.getPlugins();
-    }
-
-    @Override
-    protected void release() {
-        context.extension.clearPlugins();
-        super.release();
     }
 }

@@ -15,9 +15,6 @@ import org.gradle.internal.reflect.Instantiator;
 import org.gradle.invocation.DefaultGradle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
 import javax.annotation.Nonnull;
 
 public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Project>, IPlugin {
@@ -36,18 +33,23 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
 
     @Override
     public boolean alone() {
-        return false;
+        boolean alone = false;
+        Object aloneProperty = project.findProperty("bytex." + extension.getName() + ".alone");
+        if (aloneProperty != null) {
+            alone = Boolean.parseBoolean(aloneProperty.toString());
+        }
+        return alone;
     }
 
     @Override
     public boolean shouldSaveCache() {
-        return extension.isShouldSaveCache();
+        return extension.isShouldSaveCache() && transformConfiguration().isIncremental();
     }
 
     @Override
     public final void apply(@NotNull Project project) {
-        if(!transformConfiguration().isIncremental()){
-            System.err.println("[ByteX Warning]:"+this.getClass().getName()+" does not yet support incremental build");
+        if (!transformConfiguration().isIncremental()) {
+            System.err.println("[ByteX Warning]:" + this.getClass().getName() + " does not yet support incremental build");
         }
         this.project = project;
         this.android = project.getExtensions().getByType(AppExtension.class);
@@ -98,8 +100,5 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
 
     @Override
     public void afterExecute() throws Throwable {
-        project = null;
-        android = null;
-        extension = null;
     }
 }

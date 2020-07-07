@@ -2,6 +2,7 @@ package com.ss.android.ugc.bytex.getter_setter_inline;
 
 import com.android.build.gradle.AppExtension;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
+import com.ss.android.ugc.bytex.common.TransformConfiguration;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.getter_setter_inline.visitor.FindGetterSetterClassVisitor;
 import com.ss.android.ugc.bytex.getter_setter_inline.visitor.InlineGetterSetterClassVisitor;
@@ -9,6 +10,8 @@ import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nonnull;
 
 public class GetterSetterInlinePlugin extends CommonPlugin<GetterSettingInlineExtension, Context> {
     @Override
@@ -40,5 +43,16 @@ public class GetterSetterInlinePlugin extends CommonPlugin<GetterSettingInlineEx
     protected void onApply(@NotNull Project project) {
         super.onApply(project);
         context.hookProguard(project);
+    }
+
+    @Nonnull
+    @Override
+    public TransformConfiguration transformConfiguration() {
+        return new TransformConfiguration() {
+            @Override
+            public boolean isIncremental() {
+                return false;
+            }
+        };
     }
 }

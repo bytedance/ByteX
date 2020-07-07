@@ -14,6 +14,7 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.ss.android.ugc.bytex.transformer.cache.*
 import com.ss.android.ugc.bytex.transformer.concurrent.Schedulers
+import com.ss.android.ugc.bytex.transformer.utils.getStack
 import java.io.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -116,6 +117,7 @@ class TransformInputs internal constructor(private val context: TransformContext
     }
 
     protected fun requestNotIncremental() {
+        println("ByteX requestNotIncremental(${getCallStack()})")
         transformInputs.flatMap { it.value }.forEach {
             if (it.status == Status.NOTCHANGED) {
                 it.status = Status.CHANGED
@@ -124,6 +126,7 @@ class TransformInputs internal constructor(private val context: TransformContext
     }
 
     protected fun requestNotIncremental(relativePath: String): Boolean {
+        println("ByteX requestNotIncremental(${getCallStack()}):$relativePath")
         var r = false
         transformInputs.flatMap { it.value }.forEach {
             if (it.relativePath == relativePath && it.status == Status.NOTCHANGED) {
@@ -132,6 +135,10 @@ class TransformInputs internal constructor(private val context: TransformContext
             }
         }
         return r
+    }
+
+    private fun getCallStack(): String {
+        return getStack(1, "com.ss.android.ugc.bytex.transformer")
     }
 
     fun addFile(affinity: String, file: FileData) {

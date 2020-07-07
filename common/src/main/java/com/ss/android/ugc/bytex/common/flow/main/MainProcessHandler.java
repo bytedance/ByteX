@@ -78,6 +78,18 @@ public interface MainProcessHandler {
     }
 
     /**
+     * 启动运行操作回调，表示马上开始处理过程。这个是{@link #traverse }方法前面的一个声明周期。此时增量状态已经完全确定，不能修改。
+     * 建议在此时判断在是否增量构建然后再加载增量cache.
+     * start to running。This lifecycle will be called before {@link #traverse } the incremental status has been determined and cannot be modified
+     * prefer to load incremental cache as it is running as incremental
+     *
+     * @param transformer from TransformEngine
+     */
+    default void startRunning(@Nonnull TransformEngine transformer) {
+    }
+
+
+    /**
      * 遍历工程中所有的class
      * Traverse all classes in the whole project.
      *

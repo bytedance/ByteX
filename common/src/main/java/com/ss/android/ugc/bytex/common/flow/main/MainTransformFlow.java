@@ -9,6 +9,7 @@ import com.ss.android.ugc.bytex.common.graph.cache.CachedGraphBuilder;
 import com.ss.android.ugc.bytex.common.log.Timer;
 import com.ss.android.ugc.bytex.common.processor.ClassFileAnalyzer;
 import com.ss.android.ugc.bytex.common.processor.ClassFileTransformer;
+import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
 import com.ss.android.ugc.bytex.transformer.concurrent.Schedulers;
 import com.ss.android.ugc.bytex.transformer.processor.ClassFileProcessor;
@@ -28,6 +29,7 @@ import javax.annotation.Nullable;
 public class MainTransformFlow extends AbsTransformFlow {
     private final List<MainProcessHandler> handlers;
     private Graph mClassGraph;
+    private Timer timer = new Timer();
 
     public MainTransformFlow(TransformEngine transformEngine) {
         super(transformEngine);
@@ -35,60 +37,64 @@ public class MainTransformFlow extends AbsTransformFlow {
     }
 
     @Override
+    public void prepare() throws IOException, InterruptedException {
+        super.prepare();
+        markRunningState(TransformContext.State.INITIALIZING);
+        timer.startRecord("INIT");
+        Schedulers.COMPUTATION().submitAndAwait(handlers, handler -> handler.init(transformEngine));
+        timer.stopRecord("INIT", "Process init cost time = [%s ms]");
+        markRunningState(TransformContext.State.INITIALIZED);
+        if (!isOnePassEnough()) {
+            markRunningState(TransformContext.State.INCREMENTALTRAVERSING);
+            if (context.isIncremental()) {
+                timer.startRecord("TRAVERSE_INCREMENTAL");
+                traverseArtifactOnly(getProcessors(Process.TRAVERSE_INCREMENTAL, new ClassFileAnalyzer(context, Process.TRAVERSE_INCREMENTAL, null, handlers)));
+                timer.stopRecord("TRAVERSE_INCREMENTAL", "Process project all .class files cost time = [%s ms]");
+            }
+            markRunningState(TransformContext.State.BEFORETRAVERSE);
+            Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.beforeTraverse(transformEngine));
+        }
+    }
+
+    @Override
     public void run() throws IOException, InterruptedException {
         try {
-            beginRun();
+            markRunningState(TransformContext.State.RUNNING);
             runTransform();
         } finally {
-            endRun();
+            markRunningState(TransformContext.State.STATELESS);
         }
     }
 
     private void runTransform() throws IOException, InterruptedException {
         if (handlers.isEmpty()) return;
-        Timer timer = new Timer();
         timer.startRecord("PRE_PROCESS");
-        timer.startRecord("INIT");
-        Schedulers.COMPUTATION().submitAndAwait(handlers, handler -> handler.init(transformEngine));
-        timer.stopRecord("INIT", "Process init cost time = [%s ms]");
+        Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.startRunning(transformEngine));
         if (!isOnePassEnough()) {
-            if (!handlers.isEmpty() && context.isIncremental()) {
-                timer.startRecord("TRAVERSE_INCREMENTAL");
-                traverseArtifactOnly(getProcessors(Process.TRAVERSE_INCREMENTAL, new ClassFileAnalyzer(context, Process.TRAVERSE_INCREMENTAL, null, handlers)));
-                timer.stopRecord("TRAVERSE_INCREMENTAL", "Process project all .class files cost time = [%s ms]");
-            }
-
-            Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.beforeTraverse(transformEngine));
             timer.startRecord("LOADCACHE");
-            GraphBuilder graphBuilder = new CachedGraphBuilder(context.getGraphCache(), context.isIncremental(), context.shouldSaveCache());
+            GraphBuilder graphBuilder = new CachedGraphBuilder(getGraphCache(), context.isIncremental(), context.shouldSaveCache());
             if (context.isIncremental() && !graphBuilder.isCacheValid()) {
-                context.requestNotIncremental();
+                throw new IllegalStateException("Transform is running as incrementally, but failed to load cache for the transform!");
             }
             timer.stopRecord("LOADCACHE", "Process loading cache cost time = [%s ms]");
-            running();
-            if (!handlers.isEmpty()) {
-                timer.startRecord("PROJECT_CLASS");
-                traverseArtifactOnly(getProcessors(Process.TRAVERSE, new ClassFileAnalyzer(context, Process.TRAVERSE, graphBuilder, handlers)));
-                timer.stopRecord("PROJECT_CLASS", "Process project all .class files cost time = [%s ms]");
-            }
+            markRunningState(TransformContext.State.TRANSFORMING);
+            timer.startRecord("PROJECT_CLASS");
+            traverseArtifactOnly(getProcessors(Process.TRAVERSE, new ClassFileAnalyzer(context, Process.TRAVERSE, graphBuilder, handlers)));
+            timer.stopRecord("PROJECT_CLASS", "Process project all .class files cost time = [%s ms]");
 
-            if (!handlers.isEmpty()) {
-                timer.startRecord("ANDROID");
-                traverseAndroidJarOnly(getProcessors(Process.TRAVERSE_ANDROID, new ClassFileAnalyzer(context, Process.TRAVERSE_ANDROID, graphBuilder, handlers)));
-                timer.stopRecord("ANDROID", "Process android jar cost time = [%s ms]");
-            }
+            timer.startRecord("ANDROID");
+            markRunningState(TransformContext.State.TRAVERSINGANDROID);
+            traverseAndroidJarOnly(getProcessors(Process.TRAVERSE_ANDROID, new ClassFileAnalyzer(context, Process.TRAVERSE_ANDROID, graphBuilder, handlers)));
+            timer.stopRecord("ANDROID", "Process android jar cost time = [%s ms]");
             timer.startRecord("SAVECACHE");
             mClassGraph = graphBuilder.build();
             timer.stopRecord("SAVECACHE", "Process saving cache cost time = [%s ms]");
         }
 
         timer.stopRecord("PRE_PROCESS", "Collect info cost time = [%s ms]");
-
-        if (!handlers.isEmpty()) {
-            timer.startRecord("PROCESS");
-            transform(getProcessors(Process.TRANSFORM, new ClassFileTransformer(handlers, needPreVerify(), needVerify())));
-            timer.stopRecord("PROCESS", "Transform cost time = [%s ms]");
-        }
+        timer.startRecord("PROCESS");
+        transform(getProcessors(Process.TRANSFORM, new ClassFileTransformer(handlers, needPreVerify(), needVerify())));
+        timer.stopRecord("PROCESS", "Transform cost time = [%s ms]");
     }
 
     private boolean isOnePassEnough() {

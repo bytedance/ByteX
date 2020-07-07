@@ -10,13 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Context extends BaseContext<SerializationCheckExtension> {
-    private WhiteList whiteList;
-    private List<String> errorRecords;
+    private WhiteList whiteList = new WhiteList();
+    private List<String> errorRecords = new ArrayList<>();
 
     public Context(Project project, AppExtension android, SerializationCheckExtension extension) {
         super(project, android, extension);
-        whiteList = new WhiteList();
-        errorRecords = new ArrayList<>();
     }
 
     public void initWithWhiteList(List<String> whiteList) {
@@ -44,5 +42,12 @@ public class Context extends BaseContext<SerializationCheckExtension> {
             sb.append(record);
         }
         return sb.toString();
+    }
+
+    @Override
+    public void releaseContext() {
+        super.releaseContext();
+        whiteList.clear();
+        errorRecords.clear();
     }
 }

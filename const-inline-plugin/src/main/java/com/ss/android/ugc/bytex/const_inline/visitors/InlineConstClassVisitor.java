@@ -105,7 +105,7 @@ public class InlineConstClassVisitor extends BaseClassVisitor {
                 if (constField != null && NO_SKIP == needSkip(constField.access, owner, name, desc, constField.value)) {
                     //inline const
                     mContext.getLogger().i("inline const field", String.format("change instruction in method %s.%s: GETSTATIC %s.%s to LDC %s", Utils.replaceSlash2Dot(mClassName), methodName, Utils.replaceSlash2Dot(owner), name, constField.value));
-                    mv.visitLdcInsn(constField.value);
+                    super.visitLdcInsn(constField.value);
                     return;
                 }
             } else if (opcode == Opcodes.PUTSTATIC) {

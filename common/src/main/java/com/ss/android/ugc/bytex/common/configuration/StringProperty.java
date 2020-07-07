@@ -1,6 +1,6 @@
 package com.ss.android.ugc.bytex.common.configuration;
 
-import com.android.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Created by tanlehua on 2019/4/23.
@@ -9,7 +9,7 @@ public enum StringProperty implements Property<String> {
     EXCEPTION_IGNORE_LIST("bytex.exceptionIgnoreClassList", ""),
     GLOBAL_IGNORE_LIST("bytex.globalIgnoreClassList", "");
 
-    @NonNull
+    @Nonnull
     private final String propertyName;
     private final String defaultValue;
 

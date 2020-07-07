@@ -257,4 +257,13 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
         }
         return false;
     }
+
+    @Override
+    public void releaseContext() {
+        super.releaseContext();
+        gettersAndSetters.clear();
+        targetFields.clear();
+        excludeClass.clear();
+        keepAnnotationDescriptors.clear();
+    }
 }

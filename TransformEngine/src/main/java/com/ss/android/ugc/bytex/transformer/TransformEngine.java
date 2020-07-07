@@ -29,12 +29,11 @@ public class TransformEngine {
         this.context = context;
     }
 
-    public void beginRun() {
-        context.markRunningState(false);
-    }
-
-    public void running() {
-        context.markRunningState(true);
+    /**
+     * call internal
+     */
+    public void markRunningState(TransformContext.State state) {
+        context.markRunningState(state);
     }
 
     public void transform(FileProcessor... processors) {
@@ -81,10 +80,6 @@ public class TransformEngine {
         Collections.addAll(realProcessorList, processors);
         realProcessorList.add(new BackupFileProcessor());
         return realProcessorList;
-    }
-
-    public void endRun() {
-
     }
 
     public TransformContext getContext() {

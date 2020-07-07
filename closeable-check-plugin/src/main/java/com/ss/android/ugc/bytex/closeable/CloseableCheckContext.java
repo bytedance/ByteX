@@ -201,7 +201,8 @@ public class CloseableCheckContext extends BaseContext<CloseableCheckExtension> 
         return null;
     }
 
-    public final void release() {
+    public final void releaseContext() {
+        super.releaseContext();
         whiteListPattern.clear();
         onlyCheck.clear();
         emptyCloseables.clear();

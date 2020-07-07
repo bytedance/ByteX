@@ -268,4 +268,12 @@ public class Context extends BaseContext<AccessInlineExtension> {
     public Context(Project project, AccessInlineExtension accessInlineExtension, AppExtension android) {
         super(project, android, accessInlineExtension);
     }
+
+    @Override
+    public void releaseContext() {
+        super.releaseContext();
+        access$Methods.clear();
+        accessedMembers.clear();
+        graph = null;
+    }
 }
