@@ -4,6 +4,7 @@ import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.api.BaseVariant;
 import com.google.common.base.Joiner;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
+import com.ss.android.ugc.bytex.common.TransformConfiguration;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.coverage_plugin.util.GraphUtil;
 import com.ss.android.ugc.bytex.coverage_plugin.util.MappingIdGen;
@@ -49,7 +50,8 @@ public class CoveragePlugin extends CommonPlugin<CoverageExtension, Context> {
     }
 
 
-    @Override public void init() {
+    @Override
+    public void init() {
         super.init();
         // 由于是在Proguard之后插桩，尝试拉取合适的mapping反混淆
         // try to get the mapping file to parse the raw className owing to we do this after Proguard
@@ -109,7 +111,25 @@ public class CoveragePlugin extends CommonPlugin<CoverageExtension, Context> {
         context.setProguardMap(null);
     }
 
-    @Override public String hookTransformName() {
+    @Override
+    public String hookTransformName() {
         return "dexBuilder";
+    }
+
+    @Override
+    public void afterExecute() throws Throwable {
+        super.afterExecute();
+        mappingIdGen = null;
+    }
+
+    @Nonnull
+    @Override
+    public TransformConfiguration transformConfiguration() {
+        return new TransformConfiguration() {
+            @Override
+            public boolean isIncremental() {
+                return false;
+            }
+        };
     }
 }

@@ -23,10 +23,6 @@ public abstract class AbsMainProcessPlugin<E extends BaseExtension> extends AbsP
     private Processor[] processorAnnotations = getClass().getAnnotationsByType(Processor.class);
     private Handler[] handlerAnnotations = getClass().getAnnotationsByType(Handler.class);
 
-    @Override
-    public boolean alone() {
-        return false;
-    }
 
     @Override
     public void init() {
@@ -140,7 +136,5 @@ public abstract class AbsMainProcessPlugin<E extends BaseExtension> extends AbsP
     public void afterExecute() throws Throwable {
         super.afterExecute();
         transformFlow = null;
-        processorAnnotations = null;
-        handlerAnnotations = null;
     }
 }

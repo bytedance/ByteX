@@ -271,6 +271,20 @@ CoveragePlugin {
     whiteList = ["com/ss/android/ugc/bytex/+"]
 }
 
+//防止dexBuilder与multiDexList共同运行导致io异常
+project.afterEvaluate {
+    for (def variant : android.getApplicationVariants()) {
+        println(variant.getName())
+        Task hookTask = project.getTasks().findByName("transformClassesWithDexBuilderFor" + capitalize(variant.getName()))
+        Task afterTaskName = project.getTasks().findByName("multiDexList" + capitalize(variant.getName()))
+        afterTaskName.mustRunAfter(hookTask);
+    }
+}
+
+static String capitalize(String name) {
+    return name.substring(0, 1).toUpperCase() + name.substring(1);
+}
+
 apply plugin: 'bytex.butterknife-check'
 
 apply plugin: "bytex.RFileKnife"

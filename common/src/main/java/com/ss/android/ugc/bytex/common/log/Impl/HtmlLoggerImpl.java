@@ -8,26 +8,17 @@ import org.gradle.api.logging.LogLevel;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import kotlin.Triple;
 
-public class HtmlLoggerImpl extends BaseLogger implements HtmlFragmentProvider {
+public class HtmlLoggerImpl extends CachedLogger implements HtmlFragmentProvider {
     private String moduleName;
-    private final Map<LogLevel, Map<String, List<Triple<String, Throwable, Long>>>> logs = new LinkedHashMap<>();
 
     public HtmlLoggerImpl(String moduleName) {
         this.moduleName = moduleName;
-    }
-
-    @Override
-    protected synchronized void write(LogLevel level, String prefix, String msg, Throwable t) {
-        logs.computeIfAbsent(level, (it) -> new HashMap<>()).computeIfAbsent(prefix, (it) -> new ArrayList<>()).add(new Triple<>(msg, t, System.currentTimeMillis()));
     }
 
     @Override
@@ -46,19 +37,7 @@ public class HtmlLoggerImpl extends BaseLogger implements HtmlFragmentProvider {
 
     @Override
     public void reset() {
-        logs.clear();
-    }
-
-    public void acceptAllCachedLog(Func4<LogLevel, String, String, ? super Throwable> func4) {
-        synchronized (this) {
-            logs.keySet().forEach((level) -> {
-                logs.get(level).keySet().forEach((tag) -> {
-                    logs.get(level).get(tag).forEach((trip) -> {
-                        func4.apply(level, tag, trip.getFirst(), trip.getSecond());
-                    });
-                });
-            });
-        }
+        clear();
     }
 
     private void getTable(Appendable appendable) throws IOException {

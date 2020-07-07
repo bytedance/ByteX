@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -22,8 +23,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -63,49 +67,88 @@ public class JarCache extends FileCache {
             throw new RuntimeException("rewrite");
         }
         List<FileData> dataList = Collections.synchronizedList(new LinkedList<>());
-        AtomicBoolean needOutput = new AtomicBoolean(!context.getInvocation().isIncremental());
         forEach(item -> {
             if (visitor != null) visitor.accept(item);
             dataList.add(item);
-            item.traverseAll(fileData -> {
-                if (fileData.getStatus() != Status.NOTCHANGED) {
-                    needOutput.set(true);
-                }
-            });
         });
         String outputRelativePath = context.getTransformOutputs().relativeToProject(outputFile);
-        String inputRelativePath = context.getTransformOutputs().relativeToProject(getFile());
         TransformOutputs.Entry outputs = context.getTransformOutputs().getLastTransformOutputs().get(outputRelativePath);
-        if (needOutput.get() || dataList.isEmpty()) {
+        boolean isHookJar = outputFile.getAbsolutePath().equals(getFile().getAbsolutePath());
+        boolean needOutput = !context.getInvocation().isIncremental() || isHookJar;
+        if (!needOutput) {
+            needOutput = dataList.stream()
+                    .flatMap((Function<FileData, Stream<FileData>>) fileData -> fileData.allFiles().stream())
+                    .anyMatch(fileData -> fileData.getStatus() != Status.NOTCHANGED);
+        }
+        if (needOutput || dataList.isEmpty()) {
             if (dataList.isEmpty()) {
                 FileUtils.deleteIfExists(outputFile);
             }
+            dataList.sort((t0, t1) -> t0.getRelativePath().compareTo(t1.getRelativePath()));
             TransformOutputs.Entry mapToEntry = new TransformOutputs.Entry(
-                    inputRelativePath,
+                    context.getTransformOutputs().relativeToProject(getFile()),
                     outputRelativePath,
                     outputFile.exists() ? TransformOutputs.Entry.Companion.hash(outputFile) : TransformOutputs.Entry.INVALID_HASH,
                     dataList.stream().map(fileData -> TransformOutputs.Entry.Companion.outputEntry(fileData, outputRelativePath)).sorted().collect(Collectors.toList()));
             if (dataList.size() > 0 && (!outputFile.exists() || outputs == null || outputs.getIdentify() != mapToEntry.getIdentify())) {
                 //输出的结果不一样
                 AtomicBoolean hasOutput = new AtomicBoolean(false);
-                try (JarOutputStream jos = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)))) {
-                    for (FileData item : dataList) {
-                        item.traverseAll(fileData -> {
-                            try {
-                                if (fileData.getStatus() != Status.REMOVED) {
-                                    byte[] bytes = fileData.getBytes();
-                                    if (bytes != null && bytes.length > 0) {
-                                        ZipEntry entry = new ZipEntry(fileData.getRelativePath());
-                                        jos.putNextEntry(entry);
-                                        jos.write(bytes);
-                                        hasOutput.set(true);
-                                    }
-                                }
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
+                File copyFile = Files.createTempFile(String.valueOf(outputFile.getAbsolutePath().hashCode()), "").toFile();
+                JarFile jarFile = null;
+                try {
+                    if (!isHookJar && outputFile.exists() && dataList.stream()
+                            .flatMap((Function<FileData, Stream<FileData>>) fileData -> fileData.allFiles().stream())
+                            .anyMatch(fileData -> fileData.getStatus() == Status.NOTCHANGED)) {
+                        //增量构建，如果存在fileData是NOTCHANGED,则需要从原来的outputFile去读取entry
+                        FileUtils.copyFile(outputFile, copyFile);
+                        jarFile = new JarFile(copyFile);
                     }
+                    String reason = "Unknown";
+                    if (isHookJar) {
+                        reason = "Hook Jar";
+                    } else if (!outputFile.exists()) {
+                        reason = "outputFile not exists(Most likely it is full compilation)";
+                    } else if (outputs == null) {
+                        reason = "lost last outputs";
+                    } else if (outputs.getIdentify() != mapToEntry.getIdentify()) {
+                        reason = "content changed:" + outputs.getIdentify() + "->" + mapToEntry.getIdentify();
+                    }
+                    System.out.println("ByteX outputJar:" + getFile().getAbsolutePath() + "->" + outputFile.getAbsolutePath() + ":reason:" + reason);
+                    try (JarOutputStream jos = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile)))) {
+                        for (FileData item : dataList) {
+                            for (FileData file : item.allFiles()) {
+                                byte[] bytes;
+                                switch (file.getStatus()) {
+                                    case ADDED:
+                                    case CHANGED:
+                                        bytes = file.getBytes();
+                                        break;
+                                    case NOTCHANGED:
+                                        if (jarFile == null) {
+                                            throw new IllegalStateException("outputFile not exists:" + outputFile.getAbsolutePath());
+                                        }
+                                        bytes = ByteStreams.toByteArray(jarFile.getInputStream(jarFile.getEntry(file.getRelativePath())));
+                                        break;
+                                    case REMOVED:
+                                        bytes = null;
+                                        break;
+                                    default:
+                                        throw new IllegalStateException(file.getStatus().toString());
+                                }
+                                if (bytes != null) {
+                                    ZipEntry entry = new ZipEntry(file.getRelativePath());
+                                    jos.putNextEntry(entry);
+                                    jos.write(bytes);
+                                    hasOutput.set(true);
+                                }
+                            }
+                        }
+                    }
+                } finally {
+                    if (jarFile != null) {
+                        jarFile.close();
+                    }
+                    FileUtils.delete(copyFile);
                 }
                 if (!hasOutput.get()) {
                     FileUtils.deleteIfExists(outputFile);
@@ -148,6 +191,7 @@ public class JarCache extends FileCache {
             FileData.LoadFunction loadFunction = fileData -> {
                 synchronized (dataMap) {
                     if (once.compareAndSet(false, true)) {
+                        System.out.println("ByteX LoadJar:" + getFile().getAbsolutePath());
                         try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
                             ZipEntry zipEntry;
                             while ((zipEntry = zin.getNextEntry()) != null) {
@@ -168,25 +212,37 @@ public class JarCache extends FileCache {
                 }
                 return fileData.getBytes();
             };
-            //读所有的entry
-            try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
-                ZipEntry zipEntry;
-                while ((zipEntry = zin.getNextEntry()) != null) {
-                    if (!zipEntry.isDirectory()) {
-                        Status thisStatus = status;
-                        if (status == Status.CHANGED && items != null && !items.contains(zipEntry.getName())) {
-                            //修改了，并且上次输入中没有，算是新增
-                            thisStatus = Status.ADDED;
+            if (status == Status.NOTCHANGED && items != null) {
+                for (String item : items) {
+                    dataMap.put(item, new FileData(loadFunction, item, Status.NOTCHANGED));
+                }
+            } else {
+                //读所有的entry
+                try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
+                    ZipEntry zipEntry;
+                    while ((zipEntry = zin.getNextEntry()) != null) {
+                        if (!zipEntry.isDirectory()) {
+                            if (status == Status.NOTCHANGED) {
+                                //NOTCHANGED，延迟加载,绝大部分情况不会加载，降低内存
+                                dataMap.put(zipEntry.getName(), new FileData(loadFunction, zipEntry.getName(), Status.NOTCHANGED));
+                            } else {
+                                //ADD或者CHANGED
+                                Status thisStatus = status;
+                                if (status == Status.CHANGED && items != null && !items.contains(zipEntry.getName())) {
+                                    //修改了，并且上次输入中没有，算是新增
+                                    thisStatus = Status.ADDED;
+                                }
+                                dataMap.put(zipEntry.getName(), new FileData(ByteStreams.toByteArray(zin), zipEntry.getName(), thisStatus));
+                            }
                         }
-                        dataMap.put(zipEntry.getName(), new FileData(loadFunction, zipEntry.getName(), thisStatus));
                     }
                 }
-            }
-            if (status == Status.CHANGED && items != null) {
-                //上次有但本次没有的算是删除
-                for (String item : items) {
-                    if (!dataMap.containsKey(item)) {
-                        dataMap.put(item, new FileData((byte[]) null, item, Status.REMOVED));
+                if (status == Status.CHANGED && items != null) {
+                    //上次有但本次没有的算是删除
+                    for (String item : items) {
+                        if (!dataMap.containsKey(item)) {
+                            dataMap.put(item, new FileData((byte[]) null, item, Status.REMOVED));
+                        }
                     }
                 }
             }

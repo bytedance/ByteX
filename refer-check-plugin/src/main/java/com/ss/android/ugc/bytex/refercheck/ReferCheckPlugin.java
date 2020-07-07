@@ -48,7 +48,6 @@ public class ReferCheckPlugin extends CommonPlugin<ReferCheckExtension, ReferChe
                 context.getLogger().e(context.extension.getName(), msg, null);
             }
         }
-        context.release();
     }
 
     @Override

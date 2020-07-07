@@ -17,9 +17,8 @@ public abstract class CommonPlugin<E extends BaseExtension, X extends BaseContex
     protected abstract X getContext(Project project, AppExtension android, E extension);
 
     @Override
-    public boolean enable(TransformContext transformContext) {
+    public void startExecute(TransformContext transformContext) {
         context.setTransformContext(transformContext);
-        return super.enable(transformContext);
     }
 
     @Override
@@ -48,8 +47,6 @@ public abstract class CommonPlugin<E extends BaseExtension, X extends BaseContex
     @Override
     public void afterExecute() throws Throwable {
         super.afterExecute();
-        context.setTransformContext(null);
-        context.setClassGraph(null);
-        context = null;
+        context.releaseContext();
     }
 }

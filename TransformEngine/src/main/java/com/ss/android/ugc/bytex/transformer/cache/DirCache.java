@@ -89,8 +89,8 @@ public class DirCache extends FileCache {
         long hash = entry == null ? TransformOutputs.Entry.INVALID_HASH : entry.getHash();
         File target = TransformContext.getOutputTarget(outputFile, fileData.getRelativePath());
         if (fileData.getStatus() == Status.REMOVED) {
+            //被移除了
             FileUtils.deleteIfExists(target);
-            hash = TransformOutputs.Entry.INVALID_HASH;
         } else if (fileData.getStatus() != Status.NOTCHANGED) {
             if (fileData.contentLoaded()) {
                 byte[] bytes = fileData.getBytes();
@@ -102,21 +102,30 @@ public class DirCache extends FileCache {
                             Files.createParentDirs(target);
                         }
                         Files.write(bytes, target);
+                    } else {
+                        //虽然是change状态，但和上次构建的输出hash是一样的，我们可以跳过赋值，这样就可以让后面的插件再次走增量
                     }
                 } else {
-                    hash = TransformOutputs.Entry.INVALID_HASH;
+                    //实际上是等价于被删除了
                     FileUtils.deleteIfExists(target);
                 }
             } else {
+                //考虑增量是请求了变更但没有加载，依然算是未改变
                 //直接复制，减少io
                 FileUtils.copyFile(new File(getFile(), fileData.getRelativePath()), target);
-                if (entry == null) {
-                    hash = TransformOutputs.Entry.Companion.hash(target);
-                }
             }
-        } else if (entry == null) {
-            hash = TransformOutputs.Entry.Companion.hash(target);
         }
+        if (!target.exists()) {
+            hash = TransformOutputs.Entry.INVALID_HASH;
+        } else if (hash == TransformOutputs.Entry.INVALID_HASH) {
+            hash = TransformOutputs.Entry.Companion.hash(target);
+        } else {
+            //sikp check
+//            if (hash != TransformOutputs.Entry.Companion.hash(target)) {
+//                throw new IllegalStateException();
+//            }
+        }
+        //输出附带新增的文件
         List<TransformOutputs.Entry> attachments = Collections.synchronizedList(new LinkedList<>());
         fileData.traverseAttachmentOnly(attachment -> {
             try {

@@ -1,4 +1,9 @@
 # Change Log
+### Version 0.1.7
+- Optimize incremental build and fix bugs
+- Fix memory leak in plugins
+- Support multi variants build
+
 ### Version 0.1.6
 - Upgrade AGP 3.5.3
 - Fix memory leak in HookProguard

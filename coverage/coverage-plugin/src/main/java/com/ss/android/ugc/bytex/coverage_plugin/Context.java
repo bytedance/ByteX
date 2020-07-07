@@ -114,4 +114,17 @@ public class Context extends BaseContext<CoverageExtension> {
     public void setClInitOnly(boolean clInitOnly) {
         this.clInitOnly = clInitOnly;
     }
+
+    @Override
+    public void releaseContext() {
+        super.releaseContext();
+        whiteList = new WhiteList();
+        versionName = "unknown";
+        basePath = "";
+        mappingLatestFilePath = "";
+        mappingFilePath = "";
+        graphFilePath = "";
+        proguardMap = null;
+        clInitOnly = true;
+    }
 }

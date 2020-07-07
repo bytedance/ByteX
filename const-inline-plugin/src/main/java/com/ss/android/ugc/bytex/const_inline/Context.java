@@ -262,7 +262,8 @@ public class Context extends BaseContext<ConstInlineExtension> {
     }
 
 
-    public void release() {
+    public void releaseContext() {
+        super.releaseContext();
         constFieldNodes.clear();
         runtimeConstFields.clear();
         reflectFieldModels.clear();

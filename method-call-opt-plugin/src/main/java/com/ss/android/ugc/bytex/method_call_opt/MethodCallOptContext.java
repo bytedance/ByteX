@@ -88,7 +88,8 @@ public class MethodCallOptContext extends BaseContext<MethodCallOptExtension> {
         getLogger().d("init", "whiteList:" + whiteListPattern);
     }
 
-    public void release() {
+    public void releaseContext() {
+        super.releaseContext();
         whiteListPattern.clear();
         onlyCheckPattern.clear();
         mOptimizationNeededMethods.clear();

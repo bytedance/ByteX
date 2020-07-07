@@ -54,7 +54,13 @@ public interface IPlugin {
     }
 
     default boolean shouldSaveCache() {
-        return true;
+        return transformConfiguration().isIncremental();
+    }
+
+    /**
+     * 准备执行的回调
+     */
+    default void startExecute(TransformContext transformContext) {
     }
 
     /**

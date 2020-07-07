@@ -87,6 +87,12 @@ public class FileData implements Serializable {
         traverseAttachmentOnly(fileData -> fileData.traverseAll(consumer));
     }
 
+    public List<FileData> allFiles() {
+        List<FileData> result = new ArrayList<>();
+        traverseAll(result::add);
+        return result;
+    }
+
     public void attach(FileData fileData) {
         synchronized (this) {
             if (attachment.isEmpty()) {
