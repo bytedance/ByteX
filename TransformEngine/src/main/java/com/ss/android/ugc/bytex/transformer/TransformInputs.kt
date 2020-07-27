@@ -3,8 +3,6 @@ package com.ss.android.ugc.bytex.transformer
 import com.android.build.api.transform.Status
 import com.android.build.api.transform.TransformInput
 import com.android.build.api.transform.TransformInvocation
-import com.android.build.gradle.internal.utils.toImmutableList
-import com.android.build.gradle.internal.utils.toImmutableMap
 import com.google.common.collect.Streams
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
@@ -69,7 +67,7 @@ class TransformInputs internal constructor(private val context: TransformContext
             }.forEach {
                 map[it.parent] = it.items.toSet()
             }
-            map.toImmutableMap()
+            Collections.unmodifiableMap(map)
         } finally {
             //用完即删
             cacheFile.delete()
@@ -86,7 +84,7 @@ class TransformInputs internal constructor(private val context: TransformContext
                 }
             }
         }
-        inputs.toImmutableMap()
+        Collections.unmodifiableMap(inputs)
     }
 
     val changedFiles by lazy {
@@ -206,7 +204,7 @@ class TransformInputs internal constructor(private val context: TransformContext
                     }
                 }
                 `in`.endObject()
-                return Entry(parent!!, items!!.toImmutableList())
+                return Entry(parent!!, Collections.unmodifiableList(items!!))
             }
         }
     }

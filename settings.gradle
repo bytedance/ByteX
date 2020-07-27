@@ -20,6 +20,12 @@ include ':base-plugin'
 include ':common'
 include ':TransformEngine'
 include ':HookProguard'
+include ':ProguardConfigurationResolver'
+include ':ProguardConfigurationResolver-task'
+include ':ProguardConfigurationResolver-transform'
+project(':ProguardConfigurationResolver').projectDir = new File('HookProguard/ProguardConfigurationResolver')
+project(':ProguardConfigurationResolver-task').projectDir = new File('HookProguard/ProguardConfigurationResolver/task')
+project(':ProguardConfigurationResolver-transform').projectDir = new File('HookProguard/ProguardConfigurationResolver/transform')
 include ':GradleToolKit'
 include ':GradleEnvApi'
 project(':GradleEnvApi').projectDir = new File('GradleToolKit/GradleEnvApi')

@@ -2,8 +2,6 @@ package com.ss.android.ugc.bytex.transformer
 
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
-import com.android.build.gradle.internal.utils.toImmutableList
-import com.android.build.gradle.internal.utils.toImmutableMap
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.google.gson.GsonBuilder
@@ -72,7 +70,7 @@ class TransformOutputs internal constructor(private val context: TransformContex
                 for (entry in it) {
                     map[entry.path] = entry
                 }
-                map.toImmutableMap()
+                Collections.unmodifiableMap(map)
             }
         } finally {
             //用完即删
@@ -187,7 +185,7 @@ class TransformOutputs internal constructor(private val context: TransformContex
                         items.add(it.outputEntry("$parent/$relativePath"))
                     }
                     items.sort()
-                    items.toImmutableList()
+                    Collections.unmodifiableList(items)
                 }
                 val hash = if (status == Status.REMOVED || bytes == null || bytes.isEmpty()) {
                     INVALID_HASH
@@ -247,7 +245,7 @@ class TransformOutputs internal constructor(private val context: TransformContex
                     }
                 }
                 `in`.endObject()
-                return Entry(input, path!!, hash, items.toImmutableList())
+                return Entry(input, path!!, hash, Collections.unmodifiableList(items))
             }
         }
 
