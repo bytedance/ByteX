@@ -203,7 +203,6 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                     LevelLog.sDefaultLogger.e("do afterExecute", throwable);
                 }
             }
-            context.releaseContext();
             transformContext.release();
             timer.record("Total cost time = [%s ms]");
             if (BooleanProperty.ENABLE_HTML_LOG.value()) {
@@ -222,7 +221,6 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     }
 
     protected void init(TransformContext transformContext) {
-        context.setTransformContext(transformContext);
         LevelLog.sDefaultLogger = context.getLogger();
         if (BooleanProperty.ENABLE_HTML_LOG.value()) {
             String applicationId = "unknow";

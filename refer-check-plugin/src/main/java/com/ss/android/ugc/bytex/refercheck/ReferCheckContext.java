@@ -182,11 +182,15 @@ public class ReferCheckContext extends BaseContext<ReferCheckExtension> {
 
     public void releaseContext() {
         super.releaseContext();
-        methodCache.release();
-        fieldCache.release();
+        if (methodCache != null) {
+            methodCache.release();
+            methodCache = null;
+        }
+        if (fieldCache != null) {
+            fieldCache.release();
+            fieldCache = null;
+        }
         notAccessMethods.clear();
-        methodCache = null;
-        fieldCache = null;
     }
 
 }

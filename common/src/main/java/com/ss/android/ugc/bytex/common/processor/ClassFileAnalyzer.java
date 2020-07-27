@@ -67,6 +67,10 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
             ClassReader cr = new ClassReader(raw);
             int flag = getFlag(handlers);
             ClassVisitorChain chain = getClassVisitorChain(relativePath);
+            if (this.mGraphBuilder != null) {
+                //do generate class diagram
+                chain.connect(new GenerateGraphClassVisitor(process == TRAVERSE_ANDROID, mGraphBuilder));
+            }
             pluginList.forEach(plugin -> {
                 switch (process) {
                     case TRAVERSE_INCREMENTAL:
@@ -82,10 +86,6 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
                         throw new RuntimeException("Unsupported Process");
                 }
             });
-            if (this.mGraphBuilder != null) {
-                //do generate class diagram
-                chain.connect(new GenerateGraphClassVisitor(process == TRAVERSE_ANDROID, mGraphBuilder));
-            }
             ClassNode cn = new SafeClassNode();
             chain.append(cn);
             chain.accept(cr, flag);

@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.common;
 import com.android.build.api.transform.Transform;
 import com.android.build.gradle.AppExtension;
 import com.google.common.reflect.TypeToken;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.configuration.ProjectOptions;
 import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager;
 import com.ss.android.ugc.bytex.common.hook.TransformHook;
@@ -21,6 +22,7 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
     protected Project project;
     protected AppExtension android;
     protected E extension;
+    private boolean isRunningAlone = false;
 
     protected Transform getTransform() {
         return new SimpleTransform<>(new BaseContext<>(project, android, extension), this);
@@ -39,6 +41,11 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
             alone = Boolean.parseBoolean(aloneProperty.toString());
         }
         return alone;
+    }
+
+    @Override
+    public boolean isRunningAlone() {
+        return isRunningAlone;
     }
 
     @Override
@@ -62,6 +69,13 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
             project.getExtensions().add(extension.getName(), extension);
         }
         onApply(project);
+        if (BooleanProperty.CHECK_INCREMENTAL_INDEBUG.value()) {
+            project.afterEvaluate(p -> {
+                if (!transformConfiguration().isIncremental() && extension.isEnableInDebug()) {
+                    throw new IllegalStateException("ByteX plugin " + extension.getName() + " does not support incremental");
+                }
+            });
+        }
         String hookTransformName = hookTransformName();
         if (hookTransformName != null) {
             TransformHook.inject(project, android, this);
@@ -70,11 +84,14 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
                 try {
                     ByteXExtension byteX = project.getExtensions().getByType(ByteXExtension.class);
                     byteX.registerPlugin(this);
+                    isRunningAlone = false;
                 } catch (UnknownDomainObjectException e) {
                     android.registerTransform(getTransform());
+                    isRunningAlone = true;
                 }
             } else {
                 android.registerTransform(getTransform());
+                isRunningAlone = true;
             }
         }
     }

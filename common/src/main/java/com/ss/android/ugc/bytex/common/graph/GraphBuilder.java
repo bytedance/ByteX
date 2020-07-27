@@ -30,9 +30,27 @@ public class GraphBuilder {
         return false;
     }
 
-    // thread safe
     public void add(ClassEntity entity) {
+        add(entity, false);
+    }
+
+    // thread safe
+    public void add(ClassEntity entity, boolean fromCache) {
         Node current = getOrPutEmpty((entity.access & Opcodes.ACC_INTERFACE) != 0, entity.name);
+        if (!current.defined.compareAndSet(false, true)) {
+            if (fromCache) {
+                //先正式添加后面再添加cache，防止cache覆盖了新的数据，此处return
+                return;
+            }
+            if (!entity.fromAndroid && !isCacheValid()) {
+                String msg = String.format("We found duplicate %s class files in the project.", current.entity.name);
+                if (BooleanProperty.ENABLE_DUPLICATE_CLASS_CHECK.value()) {
+                    throw new DuplicateClassException(msg);
+                } else {
+                    LevelLog.sDefaultLogger.e(msg);
+                }
+            }
+        }
 
         ClassNode superNode = null;
         List<InterfaceNode> interfaceNodes = Collections.emptyList();
@@ -55,14 +73,6 @@ public class GraphBuilder {
                         }
                     })
                     .collect(Collectors.toList());
-        }
-        if (!current.defined.compareAndSet(false, true) && !entity.fromAndroid && !isCacheValid()) {
-            String msg = String.format("We found duplicate %s class files in the project.", current.entity.name);
-            if (BooleanProperty.ENABLE_DUPLICATE_CLASS_CHECK.value()) {
-                throw new DuplicateClassException(msg);
-            } else {
-                LevelLog.sDefaultLogger.e(msg);
-            }
         }
         current.entity = entity;
         current.parent = superNode;

@@ -41,6 +41,27 @@ public class BaseContext<E extends BaseExtension> {
             return;
         }
         logger = createLogger();
+        synchronized (cachedLogger) {
+            cachedLogger.accept((logTime, level, prefix, msg, t) -> {
+                switch (level) {
+                    case DEBUG:
+                        logger.d(prefix, msg);
+                        break;
+                    case INFO:
+                        logger.i(prefix, msg);
+                        break;
+                    case WARN:
+                        logger.w(prefix, msg, t);
+                        break;
+                    case ERROR:
+                        logger.e(prefix, msg, t);
+                        break;
+                    default:
+                        throw new IllegalArgumentException(level.toString());
+                }
+            });
+            cachedLogger.clear();
+        }
         getLogger().i("init");
     }
 
@@ -63,28 +84,6 @@ public class BaseContext<E extends BaseExtension> {
         LevelLog levelLog = new LevelLog(logDistributor);
         levelLog.setLevel(extension.getLogLevel());
         levelLog.setTag(extension.getName());
-
-        synchronized (cachedLogger) {
-            cachedLogger.accept((logTime, level, prefix, msg, t) -> {
-                switch (level) {
-                    case DEBUG:
-                        levelLog.d(prefix, msg);
-                        break;
-                    case INFO:
-                        levelLog.i(prefix, msg);
-                        break;
-                    case WARN:
-                        levelLog.w(prefix, msg, t);
-                        break;
-                    case ERROR:
-                        levelLog.e(prefix, msg, t);
-                        break;
-                    default:
-                        throw new IllegalArgumentException(level.toString());
-                }
-            });
-            cachedLogger.clear();
-        }
         return levelLog;
     }
 

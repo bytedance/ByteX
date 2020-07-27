@@ -9,8 +9,10 @@ public enum BooleanProperty implements Property<Boolean> {
     ENABLE_DUPLICATE_CLASS_CHECK("bytex.enableDuplicateClassCheck", true),
     ENABLE_HTML_LOG("bytex.enableHtmlLog", true),
     ENABLE_RAM_CACHE("bytex.enableRAMCache", true),
-    ENABLE_ASYNC_CACHE("bytex.asyncSaveCache", true),
-    ENABLE_VERIFY_PROGUARD_CONFIGURATION_CHANGED("bytex.verifyProguardConfigurationChanged", true);
+    ENABLE_ASYNC_LOAD_CACHE("bytex.asyncLoadCache", true),
+    ENABLE_ASYNC_SAVE_CACHE("bytex.asyncSaveCache", true),
+    ENABLE_VERIFY_PROGUARD_CONFIGURATION_CHANGED("bytex.verifyProguardConfigurationChanged", true),
+    CHECK_INCREMENTAL_INDEBUG("bytex.checkIncrementalInDebug", false);
 
     @NonNull
     private final String propertyName;

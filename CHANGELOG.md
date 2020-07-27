@@ -1,4 +1,10 @@
 # Change Log
+### Version 0.1.8
+- improve compatibility
+- optimize hook proguard
+- add checkIncrementalInDebug
+- fix npe cased by refer-checker
+- 
 ### Version 0.1.7
 - Optimize incremental build and fix bugs
 - Fix memory leak in plugins

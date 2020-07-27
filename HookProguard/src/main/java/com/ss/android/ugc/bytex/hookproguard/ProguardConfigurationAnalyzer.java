@@ -7,13 +7,10 @@ import com.android.build.gradle.FeaturePlugin;
 import com.android.build.gradle.LibraryExtension;
 import com.android.build.gradle.LibraryPlugin;
 import com.android.build.gradle.api.BaseVariant;
-import com.android.build.gradle.internal.pipeline.TransformTask;
-import com.android.build.gradle.internal.transforms.ProGuardTransform;
-import com.android.build.gradle.internal.transforms.ProguardConfigurable;
-import com.android.build.gradle.internal.transforms.R8Transform;
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.graph.Node;
+import com.ss.android.ugc.bytex.proguardconfigurationresolver.ProguardConfigurationResolver;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -24,9 +21,9 @@ import org.gradle.api.tasks.TaskState;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -293,38 +290,26 @@ public class ProguardConfigurationAnalyzer {
         // specification with the class hierarchy
         private final List<KeepClassSpecificationHolder> classHierarchySpecifications = new ArrayList<>();
         private final Map<String, Long> configurationFiles = new HashMap<>();
-        private ProguardConfigurable proGuardTransform;
+        private final ProguardConfigurationResolver configurationResolver;
         private boolean valid = false;
 
         ProguardConfigurationWithVariantAnalyzer(Project project, String variantName, Set<String> dependenciesRunBeforeTasks, boolean verify) {
             super();
-            Task hookTask = null;
-            for (Task task : project.getTasks()) {
-                if (task instanceof TransformTask) {
-                    TransformTask transformTask = (TransformTask) task;
-                    if (transformTask.getVariantName().equals(variantName) && (transformTask.getTransform() instanceof ProGuardTransform || transformTask.getTransform() instanceof R8Transform)) {
-                        hookTask = task;
-                        proGuardTransform = (ProguardConfigurable) transformTask.getTransform();
-                        FileCollection fileCollection = getAllConfigurationFileCollection();
-                        String capitalVariantName = variantName.substring(0, 1).toUpperCase() + variantName.substring(1);
-                        dependenciesRunBeforeTasks.stream()
-                                .map(s -> task.getProject().getTasks().findByName(s + capitalVariantName))
-                                .filter(Objects::nonNull)
-                                .forEach(t -> t.dependsOn(fileCollection));
-                        if (verify) {
-                            task.doFirst(task1 -> verifyProguardConfiguration());
-                            task.doLast(task12 -> verifyProguardConfiguration());
-                        }
-                    }
-                }
-            }
-            final Task hTask = hookTask;
+            configurationResolver = ProguardConfigurationResolverFactory.createProguardConfigurationResolver(project, variantName);
+            Task hookTask = configurationResolver.getTask();
             if (hookTask != null) {
+                String capitalVariantName = variantName.substring(0, 1).toUpperCase() + variantName.substring(1);
+                dependenciesRunBeforeTasks.stream()
+                        .map(s -> hookTask.getProject().getTasks().findByName(s + capitalVariantName))
+                        .filter(Objects::nonNull)
+                        .forEach(t -> t.dependsOn(configurationResolver.getAllConfigurationFiles()));
+                if (verify) {
+                    hookTask.doFirst(task1 -> verifyProguardConfiguration());
+                    hookTask.doLast(task12 -> verifyProguardConfiguration());
+                }
                 project.getGradle()
                         .getTaskGraph()
-                        .whenReady(taskExecutionGraph -> valid = taskExecutionGraph.hasTask(hTask));
-            } else {
-                project.getLogger().warn("Can not find proguard task for " + variantName);
+                        .whenReady(taskExecutionGraph -> valid = taskExecutionGraph.hasTask(hookTask));
             }
         }
 
@@ -387,24 +372,15 @@ public class ProguardConfigurationAnalyzer {
         }
 
         private List<File> getAllConfigurationFiles() {
+            FileCollection allConfigurationFiles = configurationResolver.getAllConfigurationFiles();
+            if (allConfigurationFiles == null) {
+                return Collections.emptyList();
+            }
             List<File> allFiles = new LinkedList<>();
-            for (File file : getAllConfigurationFileCollection()) {
+            for (File file : allConfigurationFiles) {
                 allFiles.add(file);
             }
             return allFiles;
-        }
-
-        private FileCollection getAllConfigurationFileCollection() {
-            if (proGuardTransform == null) {
-                throw new RuntimeException("This plugin can only be applied in release build or when proguard is enabled.");
-            }
-            try {
-                Method method = ProguardConfigurable.class.getDeclaredMethod("getAllConfigurationFiles");
-                method.setAccessible(true);
-                return (FileCollection) method.invoke(proGuardTransform);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         }
 
         private void filterAndSplit(Configuration configuration) {

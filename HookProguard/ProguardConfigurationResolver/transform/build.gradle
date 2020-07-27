@@ -1,0 +1,11 @@
+apply plugin: 'java'
+group "$upload_group"
+version "$upload_version"
+
+dependencies {
+    compileOnly gradleApi()
+    compileOnly "com.android.tools.build:gradle:3.5.3"
+    implementation project(":ProguardConfigurationResolver")
+}
+
+apply from: rootProject.file('gradle/publish.gradle')

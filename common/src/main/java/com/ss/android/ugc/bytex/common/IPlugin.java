@@ -17,10 +17,18 @@ public interface IPlugin {
     boolean enable(TransformContext transformContext);
 
     /**
-     * 是否用alone模式，即形成单独的transform。
+     * 是否用alone模式，即形成单独的transform
      * if alone, it will make your plugin as a single transform.
      */
     boolean alone();
+
+
+    /**
+     * 是否会alone形成单独的transform运行。{@link #alone()}表示配置状态，{@link #isRunningAlone()}表示结果
+     * Whether it will run in a single transform alone. {@link #alone()} indicates that plugin wants
+     * run alone, {@link #isRunningAlone()} indicates that plugin will run alone.
+     */
+    boolean isRunningAlone();
 
     @Nonnull
     default TransformConfiguration transformConfiguration() {

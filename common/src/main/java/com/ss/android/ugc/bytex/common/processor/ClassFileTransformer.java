@@ -64,15 +64,13 @@ public class ClassFileTransformer extends MainProcessFileHandler {
                 }
             }
             cn.accept(cw);
-            if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(fileData.getRelativePath())) {
-                raw = cw.toByteArray();
-                if (needVerify) {
-                    ClassNode verifyNode = new ClassNode();
-                    new ClassReader(raw).accept(verifyNode, crFlags);
-                    AsmVerifier.verify(verifyNode);
-                }
-                fileData.setBytes(raw);
+            raw = cw.toByteArray();
+            if (needVerify) {
+                ClassNode verifyNode = new ClassNode();
+                new ClassReader(raw).accept(verifyNode, crFlags);
+                AsmVerifier.verify(verifyNode);
             }
+            fileData.setBytes(raw);
         } catch (ByteXException e) {
             throw e;
         } catch (Exception e) {
