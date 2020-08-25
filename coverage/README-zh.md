@@ -15,8 +15,8 @@
 #### 1. 添加classpath
 
 ```groovy
-classpath "com.bytedance.android.byteX:coverage_lib:${Versions.BYTEX_VERSION}"
-classpath "com.bytedance.android.byteX:coverage_plugin:${Versions.BYTEX_VERSION}"
+classpath "com.bytedance.android.byteX:coverage-lib:${Versions.BYTEX_VERSION}"
+classpath "com.bytedance.android.byteX:coverage-plugin:${Versions.BYTEX_VERSION}"
 ```
 
 #### 2. 应用插件
@@ -43,7 +43,7 @@ CoveragePlugin{
 插桩会调用一个接口，我们添加依赖，实现这个接口用来处理上报信息
 
 ```groovy
-implementation "com.bytedance.android.byteX:coverage_lib:${Versions.BYTEX_VERSION}"
+implementation "com.bytedance.android.byteX:coverage-lib:${Versions.BYTEX_VERSION}"
 ```
 
 #### 4. 注册上报
