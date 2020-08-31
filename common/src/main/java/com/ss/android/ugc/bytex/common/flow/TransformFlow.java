@@ -3,11 +3,24 @@ package com.ss.android.ugc.bytex.common.flow;
 import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.annotation.Nullable;
 
-public interface TransformFlow extends Iterable<TransformFlow> {
+public interface TransformFlow extends Iterable<TransformFlow>, TransformFlowLifecycleAware {
+
+    default String name() {
+        int flowIndex = 0;
+        TransformFlow flow = this;
+        while (flow.getPreTransformFlow() != null) {
+            flowIndex++;
+            flow = flow.getPreTransformFlow();
+        }
+        String name = this.getClass().getName();
+        return name.substring(name.lastIndexOf(".") + 1) + "-" + flowIndex;
+    }
+
     /**
      * internal only
      */
@@ -30,6 +43,12 @@ public interface TransformFlow extends Iterable<TransformFlow> {
     Graph getClassGraph() {
         return null;
     }
+
+    /**
+     * 返回TransformFlow的Graph缓存文件路径，增量编译需要读取和写入使用
+     * Returns the path of the Graph cache file of TransformFlow,witch is used by incremental compilation
+     */
+    File getGraphCache();
 
     /**
      * internal only

@@ -8,8 +8,12 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.xml.sax.InputSource;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,14 +39,19 @@ public class XmlReader {
         read(file, visitors);
     }
 
+    //todo:try to fix，do not catch any exception
     public void read(File file, List<Visitor> visitors) {
         try {
-            Document document = reader.read(file);
-            Element root = document.getRootElement();
-            readNode(root, visitors);
-        } catch (DocumentException e) {
+            readWithoutCatchException(new FileInputStream(file), visitors);
+        } catch (FileNotFoundException | DocumentException e) {
             LevelLog.sDefaultLogger.e(e.getMessage(), e);
         }
+    }
+
+    public void readWithoutCatchException(InputStream is, List<Visitor> visitors) throws DocumentException {
+        Document document = reader.read(new InputSource(is));
+        Element root = document.getRootElement();
+        readNode(root, visitors);
     }
 
     private void readNode(Element node, List<Visitor> visitors) {

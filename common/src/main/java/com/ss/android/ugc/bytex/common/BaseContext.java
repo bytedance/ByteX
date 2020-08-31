@@ -131,7 +131,7 @@ public class BaseContext<E extends BaseExtension> {
         return transformContext;
     }
 
-    void setTransformContext(TransformContext transformContext) {
+    public void setTransformContext(TransformContext transformContext) {
         if (transformContext == null) {
             this.transformContext = null;
             return;

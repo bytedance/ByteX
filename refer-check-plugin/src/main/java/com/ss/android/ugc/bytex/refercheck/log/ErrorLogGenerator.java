@@ -1,10 +1,9 @@
 package com.ss.android.ugc.bytex.refercheck.log;
 
 import com.ss.android.ugc.bytex.common.graph.Graph;
-import com.ss.android.ugc.bytex.common.graph.Node;
 import com.ss.android.ugc.bytex.common.utils.Utils;
+import com.ss.android.ugc.bytex.refercheck.InaccessibleNode;
 import com.ss.android.ugc.bytex.refercheck.ReferCheckContext;
-import com.ss.android.ugc.bytex.refercheck.visitor.ReferenceLocation;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
 import org.gradle.api.Project;
@@ -15,7 +14,7 @@ import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,23 +24,23 @@ public class ErrorLogGenerator {
     private final ReferCheckContext context;
     private final TransformEngine transformer;
     private final Project project;
-    private Map<String, ReferenceLocation> notFoundMethods;
-    private Map<String, ReferenceLocation> notFoundFields;
+    private List<InaccessibleNode> inaccessableMethods;
+    private List<InaccessibleNode> inaccessableFields;
 
     public ErrorLogGenerator(ReferCheckContext context, TransformEngine transformer, Project project) {
         this.context = context;
         this.transformer = transformer;
         this.project = project;
-        this.notFoundMethods = context.getNotFoundMethods();
-        this.notFoundFields = context.getNotFoundFields();
+        this.inaccessableMethods = context.getInaccessibleMethods();
+        this.inaccessableFields = context.getInaccessibleFields();
     }
 
     public String generate() {
-        if (!notFoundMethods.isEmpty() || !notFoundFields.isEmpty()) {
+        if (!inaccessableMethods.isEmpty() || !inaccessableFields.isEmpty()) {
             String variantName = transformer.getContext().getVariantName();
             Graph graph = context.getClassGraph();
             PinpointProblemAnalyzer problemResolveAnalyzer = getPinpointProblemAnalyzer(variantName, graph);
-            StringBuilder sb = new StringBuilder("I checkout some methods are not found or inaccessible in the project while compiling and building, please review your code and library dependencies to figure out why they are not found. Any question feel free to contact @tanlehua. \n" +
+            StringBuilder sb = new StringBuilder("I checkout some methods are not found or inaccessible in the project while compiling and building, please review your code and library dependencies to figure out why they are not found. Any question feel free to contact @yangzhiqian. \n" +
                     "我在编译构建过程中检查出有些方法或字段访问不到，辛苦你review一下代码和库的依赖关系，看看为啥这些方法或字段在编译构建时不存在。" +
                     String.format("Run ./gradlew app:dependencies --configuration %sRuntimeClasspath to get more detail about project dependencies graph.\n", variantName) +
                     "We advise you to copy those log below, and leverage the \'Analyse Stacktrace\' in AndroidStudio to locate specific classes and methods.\n" +
@@ -50,49 +49,22 @@ public class ErrorLogGenerator {
                     "如果你用的是本地命令行打包，请你在打包命令后面拼上--no-daemon再试试。\n" +
                     turn2Helper());
             Set<String> relativeClasses = new HashSet<>();
-            notFoundMethods.forEach((k, v) -> {
-                String[] split = k.split(ReferCheckContext.SEPARATOR);
-                String owner = split[0];
-                String methodName = split[1];
-                String desc = split[2];
-                String errorLog = String.format("[ByteX]: Class: [%s], Method: [%s], Desc: [%s] %s. \n",
-                        owner, methodName, desc, v.inaccessible() ? "is inaccessible" : "is not found");
-                String errorStack = String.format("             at %s.%s(%s:%s) \n", v.clzLoc.replaceAll("/", "."), v.methodLoc, v.getSourceFile(), String.valueOf(v.line));
-                sb.append(errorLog).append(errorStack);
-                if (!v.inaccessible()) {
-                    Node node = graph.get(owner);
-                    if (node == null || !node.defined.get()) {
-                        sb.append(String.format("Tips: class [%s] was not packaged, please checkout if it was \'compileOnly\' or excluded by some dependencies.",
-                                owner));
-                    }
-                }
+            for (InaccessibleNode method : inaccessableMethods) {
+                sb.append(method.toString()).append("\n");
                 if (problemResolveAnalyzer != null) {
-                    sb.append(problemResolveAnalyzer.analyze(owner, methodName, desc, v))
-                            .append("\n");
+                    sb.append(problemResolveAnalyzer.analyze(method)).append("\n");
                 }
-                relativeClasses.add(Utils.replaceDot2Slash(owner) + ".class");
-                relativeClasses.add(Utils.replaceDot2Slash(v.clzLoc) + ".class");
-            });
-
-            notFoundFields.forEach((k, v) -> {
-                String[] split = k.split(ReferCheckContext.SEPARATOR);
-                String owner = split[0];
-                String fieldName = split[1];
-                String desc = split[2];
-                String errorLog = String.format("[ByteX]: Class: [%s], Field: [%s], Desc: [%s] %s. \n",
-                        owner, fieldName, desc, v.inaccessible() ? "is inaccessible" : "is not found");
-                String errorStack = String.format("             at %s.%s(%s:%s) \n", v.clzLoc.replaceAll("/", "."), v.methodLoc, v.getSourceFile(), String.valueOf(v.line));
-                sb.append(errorLog).append(errorStack);
-                if (!v.inaccessible()) {
-                    Node node = graph.get(owner);
-                    if (node == null || !node.defined.get()) {
-                        sb.append(String.format("Tips: class [%s] was not packaged, please checkout if it was \'compileOnly\' or excluded by some dependencies.",
-                                owner));
-                    }
+                relativeClasses.add(method.callClassName + ".class");
+                relativeClasses.add(method.memberClassName + ".class");
+            }
+            for (InaccessibleNode field : inaccessableFields) {
+                sb.append(field.toString()).append("\n");
+                if (problemResolveAnalyzer != null) {
+                    sb.append(problemResolveAnalyzer.analyze(field)).append("\n");
                 }
-                relativeClasses.add(Utils.replaceDot2Slash(owner) + ".class");
-                relativeClasses.add(Utils.replaceDot2Slash(v.clzLoc) + ".class");
-            });
+                relativeClasses.add(field.callClassName + ".class");
+                relativeClasses.add(field.memberClassName + ".class");
+            }
             sb.append("\nTips:\n");
             for (String relativeClass : relativeClasses) {
                 sb.append(relativeClass).append(":[")

@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.ss.android.ugc.bytex.common.builder.internal.GlobalByteXBuildListener;
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.internal.ITransformPipeline;
 import com.ss.android.ugc.bytex.common.internal.TransformFlowerManager;
@@ -155,22 +156,26 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
 
     @Override
     public boolean isIncremental() {
-        boolean result = true;
-        for (TransformConfiguration config : getConfigurations()) {
-            if (!config.isIncremental()) {
-                result = false;
-                break;
-            }
-        }
-        return result;
+        return true;
     }
 
     public boolean shouldSaveCache() {
-        return getPlugins().stream().allMatch(IPlugin::shouldSaveCache);
+        return context.extension.isShouldSaveCache() && getPlugins().stream().allMatch(IPlugin::shouldSaveCache);
     }
 
     @Override
     public final synchronized void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+        try {
+            GlobalByteXBuildListener.INSTANCE.onByteXPluginTransformStart(this, transformInvocation);
+            transformInternal(transformInvocation);
+            GlobalByteXBuildListener.INSTANCE.onByteXPluginTransformFinished(this, null);
+        } catch (Exception e) {
+            GlobalByteXBuildListener.INSTANCE.onByteXPluginTransformFinished(this, e);
+            throw e;
+        }
+    }
+
+    private void transformInternal(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
         super.transform(transformInvocation);
         if (!transformInvocation.isIncremental() && transformInvocation.getOutputProvider() != null) {
             transformInvocation.getOutputProvider().deleteAll();
@@ -178,6 +183,9 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
         TransformContext transformContext = getTransformContext(transformInvocation);
         init(transformContext);
         List<IPlugin> plugins = getPlugins().stream().filter(p -> p.enable(transformContext)).collect(Collectors.toList());
+        if (plugins.stream().anyMatch(iPlugin -> !iPlugin.transformConfiguration().isIncremental())) {
+            transformContext.requestNotIncremental();
+        }
 
         Timer timer = new Timer();
         final ITransformPipeline manager = new TransformFlowerManager(transformContext);
@@ -204,6 +212,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                 }
             }
             transformContext.release();
+            this.configurations = null;
             timer.record("Total cost time = [%s ms]");
             if (BooleanProperty.ENABLE_HTML_LOG.value()) {
                 HtmlReporter.getInstance().createHtmlReporter(getName());

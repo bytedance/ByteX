@@ -2,7 +2,7 @@ package com.ss.android.ugc.bytex.refercheck.log;
 
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.graph.Node;
-import com.ss.android.ugc.bytex.refercheck.visitor.ReferenceLocation;
+import com.ss.android.ugc.bytex.refercheck.InaccessibleNode;
 
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -26,21 +26,21 @@ class PinpointProblemAnalyzer {
         this.dependencyGraph = new DependencyGraph(configuration);
     }
 
-    String analyze(String owner, String methodName, String desc, ReferenceLocation methodCallLocation) {
-        Node ownerNode = graph.get(owner);
+    String analyze(InaccessibleNode inaccessibleNode) {
+        Node ownerNode = graph.get(inaccessibleNode.memberClassName);
         if (ownerNode == null) {
             return String.format("Tips: class %s is not existed， please checkout why this class were not be included to project build.\n " +
-                    "%s 这个类没被引进项目构建里，请检查是否有问题。\n", owner, owner);
+                    "%s 这个类没被引进项目构建里，请检查是否有问题。\n", inaccessibleNode.memberClassName, inaccessibleNode.memberClassName);
         }
 
         if (dependencyGraph == null || cacheResolver == null) return "";
-        Artifact artifactWithCallLocation = new Artifact(methodCallLocation.clzLoc);
+        Artifact artifactWithCallLocation = new Artifact(inaccessibleNode.callClassName);
         if (artifactWithCallLocation.invalid()) return "";
-        StringBuilder tips = new StringBuilder(String.format("Tips: class %s is in aar %s:%s:%s. \n", methodCallLocation.clzLoc,
+        StringBuilder tips = new StringBuilder(String.format("Tips: class %s is in aar %s:%s:%s. \n", inaccessibleNode.callClassName,
                 artifactWithCallLocation.groupId, artifactWithCallLocation.artifactId, artifactWithCallLocation.version));
-        Artifact artifactWithOwner = new Artifact(owner);
+        Artifact artifactWithOwner = new Artifact(inaccessibleNode.memberClassName);
         if (!artifactWithOwner.invalid()) {
-            tips.append(String.format("class %s is in aar %s:%s:%s. \n", owner, artifactWithOwner.groupId, artifactWithOwner.artifactId, artifactWithOwner.version));
+            tips.append(String.format("class %s is in aar %s:%s:%s. \n", inaccessibleNode.memberClassName, artifactWithOwner.groupId, artifactWithOwner.artifactId, artifactWithOwner.version));
             tips.append(dependencyGraph.render(artifactWithCallLocation, artifactWithOwner));
         }
         return tips.toString();

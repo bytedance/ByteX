@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.common;
 import com.android.build.api.transform.Transform;
 import com.android.build.gradle.AppExtension;
 import com.google.common.reflect.TypeToken;
+import com.ss.android.ugc.bytex.common.builder.internal.GlobalByteXBuildListener;
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.configuration.ProjectOptions;
 import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager;
@@ -29,6 +30,16 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
     }
 
     @Override
+    public String name() {
+        return extension == null ? getClass().getSimpleName() : extension.getName();
+    }
+
+    @Override
+    public BaseExtension getExtension() {
+        return extension;
+    }
+
+    @Override
     public boolean enable(TransformContext transformContext) {
         return extension.isEnable() && (extension.isEnableInDebug() || transformContext.isReleaseBuild());
     }
@@ -40,6 +51,9 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
         if (aloneProperty != null) {
             alone = Boolean.parseBoolean(aloneProperty.toString());
         }
+        if (!alone && !transformConfiguration().isIncremental() && BooleanProperty.ENABLE_SEPARATE_PROCESSING_NOTINCREMENTAL.value()) {
+            alone = true;
+        }
         return alone;
     }
 
@@ -49,15 +63,8 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
     }
 
     @Override
-    public boolean shouldSaveCache() {
-        return extension.isShouldSaveCache() && transformConfiguration().isIncremental();
-    }
-
-    @Override
     public final void apply(@NotNull Project project) {
-        if (!transformConfiguration().isIncremental()) {
-            System.err.println("[ByteX Warning]:" + this.getClass().getName() + " does not yet support incremental build");
-        }
+        GlobalByteXBuildListener.INSTANCE.onByteXPluginApply(project, this);
         this.project = project;
         this.android = project.getExtensions().getByType(AppExtension.class);
         ProjectOptions.INSTANCE.init(project);
@@ -69,13 +76,6 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
             project.getExtensions().add(extension.getName(), extension);
         }
         onApply(project);
-        if (BooleanProperty.CHECK_INCREMENTAL_INDEBUG.value()) {
-            project.afterEvaluate(p -> {
-                if (!transformConfiguration().isIncremental() && extension.isEnableInDebug()) {
-                    throw new IllegalStateException("ByteX plugin " + extension.getName() + " does not support incremental");
-                }
-            });
-        }
         String hookTransformName = hookTransformName();
         if (hookTransformName != null) {
             TransformHook.inject(project, android, this);
@@ -94,6 +94,7 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
                 isRunningAlone = true;
             }
         }
+        GlobalByteXBuildListener.INSTANCE.onByteXPluginApplied(this);
     }
 
 
@@ -115,7 +116,14 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
     protected void onApply(@Nonnull Project project) {
     }
 
+
+    @Override
+    public void startExecute(TransformContext transformContext) {
+        GlobalByteXBuildListener.INSTANCE.onByteXPluginStart(this);
+    }
+
     @Override
     public void afterExecute() throws Throwable {
+        GlobalByteXBuildListener.INSTANCE.onByteXPluginFinished(this);
     }
 }

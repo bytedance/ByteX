@@ -16,4 +16,6 @@ dependencies {
     compile group: 'dom4j', name: 'dom4j', version: '1.6.1'
 }
 
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
 apply from: rootProject.file('gradle/publish.gradle')
