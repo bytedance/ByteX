@@ -6,10 +6,18 @@ import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface IPlugin {
 
+    default String name() {
+        return getClass().getSimpleName();
+    }
+
     // plugin是否可用的开关
+    default BaseExtension getExtension() {
+        return null;
+    }
 
     /**
      * Determine whether your plugin is enable.
@@ -54,6 +62,7 @@ public interface IPlugin {
     /**
      * @return get the TransformFlow that the current plugin runs on
      */
+    @Nullable
     TransformFlow getTransformFlow();
 
 
@@ -62,7 +71,7 @@ public interface IPlugin {
     }
 
     default boolean shouldSaveCache() {
-        return transformConfiguration().isIncremental();
+        return true;
     }
 
     /**

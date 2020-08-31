@@ -509,6 +509,18 @@ public class SourceFileKillerPlugin extends CommonPlugin<SourceFileExtension, So
     ...
 }
 ```
+
+## Perceive The Lifecycle Of ByteX
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ByteX adds the corresponding hook code at the beginning and end of the key lifecycle events  for developers monitoring to do some operations when ByteX executes at certain timings.You can set your custom listeners with `ByteXBuildListenerManager`,for example:<br/>
+```java
+ByteXBuildListenerManager.INSTANCE.registerByteXBuildListener(yourByteXBuildListener)
+ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainProcessHandlerListener)
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;More details could be found in `ByteXBuildListener` and `MainProcessHandlerListener`
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By default, ByteX has a built-in default listener to record lifecycle events . Results will be recorded in the two jsons located at app/build/ByteX/build/ after compilation is completed.
+
+
 ## Development Considerations
 ### Branch Management
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For new features, in principle, it can only be pulled from the develop branch.When it needs to be merged into the master branch, it needs to be merged into the develop branch first, and unified into the master branch later.<br/>

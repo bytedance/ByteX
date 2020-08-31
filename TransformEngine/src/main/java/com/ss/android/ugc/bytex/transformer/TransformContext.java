@@ -125,6 +125,9 @@ public class TransformContext implements GradleEnv, ClassFinder {
         if (this.state.compareTo(State.RUNNING) >= 0) {
             throw new RuntimeException("You Should request for not incremental before traversing.");
         }
+        if (!this.isIncremental()) {
+            return;
+        }
         this.isPluginIncremental = false;
         this.transformInputs.requestNotIncremental();
     }

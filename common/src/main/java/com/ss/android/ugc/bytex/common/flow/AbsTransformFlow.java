@@ -49,17 +49,9 @@ public abstract class AbsTransformFlow implements TransformFlow {
         transformEngine.markRunningState(state);
     }
 
-    /**
-     * 返回Transform的Graph缓存文件路径，增量编译需要读取和写入使用
-     */
+    @Override
     public File getGraphCache() {
-        int flowIndex = 0;
-        TransformFlow flow = this;
-        while (flow.getPreTransformFlow() != null) {
-            flowIndex++;
-            flow = flow.getPreTransformFlow();
-        }
-        return new File(context.byteXBuildDir(), "graphCache-" + this.getClass().getSimpleName() + "-" + flowIndex + ".json");
+        return new File(context.byteXBuildDir(), "graphCache-" + name() + ".json");
     }
 
     protected AbsTransformFlow traverse(FileProcessor... processors) throws IOException, InterruptedException {
@@ -82,13 +74,18 @@ public abstract class AbsTransformFlow implements TransformFlow {
         markRunningState(TransformContext.State.BEFORETRANSFORM);
         beforeTransform(transformEngine);
         markRunningState(TransformContext.State.TRANSFORMING);
-        transformEngine.transform(this.nextTransformFlow == null, processors);
+        transform(transformEngine, this.nextTransformFlow == null, processors);
         markRunningState(TransformContext.State.AFTERTRANSFORM);
         afterTransform(transformEngine);
         return this;
     }
 
     protected abstract AbsTransformFlow beforeTransform(TransformEngine transformEngine) throws IOException;
+
+    protected AbsTransformFlow transform(TransformEngine transformEngine, boolean isLast, FileProcessor... processors) throws IOException {
+        transformEngine.transform(isLast, processors);
+        return this;
+    }
 
     protected abstract AbsTransformFlow afterTransform(TransformEngine transformEngine) throws IOException;
 

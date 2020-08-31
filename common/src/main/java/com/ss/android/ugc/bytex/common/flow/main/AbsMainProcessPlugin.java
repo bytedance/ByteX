@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.common.flow.main;
 import com.ss.android.ugc.bytex.common.AbsPlugin;
 import com.ss.android.ugc.bytex.common.BaseExtension;
 import com.ss.android.ugc.bytex.common.IPlugin;
+import com.ss.android.ugc.bytex.common.flow.LifecycleAwareTransformFlow;
 import com.ss.android.ugc.bytex.common.flow.TransformFlow;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
@@ -77,6 +78,9 @@ public abstract class AbsMainProcessPlugin<E extends BaseExtension> extends AbsP
             transformFlow = provideTransformFlow(mainFlow, transformContext);
             if (transformFlow == null) {
                 throw new RuntimeException("TransformFlow can not be null.");
+            }
+            if (!transformFlow.isLifecycleAware()) {
+                transformFlow = new LifecycleAwareTransformFlow(transformFlow);
             }
         }
         return transformFlow;

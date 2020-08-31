@@ -32,8 +32,8 @@ public class ReferCheckClassVisitor extends BaseClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String methodName, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, methodName, desc, signature, exceptions);
-        if (!isInterface && !TypeUtil.isAbstract(access) && !TypeUtil.isSynthetic(access) && context.shouldCheck(className, methodName)) {
-            mv = new ReferCheckMethodVisitor(mv, context, methodName, className, sourceFile);
+        if (!isInterface && !TypeUtil.isAbstract(access) && !TypeUtil.isSynthetic(access)) {
+            mv = new ReferCheckMethodVisitor(mv, context, className, methodName, desc, access, sourceFile);
         }
         return mv;
     }

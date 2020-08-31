@@ -32,11 +32,6 @@ public class ByteXTransform extends CommonTransform<Context> {
     }
 
     @Override
-    public boolean shouldSaveCache() {
-        return context.extension.isShouldSaveCache() && super.shouldSaveCache();
-    }
-
-    @Override
     protected void afterTransform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
         super.afterTransform(transformInvocation);
         context.releaseContext();

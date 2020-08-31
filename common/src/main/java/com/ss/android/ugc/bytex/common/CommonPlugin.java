@@ -18,6 +18,7 @@ public abstract class CommonPlugin<E extends BaseExtension, X extends BaseContex
 
     @Override
     public void startExecute(TransformContext transformContext) {
+        super.startExecute(transformContext);
         context.setTransformContext(transformContext);
     }
 

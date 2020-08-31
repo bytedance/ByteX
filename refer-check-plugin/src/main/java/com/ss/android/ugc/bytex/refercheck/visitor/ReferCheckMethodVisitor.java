@@ -1,6 +1,5 @@
 package com.ss.android.ugc.bytex.refercheck.visitor;
 
-import com.ss.android.ugc.bytex.common.graph.ClassEntity;
 import com.ss.android.ugc.bytex.common.graph.ClassNode;
 import com.ss.android.ugc.bytex.common.graph.FieldEntity;
 import com.ss.android.ugc.bytex.common.graph.Graph;
@@ -10,6 +9,7 @@ import com.ss.android.ugc.bytex.common.graph.MethodEntity;
 import com.ss.android.ugc.bytex.common.graph.Node;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.utils.Utils;
+import com.ss.android.ugc.bytex.refercheck.InaccessibleNode;
 import com.ss.android.ugc.bytex.refercheck.ReferCheckContext;
 
 import org.objectweb.asm.Label;
@@ -26,15 +26,20 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
     private final ReferCheckContext context;
     private final String sourceFile;
     private final Graph graph;
-    private String methodName;
-    private String className;
+    private final String className;
+    private final String methodName;
+    private final String methodDesc;
+    private final int methodAccess;
     private int processingLineNumber;
 
-    ReferCheckMethodVisitor(MethodVisitor mv, ReferCheckContext context, String methodName, String className, String sourceFile) {
+    ReferCheckMethodVisitor(MethodVisitor mv, ReferCheckContext context,
+                            String className, String methodName, String methodDesc, int methodAccess, String sourceFile) {
         super(Opcodes.ASM5, mv);
         this.context = context;
-        this.methodName = methodName;
         this.className = className;
+        this.methodName = methodName;
+        this.methodDesc = methodDesc;
+        this.methodAccess = methodAccess;
         this.sourceFile = sourceFile;
         this.graph = context.getClassGraph();
     }
@@ -51,51 +56,61 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
         super.visitMethodInsn(opcode, owner, name, desc, itf);
     }
 
-    private void checkMethod(int opcode, String owner, String name, String desc, boolean itf) {
-        if (context.shouldCheck(owner, name)) {
-            String method = String.format("%s#%s", owner, name);
-            List<String> logMethods = context.extension.getLogMethods();
-            if (logMethods != null && logMethods.contains(method)) {
-                context.getLogger().i("Check method : " + method);
-            }
-            Node ownerNode = graph.get(owner);
-            if (ownerNode != null) {
-                MethodEntity originMethod = ownerNode.confirmOriginMethod(name, desc);
-                if (originMethod != null) {
-                    if (TypeUtil.isAbstract(originMethod.access())) {
-                        // Add all children to checklist
-                        if (itf) { // from interface
-                            if (!(ownerNode instanceof InterfaceNode)) {
-                                throw new RuntimeException(String.format("%s should be a interface, but it's a class now. It was referred at class [%s], method [%s].", ownerNode.entity.name, this.className, this.methodName));
-                            }
-                            graph.traverseChildren((InterfaceNode) ownerNode, node -> {
-                                ClassEntity clz = node.entity;
-                                if (!TypeUtil.isInterface(clz.access) && !TypeUtil.isAbstract(clz.access)
-                                        && clz.methods.stream().noneMatch(m -> !TypeUtil.isAbstract(m.access()) && name.equals(m.name()) && desc.equals(m.desc()))) {
-                                    context.addMethodIfNeed(-1, clz.name, name, desc, className, methodName, processingLineNumber, sourceFile);
-                                }
-                                return false;
-                            });
-                        } else { // from abstract class
-                            if (!(ownerNode instanceof ClassNode)) {
-                                throw new RuntimeException(String.format("%s should be a class, but it's an interface now. It was referred at class [%s], method [%s].", ownerNode.entity.name, this.className, this.methodName));
-                            }
-                            graph.traverseChildren((ClassNode) ownerNode, node -> {
-                                ClassEntity clz = node.entity;
-                                if (!TypeUtil.isInterface(clz.access) && !TypeUtil.isAbstract(clz.access)
-                                        && clz.methods.stream().noneMatch(m -> !TypeUtil.isAbstract(m.access()) && name.equals(m.name()) && desc.equals(m.desc()))) {
-                                    context.addMethodIfNeed(-1, clz.name, name, desc, className, methodName, processingLineNumber, sourceFile);
-                                }
-                                return false;
-                            });
+    private void checkMethod(final int opcode, final String owner, final String name, final String desc, final boolean itf) {
+        String method = String.format("%s#%s", owner, name);
+        List<String> logMethods = context.extension.getLogMethods();
+        if (logMethods != null && logMethods.contains(method)) {
+            context.getLogger().i("Check method : " + method);
+        }
+        Node ownerNode = graph.get(owner);
+        if (ownerNode != null) {
+            MethodEntity originMethod = ownerNode.confirmOriginMethod(name, desc);
+            if (originMethod != null) {
+                if (TypeUtil.isAbstract(originMethod.access())) {
+                    // Add all children to checklist
+                    if (itf) { // from interface
+                        if (!(ownerNode instanceof InterfaceNode)) {
+                            throw new RuntimeException(String.format("%s should be a interface, but it's a class now. It was referred at class [%s], method [%s].", ownerNode.entity.name, this.className, this.methodName));
                         }
-                    }
-                    if (accessible(opcode, originMethod)) {
-                        return;
+                        graph.traverseChildren((InterfaceNode) ownerNode, child -> {
+                            if (child instanceof ClassNode && !TypeUtil.isAbstract(child.entity.access)
+                                    && TypeUtil.isAbstract(child.confirmOriginMethod(name, desc).access())) {
+                                //非抽象子类没有实现这个抽象类
+                                context.addNotAccessMember(
+                                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                                        child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
+                            }
+                            return false;
+                        });
+                    } else { // from abstract class
+                        if (!(ownerNode instanceof ClassNode)) {
+                            throw new RuntimeException(String.format("%s should be a class, but it's an interface now. It was referred at class [%s], method [%s].", ownerNode.entity.name, this.className, this.methodName));
+                        }
+                        graph.traverseChildren((ClassNode) ownerNode, child -> {
+                            if (!TypeUtil.isAbstract(child.entity.access) && TypeUtil.isAbstract(child.confirmOriginMethod(name, desc).access())) {
+                                //非抽象子类没有实现这个抽象方法
+                                context.addNotAccessMember(
+                                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                                        child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
+                            }
+                            return false;
+                        });
                     }
                 }
+                if (!accessible(opcode, originMethod)) {
+                    context.addNotAccessMember(
+                            className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                            owner, name, desc, originMethod.access(), InaccessibleNode.TYPE_INACCESS);
+                }
+            } else {
+                context.addNotAccessMember(
+                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                        owner, name, desc, 0, InaccessibleNode.TYPE_METHOD_NOT_FOUND);
             }
-            context.addNotAccessMethod(owner, name, desc, className, methodName, processingLineNumber, sourceFile);
+        } else {
+            context.addNotAccessMember(
+                    className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                    owner, name, desc, 0, InaccessibleNode.TYPE_CLASS_NOT_FOUND);
         }
     }
 
@@ -136,18 +151,24 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
     }
 
     private void checkField(int opcode, String name, String desc, String owner) {
-        if (context.shouldCheck(owner, name)) {
-            Node ownerNode = graph.get(owner);
-            if (ownerNode != null) {
-                FieldEntity originField = ownerNode.confirmOriginField(name, desc);
-                if (originField != null) {
-                    if (!accessible(opcode, originField)) {
-                        context.addFieldIfNeed(originField.access(), owner, name, desc, className, methodName, processingLineNumber, sourceFile);
-                    }
-                    return; // this field exist.
+        Node ownerNode = graph.get(owner);
+        if (ownerNode != null) {
+            FieldEntity originField = ownerNode.confirmOriginField(name, desc);
+            if (originField != null) {
+                if (!accessible(opcode, originField)) {
+                    context.addNotAccessMember(
+                            className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                            owner, name, desc, originField.access(), InaccessibleNode.TYPE_INACCESS);
                 }
+            } else {
+                context.addNotAccessMember(
+                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                        owner, name, desc, 0, InaccessibleNode.TYPE_FIELD_NOT_FOUND);
             }
-            context.addFieldIfNeed(-1, owner, name, desc, className, methodName, processingLineNumber, sourceFile);
+        } else {
+            context.addNotAccessMember(
+                    className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                    owner, name, desc, 01, InaccessibleNode.TYPE_CLASS_NOT_FOUND);
         }
     }
 }
