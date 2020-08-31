@@ -1,10 +1,14 @@
 # Change Log
+### Version 0.1.9
+- optimize refer checker:More detailed error information
+- add [ByteXBuildListener](wiki/ByteX-Developer-API-en.md#perceive-the-lifecycle-of-bytex)
+
 ### Version 0.1.8
 - improve compatibility
 - optimize hook proguard
 - add checkIncrementalInDebug
 - fix npe cased by refer-checker
-- 
+
 ### Version 0.1.7
 - Optimize incremental build and fix bugs
 - Fix memory leak in plugins

@@ -518,6 +518,18 @@ public class SourceFileKillerPlugin extends CommonPlugin<SourceFileExtension, So
     ...
 }
 ```
+
+## 感知ByteX的生命周期
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ByteX在关键的生命周期开始和结束时添加对应的钩子代码，用于外部监听到ByteX执行到某些时机时做一些操作.设置监听器的入口在`ByteXBuildListenerManager`中,比如:<br/>
+```java
+ByteXBuildListenerManager.INSTANCE.registerByteXBuildListener(yourByteXBuildListener)
+ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainProcessHandlerListener)
+```
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;详细的监听事件请查看`ByteXBuildListener`和`MainProcessHandlerListener`
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;默认的，ByteX内置一个默认的监听器，用于记录编译期间的生命周期事件，相关的数据会在编译完成后记录在app/build/ByteX/build/的两个json中
+
+
 ## 开发注意事项
 ### 分支管理
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;对于新功能,原则上只能从develop分支上拉出来,当需要合入到主干分支,需要先合入到develop分支,后面统一合入到master分支.<br/>
