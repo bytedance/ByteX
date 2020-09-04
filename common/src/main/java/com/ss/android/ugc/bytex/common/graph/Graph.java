@@ -18,61 +18,10 @@ import java.util.function.Function;
 public class Graph {
 
 
-    private final Map<String, Node> nodeMap;
+    protected Map<String, Node> nodeMap;
 
     Graph(Map<String, Node> nodesMap) {
         this.nodeMap = nodesMap;
-    }
-
-    /**
-     * thread unsafe
-     * Before prepare, the Graph only has vector from child to super.
-     * this method will add vector from super to child.
-     * After prepare, there is a full graph.
-     */
-    void prepare() {
-        nodeMap.values()
-                .forEach(n -> {
-                    if (n.parent != null) {
-                        ClassNode parent = n.parent;
-                        if (parent.children == Collections.EMPTY_LIST) {
-
-                            // optimize for Object
-                            if (parent.entity.name.equals("java/lang/Object")) {
-                                parent.children = new ArrayList<>(nodeMap.size() >> 1);
-                            } else {
-                                parent.children = new ArrayList<>();
-                            }
-                        }
-                        // all interfaces extends java.lang.Object
-                        // make java.lang.Object subclasses purely
-                        if (n instanceof ClassNode) {
-                            parent.children.add((ClassNode) n);
-                        }
-                    }
-                    n.interfaces.forEach(i -> {
-                        if (n instanceof InterfaceNode) {
-                            if (i.children == Collections.EMPTY_LIST) {
-                                i.children = new ArrayList<>();
-                            }
-                            i.children.add((InterfaceNode) n);
-                        } else {
-                            if (i.implementedClasses == Collections.EMPTY_LIST) {
-                                i.implementedClasses = new ArrayList<>();
-                            }
-                            //noinspection ConstantConditions
-                            i.implementedClasses.add((ClassNode) n);
-                        }
-                    });
-                });
-    }
-
-    /**
-     * clear graph info
-     * called by internal,please do not call.
-     */
-    public void clear() {
-        nodeMap.clear();
     }
 
     public boolean inherit(String child, String parent) {
@@ -301,7 +250,7 @@ public class Graph {
         return node.confirmOriginMethod(name, desc);
     }
 
-    public Map<String, Node> getNodes(){
+    public Map<String, Node> getNodes() {
         return Collections.unmodifiableMap(nodeMap);
     }
 }

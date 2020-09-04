@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Created by yangzhiqian on 2020-03-04<br/>
  */
-object RAMClassesCache : IClassCache {
+internal object RamClassesCacheStorage : ClassCacheStorage {
     private val caches = ConcurrentHashMap<String, List<ClassEntity>>()
 
     fun clear() {
@@ -23,7 +23,7 @@ object RAMClassesCache : IClassCache {
             return null
         }
         return caches.remove(t.absolutePath)?.apply {
-            println("Load ByteX Classes Cache Success[RAM]:" + t.absolutePath)
+            println("Load ByteX Classes Cache(${size}) Success[RAM]:" + t.absolutePath)
         }
     }
 
@@ -31,7 +31,7 @@ object RAMClassesCache : IClassCache {
         if (t == null) {
             return false
         }
-        println("Save ByteX Classes Cache Success[RAM]:" + t.absolutePath)
+        println("Save ByteX Classes Cache(${d.size}) Success[RAM]:" + t.absolutePath)
         caches[t.absolutePath] = d
         return true
     }

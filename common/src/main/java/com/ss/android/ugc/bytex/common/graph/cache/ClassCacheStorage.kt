@@ -6,4 +6,4 @@ import java.io.File
 /**
  * Created by yangzhiqian on 2020/7/13<br/>
  */
-interface IClassCache : ICache<File, List<ClassEntity>>
+internal interface ClassCacheStorage : CacheStorage<File, List<ClassEntity>>
