@@ -521,6 +521,21 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;By default, ByteX has a built-in default listener to record lifecycle events . Results will be recorded in the two jsons located at app/build/ByteX/build/ after compilation is completed.
 
 
+## Configuration Properties In ByteX
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Users can config each plugin with it`s Extension in DSL.In addition, there are some properties witch are used by ByteX engine and could be configured in gradle.properties.Here is the list:<br/>
+
+- bytex.globalIgnoreClassList:A relative file path relative to the project root directory,witch contains a list of classes(supporting pattern matching). If an exception occurs when processing the classes in the lists, ByteX will process it internally instead of throwing it to terminate the compilation
+- bytex.enableDuplicateClassCheck:Whether to check for class duplication，boolean,true by default
+- bytex.enableHtmlLog:Whether to generate html report，boolean,true by default
+- bytex.enableRAMCache:Whether to enable memory cache to store ByteX`s cache, this configuration is used to optimize incremental build, because loading files may take time, boolean, true by default. If it is non-incremental (CI), it is recommended to configure to false
+- bytex.enableRAMNodesCache:Whether to cache the Nodes in the Graph to the memory, it takes effect when enableRAMCache is true，boolean,true by default
+- bytex.enableRAMClassesCache:Whether to cache the ClassEntity in Graph to memory, it takes effect when enableRAMCache is true，boolean,false by default
+- bytex.asyncSaveCache：Whether to save the cache asynchronously (non-incremental plugins doing nothing), boolean , true by default.
+- bytex.verifyProguardConfigurationChanged:Whether to verify whether the keep rules obtained by the plugin is the same as the keep rules when Proguard is executed. boolean , true by default.
+- bytex.checkIncrementalInDebug:Whether to check non-incremental plugins running with its enableInDebug is true，boolean , false by default.
+- bytex.enableSeparateProcessingNotIncremental:Whether to executing non-incremental plugins in single TransformTask automatically. If there is a plugin which is incremental, all ByteX plugins will run in non-incremental, which will greatly reduce the speed of incremental build. After the switch is turned on, the plugins that support increment will be executed together. Incremental plugins will run independently in a transform. oolean ,false by default.
+- bytex.${extension.getName()}.alone:Whether to run the plugin independently，boolean , false by default.
+
 ## Development Considerations
 ### Branch Management
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For new features, in principle, it can only be pulled from the develop branch.When it needs to be merged into the master branch, it needs to be merged into the develop branch first, and unified into the master branch later.<br/>

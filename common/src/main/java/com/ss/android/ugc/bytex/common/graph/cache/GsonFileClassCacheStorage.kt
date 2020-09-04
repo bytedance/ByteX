@@ -10,7 +10,7 @@ import java.lang.reflect.Modifier
 /**
  * Created by yangzhiqian on 2019-12-01<br/>
  */
-class GsonClassesCache(private val delegate: ICache<File, List<ClassEntity>>? = null) : IClassCache {
+internal class GsonFileClassCacheStorage(private val delegate: ClassCacheStorage? = null) : ClassCacheStorage {
     companion object {
         private val GSON by lazy {
             GsonBuilder()
@@ -33,7 +33,7 @@ class GsonClassesCache(private val delegate: ICache<File, List<ClassEntity>>? = 
             BufferedReader(FileReader(t)).use { reader ->
                 return GSON.fromJson<List<ClassEntity>>(reader, object : TypeToken<List<ClassEntity>>() {
                 }.type).apply {
-                    println("Load ByteX Classes Cache Success[File]:" + t.absolutePath)
+                    println("Load ByteX Classes Cache(${size}) Success[File]:" + t.absolutePath)
                 }
             }
         } catch (e: Exception) {
@@ -56,7 +56,7 @@ class GsonClassesCache(private val delegate: ICache<File, List<ClassEntity>>? = 
             GSON.toJson(d, writer)
             writer.flush()
         }
-        println("Save ByteX Classes Cache Succeed[File]:" + t.absolutePath)
+        println("Save ByteX Classes Cache(${d.size}) Succeed[File]:" + t.absolutePath)
         return true
     }
 }

@@ -32,11 +32,7 @@ public class GraphUtil {
 
     private static Map<String, ClassNodeBean> buildNodeMap(Context context) throws NoSuchFieldException, IllegalAccessException {
         if (context == null) return null;
-        Graph graph = context.getClassGraph();
-        // 拿byteX的nodeMap
-        Field field = graph.getClass().getDeclaredField("nodeMap");
-        field.setAccessible(true);
-        Map<String, Node> nodeMap = (Map<String, Node>) field.get(graph);
+        Map<String, Node> nodeMap = context.getClassGraph().getNodes();
         Map<String, ClassNodeBean> map = new HashMap<>(nodeMap.size());
         // 一定要完完整整地复制...少了会导致统计不准
         for (Map.Entry<String, Node> stringNodeEntry : nodeMap.entrySet()) {

@@ -8,6 +8,7 @@ import com.ss.android.ugc.bytex.transformer.TransformContext;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,9 +16,10 @@ import java.util.stream.Collectors;
 
 public class GraphBuilder {
     // Key is class name. value is class node.
-    private Map<String, Node> nodeMap = new ConcurrentHashMap<>(2 >> 16);
+    protected Map<String, Node> nodeMap = new ConcurrentHashMap<>(2 >> 16);
     private volatile Graph graph;
 
+    //useless
     public GraphBuilder(TransformContext context) {
 
     }
@@ -36,7 +38,7 @@ public class GraphBuilder {
 
     // thread safe
     public void add(ClassEntity entity, boolean fromCache) {
-        Node current = getOrPutEmpty((entity.access & Opcodes.ACC_INTERFACE) != 0, entity.name);
+        final Node current = getOrPutEmpty((entity.access & Opcodes.ACC_INTERFACE) != 0, entity.name);
         if (!current.defined.compareAndSet(false, true)) {
             if (fromCache) {
                 //先正式添加后面再添加cache，防止cache覆盖了新的数据，此处return
@@ -58,6 +60,16 @@ public class GraphBuilder {
             Node node = getOrPutEmpty(false, entity.superName);
             if (node instanceof ClassNode) {
                 superNode = (ClassNode) node;
+                // all interfaces extends java.lang.Object
+                // make java.lang.Object subclasses purely
+                if (current instanceof ClassNode) {
+                    synchronized (superNode) {
+                        if (superNode.children == Collections.EMPTY_LIST) {
+                            superNode.children = new LinkedList<>();
+                        }
+                        superNode.children.add((ClassNode) current);
+                    }
+                }
             } else {
                 throw new RuntimeException(String.format("%s is not a class. Maybe there are duplicate class files in the project.", entity.superName));
             }
@@ -67,6 +79,20 @@ public class GraphBuilder {
                     .map(i -> {
                         Node node = getOrPutEmpty(true, i);
                         if (node instanceof InterfaceNode) {
+                            final InterfaceNode interfaceNode = (InterfaceNode) node;
+                            synchronized (interfaceNode) {
+                                if (current instanceof InterfaceNode) {
+                                    if (interfaceNode.children == Collections.EMPTY_LIST) {
+                                        interfaceNode.children = new LinkedList<>();
+                                    }
+                                    interfaceNode.children.add((InterfaceNode) current);
+                                } else if (current instanceof ClassNode) {
+                                    if (interfaceNode.implementedClasses == Collections.EMPTY_LIST) {
+                                        interfaceNode.implementedClasses = new LinkedList<>();
+                                    }
+                                    interfaceNode.implementedClasses.add((ClassNode) current);
+                                }
+                            }
                             return (InterfaceNode) node;
                         } else {
                             throw new RuntimeException(String.format("%s is not a interface. Maybe there are duplicate class files in the project.", i));
@@ -91,8 +117,7 @@ public class GraphBuilder {
         if (graph == null) {
             synchronized (this) {
                 if (graph == null) {
-                    graph = new Graph(nodeMap);
-                    graph.prepare();
+                    graph = new EditableGraph(nodeMap);
                 }
             }
         }

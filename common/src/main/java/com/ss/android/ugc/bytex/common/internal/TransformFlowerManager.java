@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.common.internal;
 import com.android.annotations.NonNull;
 import com.ss.android.ugc.bytex.common.flow.TransformFlow;
 import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
+import com.ss.android.ugc.bytex.common.graph.EditableGraph;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
@@ -69,9 +70,9 @@ public class TransformFlowerManager implements ITransformPipeline {
         for (TransformFlow flow : first) {
             flow.run();
             Graph graph = flow.getClassGraph();
-            if (graph != null) {
+            if (graph instanceof EditableGraph) {
                 //clear the class diagram.we won’t use it anymore
-                graph.clear();
+                ((EditableGraph) graph).clear();
             }
         }
     }

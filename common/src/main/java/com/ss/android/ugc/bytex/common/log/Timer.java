@@ -22,11 +22,13 @@ public class Timer {
         }
         long cost = System.currentTimeMillis() - start;
         LevelLog.sDefaultLogger.i(String.format(format, cost));
+        System.out.println(String.format(format, cost));
     }
 
     public void record(String format) {
         long cost = System.currentTimeMillis() - start;
         LevelLog.sDefaultLogger.i(String.format(format, cost));
+        System.out.println(String.format(format, cost));
     }
 
     public void reset() {
