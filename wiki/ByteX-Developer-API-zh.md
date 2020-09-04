@@ -529,6 +529,20 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;默认的，ByteX内置一个默认的监听器，用于记录编译期间的生命周期事件，相关的数据会在编译完成后记录在app/build/ByteX/build/的两个json中
 
+## ByteX的配置项
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ByteX可以在各自插件的Extension中配置相关的插件配置，对于ByteX引擎内部，也有一些配置或者开关，这个配置可以让使用者根据需要灵活使用，引擎内部会做不同的处理,配置可以在gradle.properties中添加，相关配置如下:<br/>
+
+- bytex.globalIgnoreClassList:需要忽略异常的class配置列表，在处理这些列表中的class如果发生异常，ByteX将内部处理而不是抛出来终止编译。相对于项目根目录的一个相对路径文件，文件中每一行是一个白名单，支持模式匹配
+- bytex.enableDuplicateClassCheck:是否检查类重复问题，boolean类型,默认true
+- bytex.enableHtmlLog:是否生成html报表，boolean类型,默认true
+- bytex.enableRAMCache:是否启用内存缓存用于存储相关的cache，该配置用于优化增量构建，因为加载文件可能需要耗时，boolean类型,默认true。如果是非增量(CI)建议配置为false
+- bytex.enableRAMNodesCache:是否缓存Graph中的Node到内存，enableRAMCache为true时生效，boolean类型,默认true。
+- bytex.enableRAMClassesCache:是否缓存Graph中的ClassEntity到内存,enableRAMCache为true时生效，boolean类型,默认false。
+- bytex.asyncSaveCache：是否使用异步的方式保存cache(非增量的插件不会保存)，boolean类型,默认true。
+- bytex.verifyProguardConfigurationChanged:获取Proguard的混淆配置是否做校验，用于判断插件获取混淆规则时与Proguard执行时的混淆配置是否相同，boolean类型,默认true。
+- bytex.checkIncrementalInDebug:是否禁止不支持增量但enableInDebug为true的插件运行(抛异常)，boolean类型,默认false。
+- bytex.enableSeparateProcessingNotIncremental:是否自动隔离执行非增量的插件进行单独运行。如果有一个插件不支持增量，ByteX所有插件(非alone)将使用非增量运行，这将大大降低增量构建的速度，开关开启后，支持增量的插件将合在一块执行，不支持增量的插件将独立在一个transform中运行.boolean类型,默认false。
+- bytex.${extension.getName()}.alone:是否独立运行某个插件，boolean类型,默认false。
 
 ## 开发注意事项
 ### 分支管理
