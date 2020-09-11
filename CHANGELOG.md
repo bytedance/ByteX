@@ -1,6 +1,10 @@
 # Change Log
+### Version 0.2.2
+- fix bugs:default transform configuration、NPE
+- optimize daemon cache with --no-daemon
+
 ### Version 0.2.1
->  optimize incremental build:Cache graph nodes with daemon
+- optimize incremental build:Cache graph nodes with daemon
 
 ### Version 0.1.9
 - optimize refer checker:More detailed error information
