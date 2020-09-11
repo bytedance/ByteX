@@ -71,6 +71,9 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                 result = Sets.union(result, scopes);
             }
         }
+        if (result.isEmpty()) {
+            return TransformManager.SCOPE_FULL_PROJECT;
+        }
         return result;
     }
 
@@ -82,6 +85,9 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             if (!result.containsAll(outputTypes)) {
                 result = Sets.union(result, outputTypes);
             }
+        }
+        if (result.isEmpty()) {
+            return TransformManager.CONTENT_CLASS;
         }
         return result;
     }

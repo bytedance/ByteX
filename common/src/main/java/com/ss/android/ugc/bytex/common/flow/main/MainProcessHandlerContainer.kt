@@ -30,7 +30,7 @@ class MainProcessHandlerContainer : Collection<MainProcessHandler> {
 
     @Synchronized
     fun add(element: MainProcessHandler): Boolean {
-        return handlers.add(LifecycleAwareManProcessHandler(element))
+        return handlers.add(LifecycleAwareMainProcessHandler(element))
     }
 
     @Synchronized
