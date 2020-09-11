@@ -18,6 +18,8 @@ import com.ss.android.ugc.bytex.transformer.location.Locator;
 import com.ss.android.ugc.bytex.transformer.utils.Service;
 
 import org.gradle.api.Project;
+import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.launcher.daemon.server.scaninfo.DaemonScanInfo;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -68,8 +70,8 @@ public class TransformContext implements GradleEnv, ClassFinder {
         graphCacheFile = new File(byteXBuildDir(), "graphCache.json");
         this.shouldSaveCache = shouldSaveCache;
         this.locator = new Locator(this);
-        this.transformOutputs = new TransformOutputs(this, invocation, new File(byteXBuildDir(), "outputs.txt"), isPluginIncremental, shouldSaveCache, useRawCache);
-        this.transformInputs = new TransformInputs(this, invocation, new File(byteXBuildDir(), "inputs.txt"), isPluginIncremental, shouldSaveCache, useRawCache);
+        this.transformOutputs = new TransformOutputs(this, invocation, new File(byteXBuildDir(), "outputs.txt"), isPluginIncremental, shouldSaveCache, !isDaemonSingleUse() && useRawCache);
+        this.transformInputs = new TransformInputs(this, invocation, new File(byteXBuildDir(), "inputs.txt"), isPluginIncremental, shouldSaveCache, !isDaemonSingleUse() && useRawCache);
         this.finder = new ClassNodeLoader(this);
     }
 
@@ -217,6 +219,16 @@ public class TransformContext implements GradleEnv, ClassFinder {
 
     synchronized void markRunningState(State state) {
         this.state = state;
+    }
+
+    /**
+     * daemon是否在构建之后会被杀死，这个对于使用daemon缓存数据有作用
+     * Whether the daemon will be killed after build finish, this is useful for using the daemon to cache data
+     *
+     * @return true 表示构建结束后会被杀死，类似于--no-daemon
+     */
+    public boolean isDaemonSingleUse() {
+        return ((ProjectInternal) project).getServices().get(DaemonScanInfo.class).isSingleUse();
     }
 
     public void release() {

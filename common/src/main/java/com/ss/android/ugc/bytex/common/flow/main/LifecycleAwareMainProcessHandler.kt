@@ -11,13 +11,13 @@ import org.objectweb.asm.tree.ClassNode
  * Created by yangzhiqian on 2020/8/30<br/>
  */
 
-class LifecycleAwareManProcessHandler(val real: MainProcessHandler) : MainProcessHandler by real {
+class LifecycleAwareMainProcessHandler(val real: MainProcessHandler) : MainProcessHandler by real {
     init {
         MainProcessHandler::class.java.methods.filter {
             it.isDefault
         }.forEach {
             try {
-                LifecycleAwareManProcessHandler::class.java.getDeclaredMethod(it.name, *it.parameterTypes)
+                LifecycleAwareMainProcessHandler::class.java.getDeclaredMethod(it.name, *it.parameterTypes)
             } catch (e: NoSuchMethodException) {
                 throw RuntimeException("default methods in java interface must be overridden while using `by operation` in kotlin", e)
             }

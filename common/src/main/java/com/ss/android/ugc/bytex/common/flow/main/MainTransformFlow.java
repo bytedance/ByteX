@@ -97,7 +97,7 @@ public class MainTransformFlow extends AbsTransformFlow {
         Schedulers.COMPUTATION().submitAndAwait(handlers, plugin -> plugin.startRunning(transformEngine));
         if (!isOnePassEnough()) {
             timer.startRecord("LOADCACHE");
-            GraphBuilder graphBuilder = new CachedGraphBuilder(getGraphCache(), context.isIncremental(), context.shouldSaveCache());
+            GraphBuilder graphBuilder = new CachedGraphBuilder(getGraphCache(), context.isIncremental(), context.shouldSaveCache(), !context.isDaemonSingleUse());
             if (context.isIncremental() && !graphBuilder.isCacheValid()) {
                 throw new IllegalStateException("Transform is running as incrementally, but failed to load cache for the transform!");
             }

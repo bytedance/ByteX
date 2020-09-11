@@ -9,7 +9,7 @@ import com.ss.android.ugc.bytex.common.IPlugin
 import com.ss.android.ugc.bytex.common.builder.ByteXBuildListener
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty
 import com.ss.android.ugc.bytex.common.flow.TransformFlow
-import com.ss.android.ugc.bytex.common.flow.main.LifecycleAwareManProcessHandler
+import com.ss.android.ugc.bytex.common.flow.main.LifecycleAwareMainProcessHandler
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandler
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandlerListener
 import com.ss.android.ugc.bytex.transformer.TransformEngine
@@ -33,7 +33,7 @@ internal object DefaultByteXBuildListener : ByteXBuildListener, MainProcessHandl
         DefaultByteXBuildListener.project = project
         validRun = false
         if (!plugin.transformConfiguration().isIncremental) {
-            System.err.println("[ByteX Warning]:" + this.javaClass.name + " does not yet support incremental build")
+            System.err.println("[ByteX Warning]:" + plugin.javaClass.name + " does not yet support incremental build")
         }
         PluginStatus(project, plugin).apply {
             pluginStatuses[plugin] = this
@@ -65,13 +65,13 @@ internal object DefaultByteXBuildListener : ByteXBuildListener, MainProcessHandl
     override fun onByteXPluginTransformStart(transform: Transform, transformInvocation: TransformInvocation) {
         validRun = true
         currentTransformInfo = TransformInfo(transform, transformInvocation)
-        currentTransformInfo!!.task = project!!.tasks.filter {
+        currentTransformInfo!!.task = project?.tasks?.filter {
             //此处不使用==是因为有些操作(比如构建优化或者监控等)会代理替换Transform
             //此处实际上是对比了taskName，因为名字不会重复
             it is TransformTask &&
                     it.transform.name == transform.name &&
                     Sets.difference(it.transform.inputTypes, transform.inputTypes).isEmpty()
-        }.firstOrNull()
+        }?.firstOrNull()
         currentTransformInfo!!.startTime = System.currentTimeMillis()
     }
 
@@ -98,7 +98,7 @@ internal object DefaultByteXBuildListener : ByteXBuildListener, MainProcessHandl
             handlers[handler] = MainProcessHandlerInfo(handler)
             if (handler is IPlugin) {
                 plugins.add(handler)
-            } else if (handler is LifecycleAwareManProcessHandler && handler.real is IPlugin) {
+            } else if (handler is LifecycleAwareMainProcessHandler && handler.real is IPlugin) {
                 plugins.add(handler.real)
             }
         }
@@ -364,7 +364,7 @@ internal object DefaultByteXBuildListener : ByteXBuildListener, MainProcessHandl
     }
 
     class MainProcessHandlerInfo(handler: MainProcessHandler) {
-        val name = if (handler is LifecycleAwareManProcessHandler) {
+        val name = if (handler is LifecycleAwareMainProcessHandler) {
             handler.real
         } else {
             handler
