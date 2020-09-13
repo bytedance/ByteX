@@ -9,28 +9,17 @@ import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.access_inline.Context;
 import com.ss.android.ugc.bytex.access_inline.ShouldSkipInlineException;
 
-import org.objectweb.asm.Handle;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.IincInsnNode;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.IntInsnNode;
-import org.objectweb.asm.tree.InvokeDynamicInsnNode;
-import org.objectweb.asm.tree.JumpInsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MultiANewArrayInsnNode;
-import org.objectweb.asm.tree.TableSwitchInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 public class PreProcessClassVisitor extends BaseClassVisitor {
 
@@ -58,156 +47,19 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
         if (!fromAndroidSDK && TypeUtil.isSynthetic(access) && TypeUtil.isStatic(access) && name.startsWith("access$")) {
             Access$MethodEntity access$MethodEntity = new Access$MethodEntity(className, name, desc);
-            return new RefineAccess$MethodVisitor(mv, context, access$MethodEntity);
+            return new RefineAccess$MethodVisitor(context, access$MethodEntity);
         }
         return mv;
     }
 
-    static class RefineAccess$MethodVisitor extends MethodVisitor {
-
-        private List<AbstractInsnNode> instructions = new ArrayList<>();
+    private static class RefineAccess$MethodVisitor extends MethodNode {
         private Access$MethodEntity access$MethodEntity;
         private Context context;
 
-        public RefineAccess$MethodVisitor(MethodVisitor mv, Context context, Access$MethodEntity access$MethodEntity) {
-            super(Opcodes.ASM5, mv);
+        public RefineAccess$MethodVisitor(Context context, Access$MethodEntity access$MethodEntity) {
+            super(Opcodes.ASM5);
             this.access$MethodEntity = access$MethodEntity;
             this.context = context;
-        }
-
-
-        @Override
-        public void visitInsn(final int opcode) {
-            super.visitInsn(opcode);
-            instructions.add(new InsnNode(opcode));
-        }
-
-        @Override
-        public void visitIntInsn(final int opcode, final int operand) {
-            super.visitIntInsn(opcode, operand);
-            instructions.add(new IntInsnNode(opcode, operand));
-        }
-
-        @Override
-        public void visitVarInsn(final int opcode, final int var) {
-            super.visitVarInsn(opcode, var);
-            instructions.add(new VarInsnNode(opcode, var));
-        }
-
-        @Override
-        public void visitTypeInsn(final int opcode, final String type) {
-            super.visitTypeInsn(opcode, type);
-            instructions.add(new TypeInsnNode(opcode, type));
-        }
-
-        @Override
-        public void visitFieldInsn(final int opcode, final String owner,
-                                   final String name, final String desc) {
-            super.visitFieldInsn(opcode, owner, name, desc);
-            instructions.add(new FieldInsnNode(opcode, owner, name, desc));
-        }
-
-        @Deprecated
-        @Override
-        public void visitMethodInsn(int opcode, String owner, String name,
-                                    String desc) {
-            if (api >= Opcodes.ASM5) {
-                super.visitMethodInsn(opcode, owner, name, desc);
-                return;
-            }
-            super.visitMethodInsn(opcode, owner, name, desc);
-            instructions.add(new MethodInsnNode(opcode, owner, name, desc));
-        }
-
-        @Override
-        public void visitMethodInsn(int opcode, String owner, String name,
-                                    String desc, boolean itf) {
-            if (api < Opcodes.ASM5) {
-                super.visitMethodInsn(opcode, owner, name, desc, itf);
-                return;
-            }
-            super.visitMethodInsn(opcode, owner, name, desc, itf);
-            instructions.add(new MethodInsnNode(opcode, owner, name, desc, itf));
-        }
-
-        @Override
-        public void visitInvokeDynamicInsn(String name, String desc, Handle bsm,
-                                           Object... bsmArgs) {
-            super.visitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
-            instructions.add(new InvokeDynamicInsnNode(name, desc, bsm, bsmArgs));
-        }
-
-        @Override
-        public void visitJumpInsn(final int opcode, final Label label) {
-            super.visitJumpInsn(opcode, label);
-            instructions.add(new JumpInsnNode(opcode, getLabelNode(label)));
-        }
-
-        @Override
-        public void visitLabel(final Label label) {
-            super.visitLabel(label);
-            instructions.add(getLabelNode(label));
-        }
-
-        @Override
-        public void visitLdcInsn(final Object cst) {
-            super.visitLdcInsn(cst);
-            instructions.add(new LdcInsnNode(cst));
-        }
-
-        @Override
-        public void visitIincInsn(final int var, final int increment) {
-            super.visitIincInsn(var, increment);
-            instructions.add(new IincInsnNode(var, increment));
-        }
-
-        @Override
-        public void visitTableSwitchInsn(final int min, final int max,
-                                         final Label dflt, final Label... labels) {
-            super.visitTableSwitchInsn(min, max, dflt, labels);
-            instructions.add(new TableSwitchInsnNode(min, max, getLabelNode(dflt),
-                    getLabelNodes(labels)));
-        }
-
-        @Override
-        public void visitLookupSwitchInsn(final Label dflt, final int[] keys,
-                                          final Label[] labels) {
-            super.visitLookupSwitchInsn(dflt, keys, labels);
-            instructions.add(new LookupSwitchInsnNode(getLabelNode(dflt), keys,
-                    getLabelNodes(labels)));
-        }
-
-        @Override
-        public void visitMultiANewArrayInsn(final String desc, final int dims) {
-            super.visitMultiANewArrayInsn(desc, dims);
-            instructions.add(new MultiANewArrayInsnNode(desc, dims));
-        }
-
-        protected LabelNode getLabelNode(final Label l) {
-            if (!(l.info instanceof LabelNode)) {
-                l.info = new LabelNode();
-            }
-            return (LabelNode) l.info;
-        }
-
-        private LabelNode[] getLabelNodes(final Label[] l) {
-            LabelNode[] nodes = new LabelNode[l.length];
-            for (int i = 0; i < l.length; ++i) {
-                nodes[i] = getLabelNode(l[i]);
-            }
-            return nodes;
-        }
-
-        private Object[] getLabelNodes(final Object[] objs) {
-            Object[] nodes = new Object[objs.length];
-            for (int i = 0; i < objs.length; ++i) {
-                Object o = objs[i];
-                if (o instanceof Label) {
-                    o = getLabelNode((Label) o);
-                }
-                nodes[i] = o;
-            }
-            return nodes;
         }
 
         @Override
@@ -220,13 +72,18 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
             }
         }
 
-        private List<AbstractInsnNode> refine(List<AbstractInsnNode> instructions) {
+        private List<AbstractInsnNode> refine(InsnList instructions) {
             List<AbstractInsnNode> refinedInsns = new ArrayList<>();
+            if (instructions == null) {
+              return refinedInsns;
+            }
+            ListIterator<AbstractInsnNode> insnNodeListIterator = instructions.iterator();
             boolean shouldSkipVarInsn = true;
             int varLoadInsnCount = 0;
             MemberEntity target = null;
             try {
-                for (AbstractInsnNode insnNode : instructions) {
+                while (insnNodeListIterator.hasNext()) {
+                    AbstractInsnNode insnNode = insnNodeListIterator.next();
                     if (insnNode.getType() == AbstractInsnNode.LINE) continue;
                     if (insnNode.getType() == AbstractInsnNode.LABEL) continue;
                     if (insnNode.getOpcode() >= Opcodes.IRETURN && insnNode.getOpcode() <= Opcodes.RETURN)
@@ -246,6 +103,7 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
                     if (insnNode.getOpcode() > Opcodes.MONITOREXIT) {
                         throw new ShouldSkipInlineException("Unexpected new instruction in access$ method body.");
                     }
+
                     if (shouldSkipVarInsn && insnNode.getOpcode() >= Opcodes.ILOAD && insnNode.getOpcode() <= Opcodes.SALOAD) {
                         varLoadInsnCount++;
                         continue;
@@ -266,13 +124,13 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
                                 case Opcodes.INVOKESPECIAL:
                                 case Opcodes.INVOKEINTERFACE:
                                     if (parameterCountOfTargetMethod != parameterCountOfAccess$Method - 1
-                                            || varLoadInsnCount != parameterCountOfAccess$Method) {
+                                        || varLoadInsnCount != parameterCountOfAccess$Method) {
                                         throw new ShouldSkipInlineException("The parameter count of access$ method is abnormal.");
                                     }
                                     break;
                                 case Opcodes.INVOKESTATIC:
                                     if (parameterCountOfTargetMethod != parameterCountOfAccess$Method ||
-                                            varLoadInsnCount != parameterCountOfAccess$Method) {
+                                        varLoadInsnCount != parameterCountOfAccess$Method) {
                                         throw new ShouldSkipInlineException("The parameter count of access$ method is abnormal.");
                                     }
                                     break;
@@ -291,7 +149,7 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
                             switch (insnNode.getOpcode()) {
                                 case Opcodes.GETSTATIC:
                                     if (parameterCountOfAccess$Method != 0
-                                            || varLoadInsnCount != parameterCountOfAccess$Method) {
+                                        || varLoadInsnCount != parameterCountOfAccess$Method) {
                                         throw new ShouldSkipInlineException("The parameter count of access$ method is abnormal.");
                                     }
                                     break;
@@ -331,7 +189,25 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
                 }
                 refinedInsns.clear();
             }
+
+            /**
+             * 没有找到target时，导致使用target时候NPE问题
+             * 清除需要内联的指令
+             *
+             * 例如：
+             * 遇到只有LDC指令的access$方法， 无法给access$MethodEntity 设置target
+             *
+             */
+            if (target == null) {
+                refinedInsns.clear();
+                if (access$MethodEntity != null) {
+                    context.getLogger().d("SkipInlineAccess", String.format("Skip inline access to %s (owner = [%s], name = [%s], desc = [%s]), for the reason that %s",
+                        access$MethodEntity.className(), access$MethodEntity.name(), access$MethodEntity.desc(), "target is null"));
+                }
+            }
+
             return refinedInsns;
         }
     }
+
 }
