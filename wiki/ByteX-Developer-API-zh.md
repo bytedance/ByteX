@@ -543,6 +543,7 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 - bytex.checkIncrementalInDebug:是否禁止不支持增量但enableInDebug为true的插件运行(抛异常)，boolean类型,默认false。
 - bytex.enableSeparateProcessingNotIncremental:是否自动隔离执行非增量的插件进行单独运行。如果有一个插件不支持增量，ByteX所有插件(非alone)将使用非增量运行，这将大大降低增量构建的速度，开关开启后，支持增量的插件将合在一块执行，不支持增量的插件将独立在一个transform中运行.boolean类型,默认false。
 - bytex.${extension.getName()}.alone:是否独立运行某个插件，boolean类型,默认false。
+- bytex.useFixedTimestamp:是否固定一个输出文件jar中entity的时间戳(0)，这个对增量编译有比较大收益，因为输出内容不变+时间戳不变，后续task可以命中cache(比如DexBuilder)。boolean类型,默认false。
 
 ## 开发注意事项
 ### 分支管理
