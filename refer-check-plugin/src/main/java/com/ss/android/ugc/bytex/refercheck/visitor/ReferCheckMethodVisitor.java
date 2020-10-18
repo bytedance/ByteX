@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.refercheck.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.graph.ClassNode;
 import com.ss.android.ugc.bytex.common.graph.FieldEntity;
 import com.ss.android.ugc.bytex.common.graph.Graph;
@@ -34,7 +35,7 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
 
     ReferCheckMethodVisitor(MethodVisitor mv, ReferCheckContext context,
                             String className, String methodName, String methodDesc, int methodAccess, String sourceFile) {
-        super(Opcodes.ASM5, mv);
+        super(Constants.ASM_API, mv);
         this.context = context;
         this.className = className;
         this.methodName = methodName;

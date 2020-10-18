@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.shrinkR.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.shrinkR.Context;
 
 import org.objectweb.asm.MethodVisitor;
@@ -16,7 +17,7 @@ public class AnalyzeStyleableClassVisitor extends MethodVisitor {
     private List<Integer> styleableValList;
 
     public AnalyzeStyleableClassVisitor(MethodVisitor mv, Context context) {
-        super(Opcodes.ASM5, mv);
+        super(Constants.ASM_API, mv);
         this.context = context;
         reset();
     }

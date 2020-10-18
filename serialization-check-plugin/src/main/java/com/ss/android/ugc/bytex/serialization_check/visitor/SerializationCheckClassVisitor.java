@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.serialization_check.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.graph.ClassNode;
 import com.ss.android.ugc.bytex.common.graph.Node;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
@@ -79,7 +80,7 @@ public class SerializationCheckClassVisitor extends BaseClassVisitor {
         private String descriptor;
 
         SerializationCheckFieldVisitor(FieldVisitor fieldVisitor, Context context, String className, String name, String descriptor) {
-            super(Opcodes.ASM5, fieldVisitor);
+            super(Constants.ASM_API, fieldVisitor);
             this.context = context;
             this.className = className;
             this.name = name;
@@ -91,7 +92,7 @@ public class SerializationCheckClassVisitor extends BaseClassVisitor {
             AnnotationVisitor av = super.visitAnnotation(descriptor, visible);
             if ("android/annotation/SuppressLint".equals(TypeUtil.desc2Name(descriptor))) {
                 AnnotationVisitor exAnnotationVisitor = av;
-                av = suppressLintAnnotation = new AnnotationNode(Opcodes.ASM5, descriptor) {
+                av = suppressLintAnnotation = new AnnotationNode(Constants.ASM_API, descriptor) {
                     @Override
                     public void visitEnd() {
                         super.visitEnd();

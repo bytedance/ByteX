@@ -29,9 +29,7 @@ import kotlin.collections.ArrayList
 class TransformInputs internal constructor(private val context: TransformContext,
                                            private val invocation: TransformInvocation,
                                            private val cacheFile: File,
-                                           private val isIncremental: Boolean,
-                                           private val shouldSaveCache: Boolean,
-                                           private val useRawCache: Boolean) {
+                                           private val transformOptions: TransformOptions) {
 
     companion object {
         internal val gson by lazy { GsonBuilder().registerTypeAdapter(Entry::class.java, Entry.EntryTypeAdapter()).create() }
@@ -50,10 +48,10 @@ class TransformInputs internal constructor(private val context: TransformContext
         * */
         try {
             val map = mutableMapOf<String, Set<String>>()
-            if (!isIncremental) {
+            if (!invocation.isIncremental) {
                 emptyList()
             } else {
-                if (useRawCache) {
+                if (transformOptions.isUseRawCache) {
                     caches.remove(cacheFile.absolutePath)
                 } else {
                     null
@@ -93,7 +91,7 @@ class TransformInputs internal constructor(private val context: TransformContext
 
     init {
         invocation.inputs.forEach(Consumer { input: TransformInput ->
-            input.jarInputs.forEach { allJars.add(JarCache(it, context)) }
+            input.jarInputs.forEach { allJars.add(JarCache(it, context, transformOptions.isUseFixedTimestamp)) }
             input.directoryInputs.forEach { allDirs.add(DirCache(it, context)) }
         })
         //提前加载
@@ -146,11 +144,11 @@ class TransformInputs internal constructor(private val context: TransformContext
     }
 
     protected fun saveCache() {
-        if (shouldSaveCache) {
+        if (transformOptions.isShouldSaveCache) {
             val list = transformInputs.map {
                 Entry(it.key, it.value.map { it.relativePath })
             }.toList()
-            if (useRawCache) {
+            if (transformOptions.isUseRawCache && !context.isDaemonSingleUse) {
                 caches.put(cacheFile.absolutePath, list)
             }
             Schedulers.IO().submit {

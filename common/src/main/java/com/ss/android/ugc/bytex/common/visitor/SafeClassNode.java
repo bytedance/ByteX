@@ -1,7 +1,8 @@
 package com.ss.android.ugc.bytex.common.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
+
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -11,7 +12,7 @@ import org.objectweb.asm.tree.MethodNode;
 public class SafeClassNode extends ClassNode {
 
     public SafeClassNode() {
-        super(Opcodes.ASM5);
+        super(Constants.ASM_API);
     }
 
     @Override

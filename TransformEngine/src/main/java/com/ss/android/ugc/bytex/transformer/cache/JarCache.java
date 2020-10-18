@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -38,11 +39,18 @@ public class JarCache extends FileCache {
     private final File jar;
     private final Status status;
     private final File outputFile;
+    private boolean useFixedTimestamp = false;
+
 
     public JarCache(QualifiedContent content, TransformContext context) {
+        this(content, context, false);
+    }
+
+    public JarCache(QualifiedContent content, TransformContext context, boolean useFixedTimestamp) {
         super(content, context);
         jar = content.getFile();
         status = ((JarInput) content).getStatus();
+        this.useFixedTimestamp = useFixedTimestamp;
         try {
             outputFile = context.getOutputFile(content, false);
         } catch (IOException e) {
@@ -137,6 +145,12 @@ public class JarCache extends FileCache {
                                 }
                                 if (bytes != null) {
                                     ZipEntry entry = new ZipEntry(file.getRelativePath());
+                                    if (useFixedTimestamp) {
+                                        entry.setTime(0);
+                                        entry.setCreationTime(FileTime.fromMillis(0L));
+                                        entry.setLastAccessTime(FileTime.fromMillis(0L));
+                                        entry.setLastModifiedTime(FileTime.fromMillis(0L));
+                                    }
                                     jos.putNextEntry(entry);
                                     jos.write(bytes);
                                     hasOutput.set(true);

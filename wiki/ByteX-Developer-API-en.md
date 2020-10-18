@@ -535,6 +535,7 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 - bytex.checkIncrementalInDebug:Whether to check non-incremental plugins running with its enableInDebug is true，boolean , false by default.
 - bytex.enableSeparateProcessingNotIncremental:Whether to executing non-incremental plugins in single TransformTask automatically. If there is a plugin which is incremental, all ByteX plugins will run in non-incremental, which will greatly reduce the speed of incremental build. After the switch is turned on, the plugins that support increment will be executed together. Incremental plugins will run independently in a transform. oolean ,false by default.
 - bytex.${extension.getName()}.alone:Whether to run the plugin independently，boolean , false by default.
+- bytex.useFixedTimestamp:Whether to use the fixed timestamp (0) of the entity in the output jar, this has a great benefit for incremental compilation because the entity is same and the timestamp is unchanged,and tasks after bytex could hit the cache (such as DexBuilder).boolean , false by default.
 
 ## Development Considerations
 ### Branch Management

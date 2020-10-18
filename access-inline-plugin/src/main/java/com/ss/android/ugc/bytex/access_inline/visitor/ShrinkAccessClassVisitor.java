@@ -1,6 +1,7 @@
 package com.ss.android.ugc.bytex.access_inline.visitor;
 
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
 import com.ss.android.ugc.bytex.access_inline.Context;
@@ -82,7 +83,7 @@ public class ShrinkAccessClassVisitor extends BaseClassVisitor {
         private final String desc;
 
         public AccessMethodVisitor(MethodVisitor mv, String owner, String name, String desc) {
-            super(Opcodes.ASM5, mv);
+            super(Constants.ASM_API, mv);
             this.owner = owner;
             this.name = name;
             this.desc = desc;

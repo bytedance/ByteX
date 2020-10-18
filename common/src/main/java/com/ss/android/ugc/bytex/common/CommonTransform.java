@@ -19,6 +19,7 @@ import com.ss.android.ugc.bytex.common.log.Timer;
 import com.ss.android.ugc.bytex.common.log.html.HtmlReporter;
 import com.ss.android.ugc.bytex.gradletoolkit.TransformInvocationKt;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
+import com.ss.android.ugc.bytex.transformer.TransformOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -229,7 +230,16 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     }
 
     protected TransformContext getTransformContext(TransformInvocation transformInvocation) {
-        return new TransformContext(transformInvocation, context.project, context.android, isIncremental(), shouldSaveCache(), BooleanProperty.ENABLE_RAM_CACHE.value());
+        return new TransformContext(transformInvocation,
+                context.project,
+                context.android,
+                new TransformOptions.Builder()
+                        .setPluginIncremental(isIncremental())
+                        .setShouldSaveCache(shouldSaveCache())
+                        .setUseRawCache(BooleanProperty.ENABLE_RAM_CACHE.value())
+                        .setUseFixedTimestamp(BooleanProperty.USE_FIXED_TIMESTAMP.value())
+                        .build()
+        );
     }
 
     protected void afterTransform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {

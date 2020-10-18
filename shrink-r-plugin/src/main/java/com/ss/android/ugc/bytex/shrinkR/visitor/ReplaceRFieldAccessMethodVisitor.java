@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.shrinkR.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.shrinkR.Context;
 import com.ss.android.ugc.bytex.shrinkR.exception.RFieldNotFoundException;
@@ -22,7 +23,7 @@ class ReplaceRFieldAccessMethodVisitor extends MethodVisitor {
     private int processingLineNumber;
 
     public ReplaceRFieldAccessMethodVisitor(MethodVisitor mv, Context context, String methodName, String className) {
-        super(Opcodes.ASM5, mv);
+        super(Constants.ASM_API, mv);
         this.context = context;
         this.methodName = methodName;
         this.className = className;

@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.const_inline.visitors;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
 import com.ss.android.ugc.bytex.const_inline.Context;
@@ -55,7 +56,7 @@ public class InlineConstPreviewClassVisitor extends BaseClassVisitor {
     class RuntimeConstFieldScanMethodVisitor extends MethodVisitor {
 
         RuntimeConstFieldScanMethodVisitor(MethodVisitor mv) {
-            super(Opcodes.ASM5, mv);
+            super(Constants.ASM_API, mv);
         }
 
         @Override
@@ -83,7 +84,7 @@ public class InlineConstPreviewClassVisitor extends BaseClassVisitor {
         private final String mFieldDesc;
 
         RuntimeConstFieldScanFieldVisitor(String name, String desc, FieldVisitor fieldVisitor) {
-            super(Opcodes.ASM5, fieldVisitor);
+            super(Constants.ASM_API, fieldVisitor);
             this.mFieldName = name;
             this.mFieldDesc = desc;
         }

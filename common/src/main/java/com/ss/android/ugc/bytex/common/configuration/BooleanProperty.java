@@ -14,7 +14,8 @@ public enum BooleanProperty implements Property<Boolean> {
     ENABLE_ASYNC_SAVE_CACHE("bytex.asyncSaveCache", true),
     ENABLE_VERIFY_PROGUARD_CONFIGURATION_CHANGED("bytex.verifyProguardConfigurationChanged", true),
     CHECK_INCREMENTAL_INDEBUG("bytex.checkIncrementalInDebug", false),
-    ENABLE_SEPARATE_PROCESSING_NOTINCREMENTAL("bytex.enableSeparateProcessingNotIncremental", false);
+    ENABLE_SEPARATE_PROCESSING_NOTINCREMENTAL("bytex.enableSeparateProcessingNotIncremental", false),
+    USE_FIXED_TIMESTAMP("bytex.useFixedTimestamp", false);
 
     @NonNull
     private final String propertyName;

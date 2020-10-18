@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.getter_setter_inline.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.getter_setter_inline.Context;
 import com.ss.android.ugc.bytex.getter_setter_inline.ShouldSkipInlineException;
@@ -39,7 +40,7 @@ public class ExtractFieldInsnMethodVisitor extends MethodVisitor {
     private static final int threshold = 16;
 
     public ExtractFieldInsnMethodVisitor(MethodVisitor mv, Context context, MethodInfo methodInfo) {
-        super(Opcodes.ASM5, mv);
+        super(Constants.ASM_API, mv);
         this.context = context;
         this.methodInfo = methodInfo;
     }

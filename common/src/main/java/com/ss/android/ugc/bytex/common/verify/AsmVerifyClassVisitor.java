@@ -1,9 +1,9 @@
 package com.ss.android.ugc.bytex.common.verify;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
 
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.MethodNode;
 
 /**
@@ -31,7 +31,7 @@ public class AsmVerifyClassVisitor extends BaseClassVisitor {
 
         AsmVerifyMethodVisitor(MethodVisitor mv, final int access, final String name, final String desc,
                                final String signature, final String[] exceptions) {
-            super(Opcodes.ASM5, access, name, desc, signature, exceptions);
+            super(Constants.ASM_API, access, name, desc, signature, exceptions);
             this.mv = mv;
         }
 

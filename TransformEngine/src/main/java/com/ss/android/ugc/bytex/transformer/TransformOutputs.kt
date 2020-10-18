@@ -25,9 +25,7 @@ import java.util.function.Consumer
 class TransformOutputs internal constructor(private val context: TransformContext,
                                             private val invocation: TransformInvocation,
                                             private val cacheFile: File,
-                                            private val isIncremental: Boolean,
-                                            private val shouldSaveCache: Boolean,
-                                            private val useRawCache: Boolean) {
+                                            private val transformOptions: TransformOptions) {
 
     companion object {
         internal val gson by lazy { GsonBuilder().registerTypeAdapter(Entry::class.java, Entry.EntryTypeAdapter()).create() }
@@ -51,10 +49,10 @@ class TransformOutputs internal constructor(private val context: TransformContex
         * 文件加载
         * */
         try {
-            if (!isIncremental) {
+            if (!invocation.isIncremental) {
                 emptyList()
             } else {
-                if (useRawCache) {
+                if (transformOptions.isUseRawCache) {
                     caches.remove(cacheFile.absolutePath)
                 } else {
                     null
@@ -126,9 +124,9 @@ class TransformOutputs internal constructor(private val context: TransformContex
 
 
     protected fun saveCache() {
-        if (shouldSaveCache) {
+        if (transformOptions.isShouldSaveCache) {
             val enties = transformOutputs.values.toList()
-            if (useRawCache) {
+            if (transformOptions.isUseRawCache && !context.isDaemonSingleUse) {
                 caches[cacheFile.absolutePath] = enties
             }
             Schedulers.IO().submit {

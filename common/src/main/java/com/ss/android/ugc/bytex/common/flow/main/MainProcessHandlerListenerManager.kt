@@ -1,7 +1,5 @@
 package com.ss.android.ugc.bytex.common.flow.main
 
-import com.android.build.gradle.internal.utils.toImmutableList
-import com.google.common.collect.ImmutableList
 import java.util.*
 
 /**
@@ -22,7 +20,7 @@ object MainProcessHandlerListenerManager {
         listeners.remove(listener)
     }
 
-    internal fun getMainProcessHandlerListeners(): ImmutableList<MainProcessHandlerListener> {
-        return listeners.toImmutableList()
+    internal fun getMainProcessHandlerListeners(): List<MainProcessHandlerListener> {
+        return Collections.unmodifiableList(listeners)
     }
 }

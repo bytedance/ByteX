@@ -5,10 +5,12 @@ import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager;
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandler;
 import com.ss.android.ugc.bytex.common.flow.main.Process;
 import com.ss.android.ugc.bytex.common.log.LevelLog;
+import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.verify.AsmVerifier;
 import com.ss.android.ugc.bytex.common.verify.AsmVerifyClassVisitor;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.common.visitor.SafeClassNode;
+import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.cache.FileData;
 
 import org.objectweb.asm.ClassReader;
@@ -20,9 +22,16 @@ import java.util.List;
 public class ClassFileTransformer extends MainProcessFileHandler {
     private boolean needPreVerify;
     private boolean needVerify;
+    private TransformContext context;
 
+    @Deprecated
     public ClassFileTransformer(List<MainProcessHandler> handlers, boolean needPreVerify, boolean needVerify) {
+        this(null, handlers, needPreVerify, needVerify);
+    }
+
+    public ClassFileTransformer(TransformContext context, List<MainProcessHandler> handlers, boolean needPreVerify, boolean needVerify) {
         super(handlers);
+        this.context = context;
         this.needPreVerify = needPreVerify;
         this.needVerify = needVerify;
     }
@@ -76,7 +85,11 @@ public class ClassFileTransformer extends MainProcessFileHandler {
         } catch (Exception e) {
             LevelLog.sDefaultLogger.e(String.format("Failed to handle class %s", fileData.getRelativePath()), e);
             if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(fileData.getRelativePath())) {
-                throw e;
+                if (context != null) {
+                    throw new RuntimeException(String.format("Failed to resolve class %s[%s]", fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
+                } else {
+                    throw e;
+                }
             }
         }
     }

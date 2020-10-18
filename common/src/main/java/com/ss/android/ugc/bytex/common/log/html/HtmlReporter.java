@@ -41,21 +41,21 @@ public class HtmlReporter {
     private String appPackageName;
     private String versionName;
     private String versionCode;
-    private final List<HtmlFragmentProvider> htmlFragmentProviders = Collections.synchronizedList(new ArrayList<>());
+    private final List<HtmlFragmentProvider> htmlFragmentProviders = new ArrayList<>();
 
     /**
      * register a HtmlFragmentProvider,which will be use to create a piece of HTML code when {@link #createHtmlReporter} is called
      *
      * @param htmlFragmentProvider HtmlFragmentProvider
      */
-    public void registerHtmlFragment(HtmlFragmentProvider htmlFragmentProvider) {
+    public synchronized void registerHtmlFragment(HtmlFragmentProvider htmlFragmentProvider) {
         if (htmlFragmentProvider == null || htmlFragmentProviders.contains(htmlFragmentProvider)) {
             return;
         }
         htmlFragmentProviders.add(htmlFragmentProvider);
     }
 
-    public void init(String htmlFileDir, String title, String appPackageName, String versionName, String versionCode) {
+    public synchronized void init(String htmlFileDir, String title, String appPackageName, String versionName, String versionCode) {
         for (HtmlFragmentProvider htmlFragmentProvider : htmlFragmentProviders) {
             htmlFragmentProvider.reset();
         }
@@ -67,7 +67,7 @@ public class HtmlReporter {
         this.versionCode = versionCode;
     }
 
-    public void reset() {
+    public synchronized void reset() {
         htmlFragmentProviders.clear();
     }
 
@@ -111,7 +111,7 @@ public class HtmlReporter {
         }
     }
 
-    private void appendHtml(Appendable appendable) throws IOException {
+    private synchronized void appendHtml(Appendable appendable) throws IOException {
         //构建头部
         appendable.append("<!DOCTYPE html>")
                 .append("<html>")

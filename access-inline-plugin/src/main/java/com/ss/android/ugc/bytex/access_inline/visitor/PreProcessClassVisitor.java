@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.access_inline.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.graph.FieldEntity;
 import com.ss.android.ugc.bytex.common.graph.MemberEntity;
 import com.ss.android.ugc.bytex.common.graph.MemberType;
@@ -70,7 +71,7 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
         private Context context;
 
         public RefineAccess$MethodVisitor(MethodVisitor mv, Context context, Access$MethodEntity access$MethodEntity) {
-            super(Opcodes.ASM5, mv);
+            super(Constants.ASM_API, mv);
             this.access$MethodEntity = access$MethodEntity;
             this.context = context;
         }

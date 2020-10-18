@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.field_assign_opt.visitors;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.OpcodesUtils;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
@@ -59,7 +60,7 @@ public class FieldAssignCollectClassVisitor extends BaseClassVisitor {
         final Set<Integer> mBreakInstructions;
 
         RedundantFieldAssignmentMethodVisitor(MethodNode mn, MethodVisitor mv, boolean isStatic) {
-            super(Opcodes.ASM5, mn);
+            super(Constants.ASM_API, mn);
             this.mn = mn;
             this.mv = mv;
             this.isStatic = isStatic;

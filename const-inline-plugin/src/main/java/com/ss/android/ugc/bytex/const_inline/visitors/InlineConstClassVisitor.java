@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.const_inline.visitors;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
@@ -94,7 +95,7 @@ public class InlineConstClassVisitor extends BaseClassVisitor {
         private String methodName;
 
         InlineConstMethodVisitor(MethodVisitor mv, String methodName) {
-            super(Opcodes.ASM5, mv);
+            super(Constants.ASM_API, mv);
             this.methodName = methodName;
         }
 

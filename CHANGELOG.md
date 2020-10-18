@@ -1,4 +1,9 @@
 # Change Log
+### Version 0.2.3
+- use ASM6
+- remove usages of internal interfaces
+- configurable output with fixed timestamp
+
 ### Version 0.2.2
 - fix bugs:default transform configuration、NPE
 - optimize daemon cache with --no-daemon
