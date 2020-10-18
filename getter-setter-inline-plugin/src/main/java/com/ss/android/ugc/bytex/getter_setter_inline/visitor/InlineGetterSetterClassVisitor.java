@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.getter_setter_inline.visitor;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
 import com.ss.android.ugc.bytex.getter_setter_inline.Context;
@@ -58,7 +59,7 @@ public class InlineGetterSetterClassVisitor extends BaseClassVisitor {
         private final String desc;
 
         InlineGetterSetterMethodVisitor(Context context, MethodVisitor mv, String owner, String name, String desc) {
-            super(Opcodes.ASM5, mv);
+            super(Constants.ASM_API, mv);
             this.context = context;
             this.owner = owner;
             this.name = name;

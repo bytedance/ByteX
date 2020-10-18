@@ -11,6 +11,7 @@ import com.ss.android.ugc.bytex.common.CommonTransform;
 import com.ss.android.ugc.bytex.common.IPlugin;
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
+import com.ss.android.ugc.bytex.transformer.TransformOptions;
 
 import org.gradle.api.Project;
 
@@ -38,7 +39,15 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
 
     @Override
     protected TransformContext getTransformContext(TransformInvocation transformInvocation) {
-        return new ProxyTransformContext(transformInvocation, context.getProject(), context.getAndroid(), isIncremental(), shouldSaveCache());
+        return new ProxyTransformContext(transformInvocation,
+                context.getProject(),
+                context.getAndroid(),
+                new TransformOptions.Builder()
+                        .setPluginIncremental(isIncremental())
+                        .setShouldSaveCache(shouldSaveCache())
+                        .setUseRawCache(BooleanProperty.ENABLE_RAM_CACHE.value())
+                        .setUseFixedTimestamp(BooleanProperty.USE_FIXED_TIMESTAMP.value())
+                        .build());
     }
 
     @Override
@@ -74,9 +83,8 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
     }
 
     private static class ProxyTransformContext extends TransformContext {
-
-        ProxyTransformContext(TransformInvocation invocation, Project project, AppExtension android, boolean isIncremental, boolean shouldSaveCache) {
-            super(invocation, project, android, isIncremental, shouldSaveCache, BooleanProperty.ENABLE_RAM_CACHE.value());
+        public ProxyTransformContext(TransformInvocation invocation, Project project, AppExtension android, TransformOptions transformOptions) {
+            super(invocation, project, android, transformOptions);
         }
 
         @Override

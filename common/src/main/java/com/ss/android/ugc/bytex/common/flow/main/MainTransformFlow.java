@@ -133,7 +133,7 @@ public class MainTransformFlow extends AbsTransformFlow {
         GlobalMainProcessHandlerListener.INSTANCE.startTransform(handlers);
         timer.stopRecord("PRE_PROCESS", "Collect info cost time = [%s ms]");
         timer.startRecord("PROCESS");
-        transform(getProcessors(Process.TRANSFORM, new ClassFileTransformer(new ArrayList<>(handlers), needPreVerify(), needVerify())));
+        transform(getProcessors(Process.TRANSFORM, new ClassFileTransformer(context, new ArrayList<>(handlers), needPreVerify(), needVerify())));
         timer.stopRecord("PROCESS", "Transform cost time = [%s ms]");
     }
 

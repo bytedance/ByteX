@@ -1,6 +1,7 @@
 package com.ss.android.ugc.bytex.coverage_plugin.visitors;
 
 import com.ss.android.ugc.bytex.common.BaseContext;
+import com.ss.android.ugc.bytex.common.Constants;
 
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -8,8 +9,6 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-
-import static org.objectweb.asm.Opcodes.ASM5;
 
 
 public class CoverageMethodVisitor extends MethodNode {
@@ -21,7 +20,7 @@ public class CoverageMethodVisitor extends MethodNode {
     private MethodVisitor mv;
 
     public CoverageMethodVisitor( int access, String name, String desc, String signature, String[] exceptions, BaseContext context, int mapping, String className, MethodVisitor mv) {
-        super(ASM5, access, name, desc, signature, exceptions);
+        super(Constants.ASM_API, access, name, desc, signature, exceptions);
         this.context = context;
         this.mapping = mapping;
         this.className = className;

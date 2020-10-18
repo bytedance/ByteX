@@ -1,5 +1,6 @@
 package com.ss.android.ugc.bytex.method_call_opt.visitors;
 
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.OpcodesUtils;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
@@ -79,7 +80,7 @@ public class MethodCallClassVisitor extends BaseClassVisitor {
         private String mMethodName;
 
         MethodCallOptMethodVisitor(MethodVisitor mv, int access, String name, String desc, String signature, String[] exceptions) {
-            super(Opcodes.ASM5, access, name, desc, signature, exceptions);
+            super(Constants.ASM_API, access, name, desc, signature, exceptions);
             this.mMv = mv;
             this.mMethodName = name;
         }

@@ -37,11 +37,11 @@ public class TransformFlowerManager implements ITransformPipeline {
                 if (transformFlow == flow) {
                     return;
                 }
+                find = transformFlow;
                 TransformFlow next = transformFlow.getNextTransformFlow();
                 if (next == null || next.getPriority() < flow.getPriority()) {
                     break;
                 }
-                find = transformFlow;
             }
             TransformFlow findNext = find.getNextTransformFlow();
             flow.setPreTransformFlow(find);

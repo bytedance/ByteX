@@ -2,6 +2,7 @@ package com.ss.android.ugc.bytex.closeable.visitors;
 
 import com.ss.android.ugc.bytex.closeable.CloseableCheckContext;
 import com.ss.android.ugc.bytex.closeable.ControlFlowAnalyzer;
+import com.ss.android.ugc.bytex.common.Constants;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
 
@@ -87,7 +88,7 @@ public class CloseableCheckClassVisitor extends BaseClassVisitor {
         private String mDesc;
 
         CloseableCheckMethodVisitor(MethodVisitor mv, int access, String name, String desc, String signature, String[] exceptions) {
-            super(Opcodes.ASM5, access, name, desc, signature, exceptions);
+            super(Constants.ASM_API, access, name, desc, signature, exceptions);
             this.mv = mv;
             this.mMethodName = name;
             this.mDesc = desc;

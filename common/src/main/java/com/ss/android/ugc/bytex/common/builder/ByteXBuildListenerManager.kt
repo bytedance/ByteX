@@ -1,6 +1,5 @@
 package com.ss.android.ugc.bytex.common.builder
 
-import com.android.build.gradle.internal.utils.toImmutableList
 import com.ss.android.ugc.bytex.common.builder.internal.DefaultByteXBuildListener
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandlerListener
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandlerListenerManager
@@ -39,6 +38,6 @@ object ByteXBuildListenerManager {
 
     @Synchronized
     internal fun getByteXBuildListeners(): List<ByteXBuildListener> {
-        return listeners.toImmutableList()
+        return Collections.unmodifiableList(listeners)
     }
 }

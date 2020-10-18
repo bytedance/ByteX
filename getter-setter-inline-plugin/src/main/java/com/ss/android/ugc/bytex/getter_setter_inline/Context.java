@@ -105,6 +105,9 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
                 }
                 FieldEntity origin = target.origin();
                 FieldEntity realField = graph.confirmOriginField(origin.className(), origin.name(), origin.desc());
+                if (realField == null) {
+                    throw new RuntimeException("Can not resolve real field:" + origin.className() + " " + origin.desc() + " " + origin.name());
+                }
                 if (graph.get(realField.className()).entity.fromAndroid) {
                     throw new ShouldSkipInlineException("Target class is in android.jar.");
                 } else {
