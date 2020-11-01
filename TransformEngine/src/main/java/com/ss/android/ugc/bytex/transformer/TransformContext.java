@@ -12,6 +12,7 @@ import com.ss.android.ugc.bytex.transformer.cache.DirCache;
 import com.ss.android.ugc.bytex.transformer.cache.FileCache;
 import com.ss.android.ugc.bytex.transformer.cache.FileData;
 import com.ss.android.ugc.bytex.transformer.cache.JarCache;
+import com.ss.android.ugc.bytex.transformer.internal.TransformEnvWithNoLenientMutationImpl;
 import com.ss.android.ugc.bytex.transformer.io.ClassFinder;
 import com.ss.android.ugc.bytex.transformer.io.ClassNodeLoader;
 import com.ss.android.ugc.bytex.transformer.location.Locator;
@@ -19,6 +20,7 @@ import com.ss.android.ugc.bytex.transformer.utils.Service;
 
 import org.gradle.api.Project;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.internal.service.UnknownServiceException;
 import org.gradle.launcher.daemon.server.scaninfo.DaemonScanInfo;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -76,6 +78,9 @@ public class TransformContext implements GradleEnv, ClassFinder {
         this.transformOptions = transformOptions;
         this.transformEnv = Service.load(TransformEnv.class);
         if (transformEnv != null) {
+            if (transformOptions.isForbidUseLenientMutationDuringGetArtifact()) {
+                transformEnv = new TransformEnvWithNoLenientMutationImpl(transformEnv);
+            }
             transformEnv.setTransformInvocation(invocation);
         }
         temporaryDirName = invocation.getContext().getTemporaryDir().getName();
@@ -245,7 +250,12 @@ public class TransformContext implements GradleEnv, ClassFinder {
      * @return true 表示构建结束后会被杀死，类似于--no-daemon
      */
     public boolean isDaemonSingleUse() {
-        return ((ProjectInternal) project).getServices().get(DaemonScanInfo.class).isSingleUse();
+        try {
+            return ((ProjectInternal) project).getServices().get(DaemonScanInfo.class).isSingleUse();
+        } catch (UnknownServiceException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public void release() {

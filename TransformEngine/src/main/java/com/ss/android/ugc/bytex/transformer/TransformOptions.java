@@ -8,12 +8,14 @@ public class TransformOptions {
     private final boolean shouldSaveCache;
     private final boolean useRawCache;
     private final boolean useFixedTimestamp;
+    private final boolean forbidUseLenientMutationDuringGetArtifact;
 
     private TransformOptions(Builder builder) {
         this.isPluginIncremental = builder.isPluginIncremental;
         this.shouldSaveCache = builder.shouldSaveCache;
         this.useRawCache = builder.useRawCache;
         this.useFixedTimestamp = builder.useFixedTimestamp;
+        this.forbidUseLenientMutationDuringGetArtifact = builder.forbidUseLenientMutationDuringGetArtifact;
     }
 
     public boolean isPluginIncremental() {
@@ -32,11 +34,16 @@ public class TransformOptions {
         return useFixedTimestamp;
     }
 
+    public boolean isForbidUseLenientMutationDuringGetArtifact() {
+        return forbidUseLenientMutationDuringGetArtifact;
+    }
+
     public static class Builder {
         private boolean isPluginIncremental = true;
         private boolean shouldSaveCache = true;
         private boolean useRawCache = true;
         private boolean useFixedTimestamp = false;
+        private boolean forbidUseLenientMutationDuringGetArtifact = false;
 
         public Builder setPluginIncremental(boolean pluginIncremental) {
             isPluginIncremental = pluginIncremental;
@@ -55,6 +62,12 @@ public class TransformOptions {
 
         public Builder setUseFixedTimestamp(boolean useFixedTimestamp) {
             this.useFixedTimestamp = useFixedTimestamp;
+            return this;
+        }
+
+
+        public Builder setForbidUseLenientMutationDuringGetArtifact(boolean forbidUseLenientMutationDuringGetArtifact) {
+            this.forbidUseLenientMutationDuringGetArtifact = forbidUseLenientMutationDuringGetArtifact;
             return this;
         }
 
