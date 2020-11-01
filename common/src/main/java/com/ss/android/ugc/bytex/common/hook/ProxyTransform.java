@@ -47,6 +47,7 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
                         .setShouldSaveCache(shouldSaveCache())
                         .setUseRawCache(BooleanProperty.ENABLE_RAM_CACHE.value())
                         .setUseFixedTimestamp(BooleanProperty.USE_FIXED_TIMESTAMP.value())
+                        .setForbidUseLenientMutationDuringGetArtifact(BooleanProperty.FORBID_USE_LENIENT_MUTATION_DURING_GET_ARTIFACT.value())
                         .build());
     }
 

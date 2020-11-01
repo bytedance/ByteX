@@ -6,12 +6,16 @@ import com.google.gson.stream.JsonWriter;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import kotlin.Pair;
 
 public abstract class Node implements Jsonable {
     /**
@@ -202,6 +206,54 @@ public abstract class Node implements Jsonable {
             }
         }
         return null;
+    }
+
+    public Pair<Set<ClassNode>, Set<InterfaceNode>> getAllChildren(boolean includeSelf) {
+        Set<ClassNode> classNodes = new HashSet<>();
+        Set<InterfaceNode> itfNodes = new HashSet<>();
+        Set<Node> handleQ = new HashSet<>();
+        if (this instanceof ClassNode) {
+            ClassNode node = (ClassNode) this;
+            if (includeSelf) {
+                classNodes.add(node);
+            }
+            handleQ.addAll(node.children);
+        } else if (this instanceof InterfaceNode) {
+            InterfaceNode node = (InterfaceNode) this;
+            if (includeSelf) {
+                itfNodes.add(node);
+            }
+            handleQ.addAll(node.children);
+            handleQ.addAll(node.implementedClasses);
+        }
+        while (!handleQ.isEmpty()) {
+            Iterator<Node> iterator = handleQ.iterator();
+            Node next = iterator.next();
+            iterator.remove();
+            if (next instanceof ClassNode) {
+                ClassNode node = (ClassNode) next;
+                classNodes.add(node);
+                for (ClassNode c : node.children) {
+                    if (!classNodes.contains(c)) {
+                        handleQ.add(c);
+                    }
+                }
+            } else if (next instanceof InterfaceNode) {
+                InterfaceNode node = (InterfaceNode) next;
+                itfNodes.add(node);
+                for (ClassNode c : node.implementedClasses) {
+                    if (!classNodes.contains(c)) {
+                        handleQ.add(c);
+                    }
+                }
+                for (InterfaceNode c : node.children) {
+                    if (!itfNodes.contains(c)) {
+                        handleQ.add(c);
+                    }
+                }
+            }
+        }
+        return new Pair<>(classNodes, itfNodes);
     }
 
     @Override

@@ -46,7 +46,7 @@ public class GraphBuilder {
             }
             if (!entity.fromAndroid && !isCacheValid()) {
                 String msg = String.format("We found duplicate %s class files in the project.", current.entity.name);
-                if (BooleanProperty.ENABLE_DUPLICATE_CLASS_CHECK.value()) {
+                if (BooleanProperty.ENABLE_DUPLICATE_CLASS_CHECK.value() && !"module-info".equals(current.entity.name)) {
                     throw new DuplicateClassException(msg);
                 } else {
                     LevelLog.sDefaultLogger.e(msg);

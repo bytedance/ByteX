@@ -4,15 +4,18 @@ import com.android.annotations.NonNull;
 import com.android.build.api.transform.QualifiedContent;
 import com.android.build.api.transform.SecondaryFile;
 import com.android.build.gradle.internal.pipeline.TransformManager;
+import com.android.build.gradle.internal.scope.VariantScope;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.ss.android.ugc.bytex.common.utils.ReflectionUtils;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 public interface TransformConfiguration {
 
@@ -47,19 +50,58 @@ public interface TransformConfiguration {
      * Returns the scope(s) of the Transform. This indicates which scopes the handle consumes.
      */
     @NonNull
+    default Set<? super QualifiedContent.Scope> getScopes(@Nullable VariantScope variantScope) {
+        try {
+            if (variantScope == null || this.getClass().getMethod("getScopes").getDeclaringClass() != TransformConfiguration.class) {
+                return getScopes();
+            }
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        if (variantScope.getType().isAar()) {
+            return TransformManager.SCOPE_FULL_LIBRARY_WITH_LOCAL_JARS;
+        } else if (variantScope.consumesFeatureJars() && consumesFeatureJars()) {
+            return TransformManager.SCOPE_FULL_WITH_FEATURES;
+        } else {
+            return TransformManager.SCOPE_FULL_PROJECT;
+        }
+    }
+
+    /**
+     * Returns the scope(s) of the Transform. This indicates which scopes the handle consumes.
+     */
+    @NonNull
+    @Deprecated
     default Set<? super QualifiedContent.Scope> getScopes() {
         if (consumesFeatureJars()) {
             try {
-                Class clazz = Class.forName("com.android.build.gradle.internal.pipeline.TransformManager");
-                Field field = clazz.getField("SCOPE_FULL_WITH_FEATURES");
-                field.setAccessible(true);
-                return (Set<? super QualifiedContent.Scope>) field.get(clazz);
+                return ReflectionUtils.getField(TransformManager.class, TransformManager.class, "SCOPE_FULL_WITH_FEATURES");
             } catch (Exception ignored) {
             }
         }
         // 需要gradle 3.2 开始支持
         // return TransformManager.SCOPE_FULL_WITH_FEATURES
         return TransformManager.SCOPE_FULL_PROJECT;
+    }
+
+
+    /**
+     * Returns the referenced scope(s) for the Transform. These scopes are not consumed by
+     * the Transform. They are provided as inputs, but are still available as inputs for
+     * other Transforms to consume.
+     *
+     * <p>The default implementation returns an empty Set.
+     */
+    @NonNull
+    default Set<? super QualifiedContent.Scope> getReferencedScopes(@Nullable VariantScope variantScope) {
+        try {
+            if (variantScope == null || this.getClass().getMethod("getReferencedScopes").getDeclaringClass() != TransformConfiguration.class) {
+                return getReferencedScopes();
+            }
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        return ImmutableSet.of();
     }
 
     /**
@@ -70,6 +112,7 @@ public interface TransformConfiguration {
      * <p>The default implementation returns an empty Set.
      */
     @NonNull
+    @Deprecated
     default Set<? super QualifiedContent.Scope> getReferencedScopes() {
         return ImmutableSet.of();
     }

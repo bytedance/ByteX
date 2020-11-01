@@ -1,4 +1,12 @@
 # Change Log
+### Version 0.2.4
+- fix APK with empty code on the higher version of AGP due to getScope
+- fix blocking compilation while calling getArtifact
+  > Note :This is an experimental bug fix.Need to enable the
+  > switch(bytex.forbidUseLenientMutationDuringGetArtifact) in
+  > gradle.properties manually
+- fix a badcase in access-inline-plugin
+
 ### Version 0.2.3
 - use ASM6
 - remove usages of internal interfaces

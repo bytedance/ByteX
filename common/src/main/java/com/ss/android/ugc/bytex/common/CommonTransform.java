@@ -5,7 +5,9 @@ import com.android.build.api.transform.SecondaryFile;
 import com.android.build.api.transform.Transform;
 import com.android.build.api.transform.TransformException;
 import com.android.build.api.transform.TransformInvocation;
-import com.android.build.gradle.internal.pipeline.TransformManager;
+import com.android.build.api.variant.VariantInfo;
+import com.android.build.gradle.AppPlugin;
+import com.android.build.gradle.internal.scope.VariantScope;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -31,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 /**
  * Created by tlh on 2018/8/29.
  */
@@ -38,6 +42,9 @@ import java.util.stream.Collectors;
 public abstract class CommonTransform<X extends BaseContext> extends Transform {
     protected final X context;
     private Set<TransformConfiguration> configurations;
+    @Nullable
+    //3.4在配置阶段才有
+    private String applyingVariantName = null;
 
     public CommonTransform(X context) {
         this.context = context;
@@ -46,6 +53,17 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     @Override
     public String getName() {
         return context.extension.getName();
+    }
+
+    @Override
+    public final boolean applyToVariant(VariantInfo variant) {
+        applyingVariantName = variant.getFullVariantName();
+        return super.applyToVariant(variant);
+    }
+
+    @Nullable
+    private VariantScope getApplyingVariantScope() {
+        return context.project.getPlugins().findPlugin(AppPlugin.class).getVariantManager().getVariantScopes().stream().filter(scope -> scope.getFullVariantName().equals(applyingVariantName)).findFirst().orElse(null);
     }
 
     @Override
@@ -58,7 +76,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             }
         }
         if (result.isEmpty()) {
-            return TransformManager.CONTENT_CLASS;
+            return TransformConfiguration.DEFAULT.getInputTypes();
         }
         return result;
     }
@@ -66,14 +84,15 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     @Override
     public Set<? super QualifiedContent.Scope> getScopes() {
         Set<? super QualifiedContent.Scope> result = ImmutableSet.of();
+        VariantScope variantScope = getApplyingVariantScope();
         for (TransformConfiguration config : getConfigurations()) {
-            Set<? super QualifiedContent.Scope> scopes = config.getScopes();
+            Set<? super QualifiedContent.Scope> scopes = config.getScopes(variantScope);
             if (!result.containsAll(scopes)) {
                 result = Sets.union(result, scopes);
             }
         }
         if (result.isEmpty()) {
-            return TransformManager.SCOPE_FULL_PROJECT;
+            return TransformConfiguration.DEFAULT.getScopes(variantScope);
         }
         return result;
     }
@@ -88,7 +107,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             }
         }
         if (result.isEmpty()) {
-            return TransformManager.CONTENT_CLASS;
+            return TransformConfiguration.DEFAULT.getOutputTypes();
         }
         return result;
     }
@@ -96,14 +115,15 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
     @Override
     public Set<? super QualifiedContent.Scope> getReferencedScopes() {
         Set<? super QualifiedContent.Scope> result = super.getReferencedScopes();
+        VariantScope variantScope = getApplyingVariantScope();
         for (TransformConfiguration config : getConfigurations()) {
-            Set<? super QualifiedContent.Scope> referencedScopes = config.getReferencedScopes();
+            Set<? super QualifiedContent.Scope> referencedScopes = config.getReferencedScopes(variantScope);
             if (!result.containsAll(referencedScopes)) {
                 result = Sets.union(result, referencedScopes);
             }
         }
         if (result.isEmpty()) {
-            return TransformManager.SCOPE_FULL_PROJECT;
+            return TransformConfiguration.DEFAULT.getReferencedScopes(variantScope);
         }
         return result;
     }
@@ -238,6 +258,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
                         .setShouldSaveCache(shouldSaveCache())
                         .setUseRawCache(BooleanProperty.ENABLE_RAM_CACHE.value())
                         .setUseFixedTimestamp(BooleanProperty.USE_FIXED_TIMESTAMP.value())
+                        .setForbidUseLenientMutationDuringGetArtifact(BooleanProperty.FORBID_USE_LENIENT_MUTATION_DURING_GET_ARTIFACT.value())
                         .build()
         );
     }

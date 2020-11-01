@@ -74,7 +74,7 @@ Add those configuration code to your build.gradle, and apply your plugins on dem
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.2.3"
+    ext.plugin_version="0.2.4"
     repositories {
         google()
         jcenter()
