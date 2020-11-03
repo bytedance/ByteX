@@ -1,3 +1,22 @@
+import com.android.builder.model.Version
+import com.android.repository.Revision
+
+buildscript {
+    repositories {
+        maven {
+            url uri('../gradle_plugins')
+        }
+        google()
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:$gradle_version"
+    }
+}
+
 def pluginEnable = true
 def pluginEnableInDebug = true
 def pluginLogLevel = "DEBUG"
@@ -260,46 +279,47 @@ SourceFile {
     deleteLineNumber true
 }
 
-apply plugin: "bytex.coverage"
-CoveragePlugin {
-    // we perfer input from CI
-    enable pluginEnable
-    enableInDebug pluginEnableInDebug
-    logLevel pluginLogLevel
-    // only report <clinit> for better performance
-    clInitOnly false
-    whiteList = ["com/ss/android/ugc/bytex/+"]
-}
-
-//防止dexBuilder与multiDexList共同运行导致io异常
-project.afterEvaluate {
-    for (def variant : android.getApplicationVariants()) {
-        println(variant.getName())
-        Task hookTask = project.getTasks().findByName("transformClassesWithDexBuilderFor" + capitalize(variant.getName()))
-        Task afterTaskName = project.getTasks().findByName("multiDexList" + capitalize(variant.getName()))
-        afterTaskName.mustRunAfter(hookTask);
-    }
-}
-
-static String capitalize(String name) {
-    return name.substring(0, 1).toUpperCase() + name.substring(1);
-}
-
 apply plugin: 'bytex.butterknife-check'
 
-apply plugin: "bytex.RFileKnife"
-RFileKnife {
-    //限制一个R.XXX中有多少个字段 默认10000,请不要超过10943,也不能太低(500)，否则数组无法容下，默认值最好
-    limitSize 10000
-    //分割方法  value|inherit 默认value ；inherit模式需要shrinkR开启compatRFileAssignInherit
-    assignType "inherit"
-    //是否做一次校验，防止兼容性问题 默认false
-    verifyParse true
-    packageNames = [
-            //"com.ss.android.ugc.aweme"
-    ]
-    whiteList = [
-            // style/abc
-            // abc
-    ]
+def revision = Revision.parseRevision(Version.ANDROID_GRADLE_PLUGIN_VERSION)
+println("Revision:" + revision)
+if (revision.major <= 3 && revision.minor <= 5) {
+    apply plugin: "bytex.coverage"
+    CoveragePlugin {
+        // we perfer input from CI
+        enable pluginEnable
+        enableInDebug pluginEnableInDebug
+        logLevel pluginLogLevel
+        // only report <clinit> for better performance
+        clInitOnly false
+        whiteList = ["com/ss/android/ugc/bytex/+"]
+    }
+
+    //防止dexBuilder与multiDexList共同运行导致io异常
+    project.afterEvaluate {
+        for (def variant : android.getApplicationVariants()) {
+            println(variant.getName())
+            Task hookTask = project.getTasks().findByName("transformClassesWithDexBuilderFor" + variant.getName().capitalize())
+            Task afterTaskName = project.getTasks().findByName("multiDexList" + variant.getName().capitalize())
+            afterTaskName.mustRunAfter(hookTask);
+        }
+    }
+
+    apply plugin: "bytex.RFileKnife"
+    RFileKnife {
+        //限制一个R.XXX中有多少个字段 默认10000,请不要超过10943,也不能太低(500)，否则数组无法容下，默认值最好
+        limitSize 10000
+        //分割方法  value|inherit 默认value ；inherit模式需要shrinkR开启compatRFileAssignInherit
+        assignType "inherit"
+        //是否做一次校验，防止兼容性问题 默认false
+        verifyParse true
+        packageNames = [
+                //"com.ss.android.ugc.aweme"
+        ]
+        whiteList = [
+                // style/abc
+                // abc
+        ]
+    }
+
 }

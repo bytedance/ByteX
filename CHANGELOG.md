@@ -1,5 +1,8 @@
 # Change Log
 ### Version 0.2.4
+- fix get applying variant scope(Compatible with AGP)
+
+### Version 0.2.4
 - fix APK with empty code on the higher version of AGP due to getScope
 - fix blocking compilation while calling getArtifact
   > Note :This is an experimental bug fix.Need to enable the

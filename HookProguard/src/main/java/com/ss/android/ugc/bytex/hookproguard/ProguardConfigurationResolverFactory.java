@@ -14,7 +14,7 @@ import org.gradle.api.Project;
 class ProguardConfigurationResolverFactory {
     public static ProguardConfigurationResolver createProguardConfigurationResolver(Project project, String variantName) {
         Revision revision = Revision.parseRevision(Version.ANDROID_GRADLE_PLUGIN_VERSION);
-        if (revision.getMajor() >= 3 && revision.getMinor() >= 6) {
+        if (revision.getMajor() > 3 || revision.getMinor() >= 6) {
             return new ProguardConfigurableTaskResolver(project, variantName);
         } else {
             return new ProguardConfigurableTransformResolver(project, variantName);
