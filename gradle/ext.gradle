@@ -32,7 +32,7 @@ ext {
     upload_password_snapshot = PASSWORD_SNAPSHOT
     upload_maven_url_snapshot = UPLOAD_MAVEN_URL_SNAPSHOT
     upload_group = 'com.bytedance.android.byteX'
-    upload_version = "0.2.4${(useSnapshotMaven.toBoolean() ? "-${doSh("git config user.name")}-SNAPSHOT" : "")}"
+    upload_version = "0.2.5${(useSnapshotMaven.toBoolean() ? "-${doSh("git config user.name")}-SNAPSHOT" : "")}"
     upload_dir = project.rootProject.file('gradle_plugins').path
     gradle_version = '3.5.3'
     gson_version = '2.8.2'
