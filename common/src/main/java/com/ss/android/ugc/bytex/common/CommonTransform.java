@@ -6,7 +6,6 @@ import com.android.build.api.transform.Transform;
 import com.android.build.api.transform.TransformException;
 import com.android.build.api.transform.TransformInvocation;
 import com.android.build.api.variant.VariantInfo;
-import com.android.build.gradle.AppPlugin;
 import com.android.build.gradle.internal.scope.VariantScope;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -20,6 +19,7 @@ import com.ss.android.ugc.bytex.common.log.LevelLog;
 import com.ss.android.ugc.bytex.common.log.Timer;
 import com.ss.android.ugc.bytex.common.log.html.HtmlReporter;
 import com.ss.android.ugc.bytex.gradletoolkit.TransformInvocationKt;
+import com.ss.android.ugc.bytex.gradletoolkit.VariantScopeKt;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.TransformOptions;
 
@@ -63,7 +63,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
 
     @Nullable
     private VariantScope getApplyingVariantScope() {
-        return context.project.getPlugins().findPlugin(AppPlugin.class).getVariantManager().getVariantScopes().stream().filter(scope -> scope.getFullVariantName().equals(applyingVariantName)).findFirst().orElse(null);
+        return applyingVariantName == null ? null : VariantScopeKt.findVariantScope(context.project, applyingVariantName);
     }
 
     @Override

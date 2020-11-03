@@ -58,9 +58,7 @@ public interface TransformConfiguration {
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
-        if (variantScope.getType().isAar()) {
-            return TransformManager.SCOPE_FULL_LIBRARY_WITH_LOCAL_JARS;
-        } else if (variantScope.consumesFeatureJars() && consumesFeatureJars()) {
+        if (variantScope.consumesFeatureJars() && consumesFeatureJars()) {
             return TransformManager.SCOPE_FULL_WITH_FEATURES;
         } else {
             return TransformManager.SCOPE_FULL_PROJECT;
