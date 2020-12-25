@@ -1,8 +1,8 @@
 package com.ss.android.ugc.bytex.refercheck.visitor;
 
+import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.visitor.BaseClassVisitor;
-import com.ss.android.ugc.bytex.refercheck.ReferCheckContext;
 
 import org.objectweb.asm.MethodVisitor;
 
@@ -12,28 +12,28 @@ import org.objectweb.asm.MethodVisitor;
  */
 
 public class ReferCheckClassVisitor extends BaseClassVisitor {
-    private final ReferCheckContext context;
+    private final ReferCheckMethodVisitor.CheckIssueReceiver checkIssueReceiver;
+    private final Graph graph;
     private String className;
-    private boolean isInterface;
     //    private boolean shouldCheck;
     private String sourceFile;
 
-    public ReferCheckClassVisitor(ReferCheckContext context) {
-        this.context = context;
+    public ReferCheckClassVisitor(ReferCheckMethodVisitor.CheckIssueReceiver checkIssueReceiver, Graph graph) {
+        this.checkIssueReceiver = checkIssueReceiver;
+        this.graph = graph;
     }
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         this.className = name;
-        this.isInterface = TypeUtil.isInterface(access);
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String methodName, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, methodName, desc, signature, exceptions);
-        if (!isInterface && !TypeUtil.isAbstract(access) && !TypeUtil.isSynthetic(access)) {
-            mv = new ReferCheckMethodVisitor(mv, context, className, methodName, desc, access, sourceFile);
+        if (!TypeUtil.isAbstract(access) && !TypeUtil.isNative(access)) {
+            mv = new ReferCheckMethodVisitor(mv, checkIssueReceiver, graph, className, methodName, desc, access, sourceFile);
         }
         return mv;
     }

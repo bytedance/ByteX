@@ -90,31 +90,37 @@ public class PreProcessClassVisitor extends BaseClassVisitor {
                         break;
                     }
                     if (insnNode.getType() == AbstractInsnNode.JUMP_INSN) {
-                        throw new ShouldSkipInlineException("Unexpected JUMP_INSN instruction in access$ method body.");
+                        throw new ShouldSkipInlineException("Unexpected JUMP_INSN instruction(JUMP_INSN) in access$ method body.");
                     }
                     if (insnNode.getOpcode() == Opcodes.ATHROW) {
-                        throw new ShouldSkipInlineException("Unexpected ATHROW instruction in access$ method body.");
+                        throw new ShouldSkipInlineException("Unexpected ATHROW instruction(ATHROW) in access$ method body.");
                     }
                     // no control instruction
                     if (insnNode.getOpcode() >= Opcodes.GOTO && insnNode.getOpcode() <= Opcodes.LOOKUPSWITCH) {
-                        throw new ShouldSkipInlineException("Unexpected control instruction in access$ method body.");
+                        throw new ShouldSkipInlineException("Unexpected control instruction(GOTO-LOOKUPSWITCH) in access$ method body.");
+                    }
+                    //https://github.com/bytedance/ByteX/issues/31
+                    if (shouldSkipVarInsn && insnNode.getOpcode() == Opcodes.CHECKCAST) {
+                        //在加载入参时做强转，目前看到只有kotlinx/coroutines/sync/SemaphoreImpl.access$getSegment (Lkotlinx/coroutines/sync/SemaphoreImpl;Lkotlinx/coroutines/sync/SemaphoreSegment;J)Lkotlinx/coroutines/sync/SemaphoreSegment;遇到过
+                        //我们忽略处理
+                        throw new ShouldSkipInlineException("Unexpected new instructio（CHECKCAST） in access$ method body.");
                     }
                     // If those instructions appear in access$ method body, skip inline it.
                     // 如果在access$方法内部有这些指令，则不内联这个方法，因为这些指令都比较新，for safe.
                     if (insnNode.getOpcode() > Opcodes.MONITOREXIT) {
-                        throw new ShouldSkipInlineException("Unexpected new instruction in access$ method body.");
+                        throw new ShouldSkipInlineException("Unexpected new instruction(>MONITOREXIT) in access$ method body.");
                     }
                     if (insnNode.getOpcode() >= Opcodes.ILOAD && insnNode.getOpcode() <= Opcodes.SALOAD) {
                         if (shouldSkipVarInsn) {
                             varLoadInsnCount++;
                         } else {
-                            throw new ShouldSkipInlineException("Unexpected load instruction in access$ method body.");
+                            throw new ShouldSkipInlineException("Unexpected load instruction(XLOAD) in access$ method body.");
                         }
                         continue;
                     }
                     // no store instruction
                     if (insnNode.getOpcode() >= Opcodes.ISTORE && insnNode.getOpcode() <= Opcodes.SASTORE) {
-                        throw new ShouldSkipInlineException("Unexpected store instruction in access$ method body.");
+                        throw new ShouldSkipInlineException("Unexpected store instruction(XSTORE) in access$ method body.");
                     }
                     if (insnNode.getType() == AbstractInsnNode.METHOD_INSN) {
                         if (shouldSkipVarInsn) {

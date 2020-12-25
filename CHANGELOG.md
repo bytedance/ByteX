@@ -1,5 +1,9 @@
 # Change Log
-### Version 0.2.4
+### Version 0.2.6
+- fix bug in access-inline with coroutines[Issue](https://github.com/bytedance/ByteX/issues/31)
+- add quick-refer-check task:processQuickReferCheckWith${variant.capitalize}
+
+### Version 0.2.5
 - fix get applying variant scope(Compatible with AGP)
 
 ### Version 0.2.4

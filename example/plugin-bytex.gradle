@@ -67,8 +67,16 @@ refer_check {
             // Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
             "org/conscrypt/+",
     ]
-    logMethods = [
-            "com/ss/android/ugc/bytex/example/accessinline/OuterClass#run"
+}
+
+apply plugin: 'bytex.quick_refer_check'
+quick_refer_check {
+    enable pluginEnable
+    enableInDebug pluginEnableInDebug
+    logLevel pluginLogLevel
+    strictMode true
+    whiteList = [
+            "*/R\$+"
     ]
 }
 

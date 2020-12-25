@@ -4,6 +4,7 @@ import com.android.utils.Pair;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,11 +75,18 @@ public class WhiteList {
     }
 
     private List<Pair<Pattern, Pattern>> getWhiteList(String className) {
-        List<Pair<Pattern, Pattern>> whiteList = excludeList.get(className.substring(0, 1));
-        if (whiteList == null || whiteList.isEmpty()) {
-            return excludeList.get("");
+        List<Pair<Pattern, Pattern>> allMatch = excludeList.getOrDefault("", Collections.emptyList());
+        List<Pair<Pattern, Pattern>> filterMath = excludeList.getOrDefault(className.substring(0, 1), Collections.emptyList());
+        if (allMatch.isEmpty()) {
+            return filterMath;
         }
-        return whiteList;
+        if (filterMath.isEmpty()) {
+            return allMatch;
+        }
+        List<Pair<Pattern, Pattern>> result = new ArrayList<>(allMatch.size() + filterMath.size());
+        result.addAll(filterMath);
+        result.addAll(allMatch);
+        return result;
     }
 
     public boolean isEmpty() {

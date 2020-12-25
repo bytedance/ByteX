@@ -1,5 +1,7 @@
 package com.ss.android.ugc.bytex.transformer;
 
+import com.ss.android.ugc.bytex.transformer.io.AndroidJarProvider;
+
 /**
  * Created by yangzhiqian on 2020/9/22<br/>
  */
@@ -9,6 +11,7 @@ public class TransformOptions {
     private final boolean useRawCache;
     private final boolean useFixedTimestamp;
     private final boolean forbidUseLenientMutationDuringGetArtifact;
+    private final AndroidJarProvider androidJarProvider;
 
     private TransformOptions(Builder builder) {
         this.isPluginIncremental = builder.isPluginIncremental;
@@ -16,6 +19,7 @@ public class TransformOptions {
         this.useRawCache = builder.useRawCache;
         this.useFixedTimestamp = builder.useFixedTimestamp;
         this.forbidUseLenientMutationDuringGetArtifact = builder.forbidUseLenientMutationDuringGetArtifact;
+        this.androidJarProvider = builder.androidJarProvider;
     }
 
     public boolean isPluginIncremental() {
@@ -38,12 +42,17 @@ public class TransformOptions {
         return forbidUseLenientMutationDuringGetArtifact;
     }
 
+    public AndroidJarProvider getAndroidJarProvider() {
+        return androidJarProvider;
+    }
+
     public static class Builder {
         private boolean isPluginIncremental = true;
         private boolean shouldSaveCache = true;
         private boolean useRawCache = true;
         private boolean useFixedTimestamp = false;
         private boolean forbidUseLenientMutationDuringGetArtifact = false;
+        private AndroidJarProvider androidJarProvider = AndroidJarProvider.DEFAULT;
 
         public Builder setPluginIncremental(boolean pluginIncremental) {
             isPluginIncremental = pluginIncremental;
@@ -68,6 +77,11 @@ public class TransformOptions {
 
         public Builder setForbidUseLenientMutationDuringGetArtifact(boolean forbidUseLenientMutationDuringGetArtifact) {
             this.forbidUseLenientMutationDuringGetArtifact = forbidUseLenientMutationDuringGetArtifact;
+            return this;
+        }
+
+        public Builder setAndroidJarProvider(AndroidJarProvider androidJarProvider) {
+            this.androidJarProvider = androidJarProvider;
             return this;
         }
 

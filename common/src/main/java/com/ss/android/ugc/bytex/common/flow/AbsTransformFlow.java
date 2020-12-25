@@ -7,6 +7,7 @@ import com.ss.android.ugc.bytex.transformer.processor.FileProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -66,8 +67,12 @@ public abstract class AbsTransformFlow implements TransformFlow {
     }
 
     protected AbsTransformFlow traverseAndroidJarOnly(FileProcessor... processors) throws IOException, InterruptedException {
-        transformEngine.traverseAndroidJar(context.androidJar(), processors);
+        transformEngine.traverseAndroidJar(androidJar(), processors);
         return this;
+    }
+
+    protected File androidJar() throws FileNotFoundException {
+        return context.androidJar();
     }
 
     protected AbsTransformFlow transform(FileProcessor... processors) throws IOException, InterruptedException {

@@ -9,7 +9,7 @@ public class ReferCheckExtension extends BaseExtension {
     private boolean strictMode;
     private boolean moreErrorInfo;
     private String owner;
-    private List<String> logMethods;
+    private boolean printKept = false;
 
     public void setWhiteList(List<String> list) {
         whiteList = list;
@@ -43,16 +43,16 @@ public class ReferCheckExtension extends BaseExtension {
         this.owner = owner;
     }
 
-    public List<String> getLogMethods() {
-        return logMethods;
-    }
-
-    public void setLogMethods(List<String> logMethods) {
-        this.logMethods = logMethods;
-    }
-
     @Override
     public String getName() {
         return "refer_check";
+    }
+
+    public boolean isPrintKept() {
+        return printKept;
+    }
+
+    public void setPrintKept(boolean printKept) {
+        this.printKept = printKept;
     }
 }
