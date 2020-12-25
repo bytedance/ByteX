@@ -4,9 +4,11 @@ import com.android.build.gradle.AppExtension;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
 import com.ss.android.ugc.bytex.common.flow.TransformFlow;
 import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
+import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.pluginconfig.anno.PluginConfig;
 import com.ss.android.ugc.bytex.refercheck.log.ErrorLogGenerator;
+import com.ss.android.ugc.bytex.refercheck.log.PinpointProblemAnalyzer;
 import com.ss.android.ugc.bytex.refercheck.visitor.ReferCheckClassVisitor;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
@@ -31,14 +33,20 @@ public class ReferCheckPlugin extends CommonPlugin<ReferCheckExtension, ReferChe
 
     @Override
     public boolean transform(@Nonnull String relativePath, @Nonnull ClassVisitorChain chain) {
-        chain.connect(new ReferCheckClassVisitor(context));
+        chain.connect(new ReferCheckClassVisitor(context, context.getClassGraph()));
         return super.transform(relativePath, chain);
     }
 
     @Override
     public void afterTransform(@Nonnull TransformEngine engine) {
         super.afterTransform(engine);
-        ErrorLogGenerator errorLogGenerator = new ErrorLogGenerator(context, engine, project);
+        ErrorLogGenerator errorLogGenerator = new ErrorLogGenerator(
+                context.extension.moreErrorInfo() ? PinpointProblemAnalyzer.getPinpointProblemAnalyzer(project, context.getTransformContext().getVariantName(), context.getClassGraph()) : null,
+                fileName -> Utils.getAllFileCachePath(context.getTransformContext(), fileName),
+                context.getTransformContext().getVariantName(),
+                context.extension.getOwner(),
+                context.getInaccessibleNodes()
+        );
         String msg = errorLogGenerator.generate();
         if (msg != null && !msg.isEmpty()) {
             if (extension.isStrictMode()) {

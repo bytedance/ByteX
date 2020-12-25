@@ -190,16 +190,11 @@ public class TransformContext implements GradleEnv, ClassFinder {
     }
 
     public File androidJar() throws FileNotFoundException {
-        File jar = new File(getSdkJarDir(), "android.jar");
-        if (!jar.exists()) {
+        File jar = transformOptions.getAndroidJarProvider().getAndroidJar(project, android);
+        if (jar == null || !jar.exists()) {
             throw new FileNotFoundException("Android jar not found!");
         }
         return jar;
-    }
-
-    private String getSdkJarDir() {
-        String compileSdkVersion = android.getCompileSdkVersion();
-        return String.join(File.separator, android.getSdkDirectory().getAbsolutePath(), "platforms", compileSdkVersion);
     }
 
     public File byteXBuildDir() {

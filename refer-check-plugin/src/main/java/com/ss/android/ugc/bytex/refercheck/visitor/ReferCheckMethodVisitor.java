@@ -11,7 +11,6 @@ import com.ss.android.ugc.bytex.common.graph.Node;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.refercheck.InaccessibleNode;
-import com.ss.android.ugc.bytex.refercheck.ReferCheckContext;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -19,12 +18,14 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 /**
  * Created by tlh on 2018/2/13.
  */
 
 public class ReferCheckMethodVisitor extends MethodVisitor {
-    private final ReferCheckContext context;
+    private final CheckIssueReceiver checkIssueReceiver;
     private final String sourceFile;
     private final Graph graph;
     private final String className;
@@ -33,16 +34,16 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
     private final int methodAccess;
     private int processingLineNumber;
 
-    ReferCheckMethodVisitor(MethodVisitor mv, ReferCheckContext context,
+    ReferCheckMethodVisitor(MethodVisitor mv, CheckIssueReceiver checkIssueReceiver, Graph graph,
                             String className, String methodName, String methodDesc, int methodAccess, String sourceFile) {
         super(Constants.ASM_API, mv);
-        this.context = context;
+        this.checkIssueReceiver = checkIssueReceiver;
         this.className = className;
         this.methodName = methodName;
         this.methodDesc = methodDesc;
         this.methodAccess = methodAccess;
         this.sourceFile = sourceFile;
-        this.graph = context.getClassGraph();
+        this.graph = graph;
     }
 
     @Override
@@ -58,11 +59,6 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
     }
 
     private void checkMethod(final int opcode, final String owner, final String name, final String desc, final boolean itf) {
-        String method = String.format("%s#%s", owner, name);
-        List<String> logMethods = context.extension.getLogMethods();
-        if (logMethods != null && logMethods.contains(method)) {
-            context.getLogger().i("Check method : " + method);
-        }
         Node ownerNode = graph.get(owner);
         if (ownerNode != null) {
             MethodEntity originMethod = ownerNode.confirmOriginMethod(name, desc);
@@ -77,7 +73,7 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
                             if (child instanceof ClassNode && !TypeUtil.isAbstract(child.entity.access)
                                     && TypeUtil.isAbstract(child.confirmOriginMethod(name, desc).access())) {
                                 //非抽象子类没有实现这个抽象类
-                                context.addNotAccessMember(
+                                checkIssueReceiver.addNotAccessMember(
                                         className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                                         child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
                             }
@@ -90,7 +86,7 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
                         graph.traverseChildren((ClassNode) ownerNode, child -> {
                             if (!TypeUtil.isAbstract(child.entity.access) && TypeUtil.isAbstract(child.confirmOriginMethod(name, desc).access())) {
                                 //非抽象子类没有实现这个抽象方法
-                                context.addNotAccessMember(
+                                checkIssueReceiver.addNotAccessMember(
                                         className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                                         child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
                             }
@@ -99,17 +95,17 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
                     }
                 }
                 if (!accessible(opcode, originMethod)) {
-                    context.addNotAccessMember(
+                    checkIssueReceiver.addNotAccessMember(
                             className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                             owner, name, desc, originMethod.access(), InaccessibleNode.TYPE_INACCESS);
                 }
             } else {
-                context.addNotAccessMember(
+                checkIssueReceiver.addNotAccessMember(
                         className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                         owner, name, desc, 0, InaccessibleNode.TYPE_METHOD_NOT_FOUND);
             }
         } else {
-            context.addNotAccessMember(
+            checkIssueReceiver.addNotAccessMember(
                     className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                     owner, name, desc, 0, InaccessibleNode.TYPE_CLASS_NOT_FOUND);
         }
@@ -157,19 +153,27 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
             FieldEntity originField = ownerNode.confirmOriginField(name, desc);
             if (originField != null) {
                 if (!accessible(opcode, originField)) {
-                    context.addNotAccessMember(
+                    checkIssueReceiver.addNotAccessMember(
                             className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                             owner, name, desc, originField.access(), InaccessibleNode.TYPE_INACCESS);
                 }
             } else {
-                context.addNotAccessMember(
+                checkIssueReceiver.addNotAccessMember(
                         className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                         owner, name, desc, 0, InaccessibleNode.TYPE_FIELD_NOT_FOUND);
             }
         } else {
-            context.addNotAccessMember(
+            checkIssueReceiver.addNotAccessMember(
                     className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
                     owner, name, desc, 01, InaccessibleNode.TYPE_CLASS_NOT_FOUND);
         }
+    }
+
+    public interface CheckIssueReceiver {
+        void addNotAccessMember(String callClassName, String callMethodName, String callMethodDesc, int callMethodAccess, @Nullable String sourceFile, int line,
+                                String memberOwner, String memberName, String memberDesc, int memberAccess,
+                                int type);
+
+        List<InaccessibleNode> getInaccessibleNodes();
     }
 }

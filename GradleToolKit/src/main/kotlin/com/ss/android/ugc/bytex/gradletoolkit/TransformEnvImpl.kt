@@ -33,6 +33,7 @@ class TransformEnvImpl() : TransformEnv {
             Artifact.ALL_CLASSES -> invocation!!.variant.scope.allClasses
             Artifact.APK -> invocation!!.variant.scope.apk
             Artifact.JAR -> invocation!!.variant.scope.getArtifactCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH, AndroidArtifacts.ArtifactScope.ALL, AndroidArtifacts.ArtifactType.JAR).artifactFiles.files
+            Artifact.CLASSES -> invocation!!.variant.scope.getArtifactCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH, AndroidArtifacts.ArtifactScope.ALL, AndroidArtifacts.ArtifactType.CLASSES).artifactFiles.files
             Artifact.JAVAC -> invocation!!.variant.scope.javac
             Artifact.MERGED_ASSETS -> invocation!!.variant.scope.mergedAssets
             Artifact.MERGED_RES -> invocation!!.variant.scope.mergedRes
