@@ -47,7 +47,7 @@ public class DefaultCheckIssueReceiver implements ReferCheckMethodVisitor.CheckI
                 memberAccess,
                 type
         );
-        if (shouldCheck(memberOwner, memberName) && shouldCheck(callClassName, callMethodName)) {
+        if (type == InaccessibleNode.TYPE_CALL_BLOCK_METHOD || (shouldCheck(memberOwner, memberName) && shouldCheck(callClassName, callMethodName))) {
             inaccessableMembers.add(inaccessibleNode);
         } else if (consumer != null) {
             consumer.accept(inaccessibleNode);

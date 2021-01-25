@@ -3,6 +3,7 @@ package com.ss.android.ugc.bytex.refercheck.cli
 import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager
 import com.ss.android.ugc.bytex.common.graph.GraphBuilder
 import com.ss.android.ugc.bytex.common.utils.FileHandler
+import com.ss.android.ugc.bytex.common.utils.MethodMatcher
 import com.ss.android.ugc.bytex.common.visitor.GenerateGraphClassVisitor
 import com.ss.android.ugc.bytex.common.white_list.WhiteList
 import com.ss.android.ugc.bytex.refercheck.DefaultCheckIssueReceiver
@@ -24,7 +25,7 @@ object Main {
         val libraryInputs = listOf<File>()
         val variantName: String = "variantName"
 
-        val checkResult = checkReference(programInputs, libraryInputs, null)
+        val checkResult = checkReference(programInputs, libraryInputs, null, false, emptyList())
         println(ErrorLogGenerator(
                 null,
                 null,
@@ -43,7 +44,7 @@ object Main {
     }
 
     @JvmStatic
-    fun checkReference(programInputs: Collection<File>, libraryInputs: Collection<File>, whiteList: WhiteList?): CheckResult {
+    fun checkReference(programInputs: Collection<File>, libraryInputs: Collection<File>, whiteList: WhiteList?, checkInaccessOverrideMethodStrictly: Boolean, blockMethodList: List<String>): CheckResult {
         var startTime = System.currentTimeMillis()
         println("programInputs:\n\t${programInputs.map { it.absolutePath }.joinToString("\n\t")}")
         println("libraryInputs:\n\t${libraryInputs.map { it.absolutePath }.joinToString("\n\t")}")
@@ -73,9 +74,10 @@ object Main {
         val receiver = DefaultCheckIssueReceiver(whiteList, Consumer {
             keepByWhiteList.add(it)
         })
+        val blockMethodListMatchers = blockMethodList.map { MethodMatcher(it) }.toList()
         classFileData.parallelStream().forEach {
             try {
-                ClassReader(it.bytes).accept(ReferCheckClassVisitor(receiver, graph), 0)
+                ClassReader(it.bytes).accept(ReferCheckClassVisitor(checkInaccessOverrideMethodStrictly, receiver, graph, blockMethodListMatchers), 0)
             } catch (e: Exception) {
                 e.printStackTrace()
                 if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(it.name)) {

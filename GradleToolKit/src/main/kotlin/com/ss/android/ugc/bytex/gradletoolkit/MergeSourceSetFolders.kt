@@ -1,46 +1,29 @@
 package com.ss.android.ugc.bytex.gradletoolkit
 
 import com.android.build.gradle.tasks.MergeSourceSetFolders
-import com.android.ide.common.resources.AssetSet
 import java.io.File
 
-/**
- * Created by tanlehua on 2019-04-30.
- */
-
-
-fun MergeSourceSetFolders.assetSetList(): List<File> {
-    val assetSets = try {
-        assetSetList1()
-    } catch (e: Exception) {
-        assetSetList2()
-    }
-    return assetSets.flatMap { it.sourceFiles }.toSet().toList()
-}
-
-
-fun MergeSourceSetFolders.assetSetList1(): Iterable<AssetSet> {
-    val computeAssetSetListMethod = MergeSourceSetFolders::class.java.declaredMethods
-            .find { it.name == "computeAssetSetList" && it.parameterCount == 0 }!!
-
-    val oldIsAccessible = computeAssetSetListMethod.isAccessible
-    try {
-        computeAssetSetListMethod.isAccessible = true
-        return computeAssetSetListMethod.invoke(this) as Iterable<AssetSet>
-    } finally {
-        computeAssetSetListMethod.isAccessible = oldIsAccessible
+internal fun MergeSourceSetFolders.assetSetList(): Collection<File> {
+    return if (ANDROID_GRADLE_PLUGIN_VERSION.major >= 4 || ANDROID_GRADLE_PLUGIN_VERSION.minor >= 5) {
+        assetSetList35_()
+    } else {
+        assetSetList30_()
     }
 }
 
-fun MergeSourceSetFolders.assetSetList2(): Iterable<AssetSet> {
-    val computeAssetSetListMethod = MergeSourceSetFolders::class.java.declaredMethods
-            .find { it.name == "computeAssetSetList\$gradle" && it.parameterCount == 0 }!!
 
-    val oldIsAccessible = computeAssetSetListMethod.isAccessible
-    try {
-        computeAssetSetListMethod.isAccessible = true
-        return computeAssetSetListMethod.invoke(this) as Iterable<AssetSet>
-    } finally {
-        computeAssetSetListMethod.isAccessible = oldIsAccessible
-    }
+private fun MergeSourceSetFolders.assetSetList30_(): Collection<File> {
+    //this.computeAssetSetList().flatMap { it.sourceFiles }.toSet()
+    return ReflectionUtils.callMethod<List<Any>>(this, MergeSourceSetFolders::class.java, "computeAssetSetList", arrayOf(), arrayOf())
+            .flatMap {
+                ReflectionUtils.callPublicMethod<List<File>>(it, it.javaClass, "getSourceFiles", arrayOf(), arrayOf())
+            }.toSet()
+}
+
+fun MergeSourceSetFolders.assetSetList35_(): Collection<File> {
+    //this.computeAssetSetList$gradle().flatMap { it.sourceFiles }.toSet()
+    return ReflectionUtils.callMethod<List<Any>>(this, MergeSourceSetFolders::class.java, "computeAssetSetList\$gradle", arrayOf(), arrayOf())
+            .flatMap {
+                ReflectionUtils.callPublicMethod<List<File>>(it, it.javaClass, "getSourceFiles", arrayOf(), arrayOf())
+            }.toSet()
 }

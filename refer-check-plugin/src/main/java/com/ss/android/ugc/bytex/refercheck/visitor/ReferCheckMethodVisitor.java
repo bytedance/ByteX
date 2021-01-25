@@ -8,6 +8,7 @@ import com.ss.android.ugc.bytex.common.graph.InterfaceNode;
 import com.ss.android.ugc.bytex.common.graph.MemberEntity;
 import com.ss.android.ugc.bytex.common.graph.MethodEntity;
 import com.ss.android.ugc.bytex.common.graph.Node;
+import com.ss.android.ugc.bytex.common.utils.MethodMatcher;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.refercheck.InaccessibleNode;
@@ -28,6 +29,7 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
     private final CheckIssueReceiver checkIssueReceiver;
     private final String sourceFile;
     private final Graph graph;
+    private final List<MethodMatcher> blockMethodListMatchers;
     private final String className;
     private final String methodName;
     private final String methodDesc;
@@ -35,6 +37,7 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
     private int processingLineNumber;
 
     ReferCheckMethodVisitor(MethodVisitor mv, CheckIssueReceiver checkIssueReceiver, Graph graph,
+                            List<MethodMatcher> blockMethodListMatchers,
                             String className, String methodName, String methodDesc, int methodAccess, String sourceFile) {
         super(Constants.ASM_API, mv);
         this.checkIssueReceiver = checkIssueReceiver;
@@ -44,6 +47,11 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
         this.methodAccess = methodAccess;
         this.sourceFile = sourceFile;
         this.graph = graph;
+        this.blockMethodListMatchers = blockMethodListMatchers;
+        if (TypeUtil.isAbstract(methodAccess)) {
+            boolean itf = graph.get(className) instanceof InterfaceNode;
+            checkMethod(itf ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, className, methodName, methodDesc, itf);
+        }
     }
 
     @Override
@@ -54,6 +62,14 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+        for (MethodMatcher blockMethodListMatcher : blockMethodListMatchers) {
+            if (blockMethodListMatcher.match(owner, name, desc)) {
+                checkIssueReceiver.addNotAccessMember(
+                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                        owner, name, desc, 0, InaccessibleNode.TYPE_CALL_BLOCK_METHOD);
+                break;
+            }
+        }
         checkMethod(opcode, owner, name, desc, itf);
         super.visitMethodInsn(opcode, owner, name, desc, itf);
     }

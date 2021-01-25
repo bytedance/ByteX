@@ -139,6 +139,10 @@ public class TypeUtil {
         return (access & Opcodes.ACC_SYNTHETIC) == Opcodes.ACC_SYNTHETIC;
     }
 
+    public static boolean isBridge(int access) {
+        return (access & Opcodes.ACC_BRIDGE) == Opcodes.ACC_BRIDGE;
+    }
+
     public static boolean isSynchronized(int access) {
         return (access & Opcodes.ACC_SYNCHRONIZED) == Opcodes.ACC_SYNCHRONIZED;
     }
