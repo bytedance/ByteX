@@ -1,4 +1,9 @@
 # Change Log
+### Version 0.2.7
+- Improve compatibility(AGP4.1) of GradleToolKit;
+- fix 'RuntimeClasspath was resolved from a thread not managed by Gradle' in getter-setter-plugin；
+- fix incremental
+
 ### Version 0.2.6
 - fix bug in access-inline with coroutines[Issue](https://github.com/bytedance/ByteX/issues/31)
 - add quick-refer-check task:processQuickReferCheckWith${variant.capitalize}
