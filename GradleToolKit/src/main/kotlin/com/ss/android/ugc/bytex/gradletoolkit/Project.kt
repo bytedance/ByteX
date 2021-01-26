@@ -6,9 +6,6 @@ import com.android.builder.model.Version
 import com.android.repository.Revision
 import org.gradle.api.Project
 
-/**
- * Created by yangzhiqian on 2020/11/2<br/>
- */
 //todo:fix me
 val revision = Revision.parseRevision(Version.ANDROID_GRADLE_PLUGIN_VERSION)
 fun Project.findVariantScope(variantName: String): VariantScope? {
@@ -29,7 +26,6 @@ private fun Project.findVariantManager35(): VariantManager {
 }
 
 private fun Project.findVariantManager36(): VariantManager {
-//    return (project.plugins.findPlugin("com.android.internal.application") as com.android.build.gradle.internal.plugins.BasePlugin).variantManager
     return project.plugins.findPlugin("com.android.internal.application")!!.let {
         it.javaClass.getMethod("getVariantManager").invoke(it) as VariantManager
     }
@@ -50,18 +46,11 @@ private fun VariantManager.findVariantScope3X(variantName: String): VariantScope
 }
 
 private fun VariantManager.findVariantScope40(variantName: String): VariantScope? {
-//    return variantScopes.firstOrNull { it.name == variantName }
     return variantScopes.firstOrNull { it::class.java.getMethod("getName").invoke(it) == variantName }
 }
 
 
 private fun VariantManager.findVariantScope41(variantName: String): VariantScope? {
-//    for (info in getMainComponents()) {
-//        if (info.properties.name == variantName) {
-//            return info.properties.variantScope
-//        }
-//    }
-//    return null
     for (info in this.javaClass.getMethod("getMainComponents").invoke(this) as List<Any>) {
         val properties = info.javaClass.getMethod("getProperties").invoke(info)
         if (properties.javaClass.getMethod("getName").invoke(properties) == variantName) {

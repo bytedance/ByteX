@@ -2,15 +2,13 @@ package com.ss.android.ugc.bytex.gradletoolkit
 
 import com.android.build.api.transform.TransformInvocation
 import com.android.build.gradle.AppExtension
-import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.api.ApplicationVariant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
-import com.didiglobal.booster.gradle.*
-import com.didiglobal.booster.kotlinx.stream
+import com.android.build.gradle.internal.scope.InternalArtifactType
 import com.google.auto.service.AutoService
-import org.gradle.api.UnknownDomainObjectException
 import java.io.File
 import java.util.*
+import kotlin.streams.asStream
 import kotlin.streams.toList
 
 /**
@@ -29,66 +27,87 @@ class TransformEnvImpl() : TransformEnv {
             return Collections.emptyList()
         }
         return when (artifact) {
-            Artifact.AAR -> invocation!!.variant.scope.getArtifactCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH, AndroidArtifacts.ArtifactScope.ALL, AndroidArtifacts.ArtifactType.AAR).artifactFiles.files
-            Artifact.ALL_CLASSES -> invocation!!.variant.scope.allClasses
-            Artifact.APK -> invocation!!.variant.scope.apk
-            Artifact.JAR -> invocation!!.variant.scope.getArtifactCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH, AndroidArtifacts.ArtifactScope.ALL, AndroidArtifacts.ArtifactType.JAR).artifactFiles.files
-            Artifact.CLASSES -> invocation!!.variant.scope.getArtifactCollection(AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH, AndroidArtifacts.ArtifactScope.ALL, AndroidArtifacts.ArtifactType.CLASSES).artifactFiles.files
-            Artifact.JAVAC -> invocation!!.variant.scope.javac
-            Artifact.MERGED_ASSETS -> invocation!!.variant.scope.mergedAssets
-            Artifact.MERGED_RES -> invocation!!.variant.scope.mergedRes
-            Artifact.MERGED_MANIFESTS -> invocation!!.variant.scope.mergedManifests.flatMap {
-                return when {
-                    it.isDirectory -> it.walk().iterator().stream().filter { it.isFile }.toList()
+            Artifact.AAR -> {
+                invocation!!.variant.getArtifactCollection(
+                        AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                        AndroidArtifacts.ArtifactScope.ALL,
+                        AndroidArtifacts.ArtifactType.AAR
+                ).artifactFiles.files
+            }
+            Artifact.JAR -> {
+                invocation!!.variant.getArtifactCollection(
+                        AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                        AndroidArtifacts.ArtifactScope.ALL,
+                        AndroidArtifacts.ArtifactType.JAR
+                ).artifactFiles.files
+            }
+            Artifact.PROCESSED_JAR -> {
+                invocation!!.variant.getArtifactCollection(
+                        AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                        AndroidArtifacts.ArtifactScope.ALL,
+                        if (ANDROID_GRADLE_PLUGIN_VERSION.major > 3 || ANDROID_GRADLE_PLUGIN_VERSION.minor >= 2) {
+                            AndroidArtifacts.ArtifactType.PROCESSED_JAR
+                        } else {
+                            AndroidArtifacts.ArtifactType.JAR
+                        }
+                ).artifactFiles.files
+            }
+            Artifact.CLASSES -> {
+                invocation!!.variant.getArtifactCollection(
+                        AndroidArtifacts.ConsumedConfigType.RUNTIME_CLASSPATH,
+                        AndroidArtifacts.ArtifactScope.ALL,
+                        AndroidArtifacts.ArtifactType.CLASSES
+                ).artifactFiles.files
+            }
+            Artifact.ALL_CLASSES -> invocation!!.variant.bridgeAllClass
+            Artifact.APK -> invocation!!.variant.bridgeApk
+            Artifact.JAVAC ->
+                if (ANDROID_GRADLE_PLUGIN_VERSION.major == 3 && ANDROID_GRADLE_PLUGIN_VERSION.minor >= 2 && ANDROID_GRADLE_PLUGIN_VERSION.minor <= 5) {
+                    invocation!!.variant.getArtifactFiles(InternalArtifactType.JAVAC)
+                } else {
+                    emptyList()
+                }
+            Artifact.MERGED_ASSETS -> invocation!!.variant.bridgeMergedAssets
+            Artifact.MERGED_RES -> invocation!!.variant.bridgeMergedRes
+            Artifact.MERGED_MANIFESTS -> invocation!!.variant.bridgeMergedManifests.flatMap {
+                when {
+                    it.isDirectory ->
+                        it.walk().asStream().filter { it.isFile }.toList()
                     it.isFile -> listOf(it)
                     else -> emptyList()
                 }.filter { file ->
                     file.isFile && file.name.endsWith(".xml")
                 }
             }
-            Artifact.MERGED_MANIFESTS_WITH_FEATURES -> invocation!!.project.rootProject.subprojects.stream()
-                    .map {
-                        //过滤出所有的app和feature的project
-                        try {
-                            it.extensions.getByName("android") as BaseExtension
-                        } catch (e: UnknownDomainObjectException) {
-                            null
-                        } as? AppExtension
-                    }
-                    .filter {
-                        it != null
-                    }
-                    .map {
-                        var result: ApplicationVariant? = null
-                        it!!.applicationVariants.forEach {
-                            if (invocation!!.context.variantName.contains(it.name) && (result == null || it.name.contains(result!!.name))) {
-                                result = it
+            Artifact.MERGED_MANIFESTS_WITH_FEATURES ->
+                invocation!!.project.rootProject.subprojects
+                        .mapNotNull { it.extensions.findByName("android") as? AppExtension? }
+                        .map {
+                            var result: ApplicationVariant? = null
+                            it.applicationVariants.forEach {
+                                if (invocation!!.context.variantName.contains(it.name) && (result == null || it.name.contains(result!!.name))) {
+                                    result = it
+                                }
                             }
+                            result!!
                         }
-                        result!!
-                    }
-                    .map {
-                        it.scope
-                    }
-                    .flatMap {
-                        it.mergedManifests.stream()
-                    }
-                    .map {
-                        when {
-                            it.isDirectory -> it.walk().iterator().stream().filter { it.isFile }.toList()
-                            it.isFile -> listOf(it)
-                            else -> emptyList()
+                        .flatMap {
+                            it.bridgeMergedManifests
                         }
-                    }
-                    .flatMap { it.stream() }
-                    .filter { file ->
-                        file.isFile && file.name.endsWith(".xml")
-                    }.toList()
-            Artifact.PROCESSED_RES -> invocation!!.variant.scope.processedRes
-            Artifact.SYMBOL_LIST -> invocation!!.variant.scope.symbolList
-            Artifact.SYMBOL_LIST_WITH_PACKAGE_NAME -> invocation!!.variant.scope.symbolListWithPackageName
-            Artifact.RAW_RESOURCE_SETS -> invocation!!.variant.resourceSetList
-            Artifact.RAW_ASSET_SETS -> invocation!!.variant.assetSetList
+                        .flatMap {
+                            when {
+                                it.isDirectory -> it.walk().asStream().filter { it.isFile }.toList()
+                                it.isFile -> listOf(it)
+                                else -> emptyList()
+                            }
+                        }.filter { it ->
+                            it.isFile && it.name.endsWith(".xml")
+                        }.toList()
+            Artifact.PROCESSED_RES -> invocation!!.variant.bridgeMergedProcessedRes
+            Artifact.SYMBOL_LIST -> invocation!!.variant.bridgeSymbolList
+            Artifact.SYMBOL_LIST_WITH_PACKAGE_NAME -> invocation!!.variant.bridgeSymbolListWithPackageName
+            Artifact.RAW_RESOURCE_SETS -> invocation!!.variant.mergeResources.resourceSetList()
+            Artifact.RAW_ASSET_SETS -> invocation!!.variant.mergeAssets.assetSetList()
         }
     }
 }

@@ -4,10 +4,12 @@ import com.android.build.gradle.AppExtension;
 import com.android.utils.Pair;
 import com.ss.android.ugc.bytex.common.BaseContext;
 import com.ss.android.ugc.bytex.common.ByteXExtension;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.graph.FieldEntity;
 import com.ss.android.ugc.bytex.common.graph.Graph;
 import com.ss.android.ugc.bytex.common.graph.MemberEntity;
 import com.ss.android.ugc.bytex.common.graph.Node;
+import com.ss.android.ugc.bytex.common.utils.ReflectionUtils;
 import com.ss.android.ugc.bytex.common.utils.TypeUtil;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.getter_setter_inline.visitor.GetterOrSetterMethod;
@@ -48,7 +50,25 @@ public final class Context extends BaseContext<GetterSettingInlineExtension> {
     @Override
     public void init() {
         super.init();
-        proguardConfigurationAnalyzer.prepare(getTransformContext().getVariantName());
+        ThreadLocal<Boolean> LENIENT_MUTATION_STATE = null;
+        boolean origin = false;
+        try {
+            if (BooleanProperty.FORBID_USE_LENIENT_MUTATION_DURING_GET_ARTIFACT.value()) {
+                //fixme :https://github.com/bytedance/ByteX/issues/78
+                try {
+                    LENIENT_MUTATION_STATE = ReflectionUtils.getField(Class.forName("org.gradle.api.internal.project.DefaultProjectStateRegistry"), null, "LENIENT_MUTATION_STATE");
+                    origin = LENIENT_MUTATION_STATE.get();
+                    LENIENT_MUTATION_STATE.set(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            proguardConfigurationAnalyzer.prepare(getTransformContext().getVariantName());
+        } finally {
+            if (LENIENT_MUTATION_STATE != null) {
+                LENIENT_MUTATION_STATE.set(origin);
+            }
+        }
         initWithKeepList(extension.getKeepList());
         initKeepAnnotations();
     }

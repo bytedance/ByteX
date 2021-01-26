@@ -15,6 +15,12 @@ public class InaccessibleNode {
     public static final int TYPE_FIELD_NOT_FOUND = 3;
     public static final int TYPE_INACCESS = 4;
     public static final int TYPE_NOT_IMPLEMENT = 5;
+    public static final int TYPE_OVERRIDE_FINAL = 6;
+    public static final int TYPE_OVERRIDE_INACCESS = 7;
+    public static final int TYPE_CLASS2INTERFACE = 8;
+    public static final int TYPE_INTERFACE2CLASS = 9;
+    public static final int TYPE_OVERRIDE_INACCESS_STRICT = 10;
+    public static final int TYPE_CALL_BLOCK_METHOD = 11;
 
     //调用点
     public String callClassName;
@@ -57,6 +63,18 @@ public class InaccessibleNode {
                 return "Can Not Access";
             case TYPE_NOT_IMPLEMENT:
                 return "Method Not Implement";
+            case TYPE_OVERRIDE_FINAL:
+                return "Override Final Method";
+            case TYPE_OVERRIDE_INACCESS:
+                return "Can Not Access Overridden Method";
+            case TYPE_CLASS2INTERFACE:
+                return "Require Class But Found Interface";
+            case TYPE_INTERFACE2CLASS:
+                return "Require Interface But Found Class";
+            case TYPE_OVERRIDE_INACCESS_STRICT:
+                return "Can Not Access Overridden Method[Strict]";
+            case TYPE_CALL_BLOCK_METHOD:
+                return "Call Block Method";
             default:
                 return "Unknown";
         }
@@ -97,6 +115,12 @@ public class InaccessibleNode {
         }
         if (TypeUtil.isStatic(access)) {
             r.append("static ");
+        }
+        if (TypeUtil.isFinal(access)) {
+            r.append("final ");
+        }
+        if (TypeUtil.isNative(access)) {
+            r.append("native ");
         }
         return r.toString();
     }

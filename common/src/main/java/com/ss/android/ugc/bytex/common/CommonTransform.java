@@ -18,8 +18,8 @@ import com.ss.android.ugc.bytex.common.internal.TransformFlowerManager;
 import com.ss.android.ugc.bytex.common.log.LevelLog;
 import com.ss.android.ugc.bytex.common.log.Timer;
 import com.ss.android.ugc.bytex.common.log.html.HtmlReporter;
-import com.ss.android.ugc.bytex.gradletoolkit.TransformInvocationKt;
-import com.ss.android.ugc.bytex.gradletoolkit.VariantScopeKt;
+import com.ss.android.ugc.bytex.common.utils.HeapDumper;
+import com.ss.android.ugc.bytex.gradletoolkit.ProjectKt;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.TransformOptions;
 
@@ -63,7 +63,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
 
     @Nullable
     private VariantScope getApplyingVariantScope() {
-        return applyingVariantName == null ? null : VariantScopeKt.findVariantScope(context.project, applyingVariantName);
+        return applyingVariantName == null ? null : ProjectKt.findVariantScope(context.project, applyingVariantName);
     }
 
     @Override
@@ -228,6 +228,9 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             }
             afterTransform(transformInvocation);
         } catch (Throwable throwable) {
+            if (throwable instanceof OutOfMemoryError) {
+                HeapDumper.dumpHeap(context.project.getBuildDir().getAbsolutePath() + "/oom.hprof", true);
+            }
             LevelLog.sDefaultLogger.e(throwable.getClass().getName(), throwable);
             throw throwable;
         } finally {
@@ -272,7 +275,7 @@ public abstract class CommonTransform<X extends BaseContext> extends Transform {
             String applicationId = "unknow";
             String versionName = "unknow";
             String versionCode = "unknow";
-            com.android.builder.model.ProductFlavor flavor = TransformInvocationKt.getVariant(transformContext.getInvocation()).getMergedFlavor();
+            com.android.builder.model.ProductFlavor flavor = transformContext.getVariant().getMergedFlavor();
             if (flavor != null) {
                 String flavorApplicationId = flavor.getApplicationId();
                 if (flavorApplicationId != null && !flavorApplicationId.isEmpty()) {

@@ -38,6 +38,11 @@ open class QuickReferCheckTask @Inject constructor(val pj: Project, val android:
         }
     }
 
+    private val blockMethodList by lazy {
+        ((pj.extensions.findByName("refer_check") as? ReferCheckExtension)?.callBlockList
+                ?: emptyList()) + extension.callBlockList
+    }
+
     @TaskAction
     fun doTaskAction() {
         if (!extension.isEnable) {
@@ -63,7 +68,7 @@ open class QuickReferCheckTask @Inject constructor(val pj: Project, val android:
         if (!extension.isEnableInDebug && !context.isReleaseBuild) {
             return
         }
-        Main.checkReference(context.getArtifact(Artifact.CLASSES), listOf(context.androidJar()), whiteList).apply {
+        Main.checkReference(context.getArtifact(Artifact.CLASSES), listOf(context.androidJar()), whiteList, extension.isCheckInaccessOverrideMethodStrictly, blockMethodList).apply {
             val startTime = System.currentTimeMillis()
             if (keepByWhiteList.isNotEmpty() && extension.isPrintKept) {
                 println("keepByWhiteList:\n\t" + ErrorLogGenerator(

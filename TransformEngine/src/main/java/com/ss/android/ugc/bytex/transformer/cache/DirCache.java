@@ -161,7 +161,7 @@ public class DirCache extends FileCache {
             //拿到所有的改变的文件
             for (Map.Entry<File, Status> entry : ((DirectoryInput) content).getChangedFiles().entrySet()) {
                 File file = entry.getKey();
-                if (!file.getName().equalsIgnoreCase(".DS_Store")) {
+                if (file.isFile() && !file.getName().equalsIgnoreCase(".DS_Store")) {
                     String relativePath = base.relativize(file.toURI()).toString();
                     FileData data = entry.getValue() == Status.REMOVED ?
                             new FileData((byte[]) null, relativePath, entry.getValue()) :

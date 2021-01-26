@@ -33,7 +33,7 @@ public class ReferCheckPlugin extends CommonPlugin<ReferCheckExtension, ReferChe
 
     @Override
     public boolean transform(@Nonnull String relativePath, @Nonnull ClassVisitorChain chain) {
-        chain.connect(new ReferCheckClassVisitor(context, context.getClassGraph()));
+        chain.connect(new ReferCheckClassVisitor(context.extension.isCheckInaccessOverrideMethodStrictly(), context, context.getClassGraph(), context.getBlockMethodCallMatcher()));
         return super.transform(relativePath, chain);
     }
 

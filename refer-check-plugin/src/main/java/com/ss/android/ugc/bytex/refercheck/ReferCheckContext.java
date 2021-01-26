@@ -3,12 +3,14 @@ package com.ss.android.ugc.bytex.refercheck;
 import com.android.build.gradle.AppExtension;
 import com.android.utils.Pair;
 import com.ss.android.ugc.bytex.common.BaseContext;
+import com.ss.android.ugc.bytex.common.utils.MethodMatcher;
 import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.white_list.WhiteList;
 import com.ss.android.ugc.bytex.refercheck.visitor.ReferCheckMethodVisitor;
 
 import org.gradle.api.Project;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -17,6 +19,7 @@ import javax.annotation.Nullable;
 
 public class ReferCheckContext extends BaseContext<ReferCheckExtension> implements ReferCheckMethodVisitor.CheckIssueReceiver {
     private ReferCheckMethodVisitor.CheckIssueReceiver checkIssueReceiver;
+    private final List<MethodMatcher> blockMethodCallMatcher = new ArrayList<>();
 
     public ReferCheckContext(Project project, AppExtension android, ReferCheckExtension extension) {
         super(project, android, extension);
@@ -26,6 +29,9 @@ public class ReferCheckContext extends BaseContext<ReferCheckExtension> implemen
         WhiteList whiteList = new WhiteList();
         whiteList.initWithWhiteList(extension.getWhiteList());
         appendCommonWhiteList(whiteList);
+        for (String s : extension.getCallBlockList()) {
+            blockMethodCallMatcher.add(new MethodMatcher(s));
+        }
         checkIssueReceiver = new DefaultCheckIssueReceiver(whiteList, new Consumer<InaccessibleNode>() {
             @Override
             public void accept(InaccessibleNode inaccessibleNode) {
@@ -73,9 +79,14 @@ public class ReferCheckContext extends BaseContext<ReferCheckExtension> implemen
         return checkIssueReceiver.getInaccessibleNodes();
     }
 
+    public List<MethodMatcher> getBlockMethodCallMatcher() {
+        return blockMethodCallMatcher;
+    }
+
     public void releaseContext() {
         super.releaseContext();
         checkIssueReceiver = null;
+        blockMethodCallMatcher.clear();
     }
 
 }

@@ -55,7 +55,7 @@ public class CoveragePlugin extends CommonPlugin<CoverageExtension, Context> {
         super.init();
         // 由于是在Proguard之后插桩，尝试拉取合适的mapping反混淆
         // try to get the mapping file to parse the raw className owing to we do this after Proguard
-        BaseVariant variant = TransformInvocationKt.getVariant(context.getTransformContext().getInvocation());
+        BaseVariant variant = context.getTransformContext().getVariant();
         File mappingFile = new File(Joiner.on(File.separatorChar).join(
                 String.valueOf(project.getBuildDir()),
                 FD_OUTPUTS,
