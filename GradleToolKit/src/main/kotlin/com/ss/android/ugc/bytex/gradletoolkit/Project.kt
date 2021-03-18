@@ -21,13 +21,45 @@ fun Project.findVariantManager(): VariantManager {
     }
 }
 
+fun Project.isDynamicFeature():Boolean{
+    return if (revision.major > 3 || revision.minor >= 6) {
+        isDynamicFeature36()
+    } else {
+        isDynamicFeature35()
+    }
+}
+
+private fun Project.isDynamicFeature35():Boolean{
+    return project.plugins.findPlugin(com.android.build.gradle.DynamicFeaturePlugin::class.java)!=null
+}
+
+private fun Project.isDynamicFeature36():Boolean{
+    return project.plugins.findPlugin("com.android.internal.dynamic-feature")!=null
+}
+
 private fun Project.findVariantManager35(): VariantManager {
-    return project.plugins.findPlugin(com.android.build.gradle.AppPlugin::class.java)!!.variantManager
+    val appPlugin = project.plugins.findPlugin(com.android.build.gradle.AppPlugin::class.java)
+    return if(appPlugin == null){
+        //DynamicFeaturePlugin
+        val dynamicFeaturePlugin = project.plugins.findPlugin(com.android.build.gradle.DynamicFeaturePlugin::class.java)
+        dynamicFeaturePlugin!!.variantManager
+    }else{
+        appPlugin.variantManager
+    }
 }
 
 private fun Project.findVariantManager36(): VariantManager {
-    return project.plugins.findPlugin("com.android.internal.application")!!.let {
-        it.javaClass.getMethod("getVariantManager").invoke(it) as VariantManager
+    val appPlugin = project.plugins.findPlugin("com.android.internal.application")
+    return if(appPlugin == null){
+        //DynamicFeaturePlugin
+        val dynamicFeaturePlugin = project.plugins.findPlugin("com.android.internal.dynamic-feature")
+        dynamicFeaturePlugin!!.let {
+            it.javaClass.getMethod("getVariantManager").invoke(it) as VariantManager
+        }
+    }else{
+        appPlugin.let {
+            it.javaClass.getMethod("getVariantManager").invoke(it) as VariantManager
+        }
     }
 }
 
