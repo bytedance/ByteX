@@ -1,12 +1,13 @@
 package com.ss.android.ugc.bytex.common.visitor;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 public class ClassVisitorChain {
-    private BaseClassVisitor head;
-    private BaseClassVisitor tail;
+    private ChainVisitor head;
+    private ChainVisitor tail;
     private ClassWriter classWriter;
 
     public ClassVisitorChain() {
@@ -16,7 +17,7 @@ public class ClassVisitorChain {
         this.classWriter = cw;
     }
 
-    public ClassVisitorChain connect(BaseClassVisitor cv) {
+    public <cv extends ClassVisitor&ChainVisitor> ClassVisitorChain connect(cv cv) {
         if (cv == null) {
             return this;
         }
@@ -52,7 +53,7 @@ public class ClassVisitorChain {
 
     public byte[] accept(ClassReader classReader, int flag) {
         if (head != null) {
-            classReader.accept(head, flag);
+            classReader.accept((ClassVisitor) head, flag);
         }
         if (classWriter != null) {
             return classWriter.toByteArray();
