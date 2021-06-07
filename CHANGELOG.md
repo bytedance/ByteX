@@ -1,4 +1,10 @@
 # Change Log
+### Version 0.2.8
+- Replace hookTransform with HookInjector;
+- Add proguard mapping parser&retracer；
+- output files with fixed timestamp by default；
+- fix bugs of incremental build；
+
 ### Version 0.2.7
 - Improve compatibility(AGP4.1) of GradleToolKit;
 - fix 'RuntimeClasspath was resolved from a thread not managed by Gradle' in getter-setter-plugin；

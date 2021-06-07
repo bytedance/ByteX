@@ -8,7 +8,7 @@
   <img src="wiki/bytex-logo.png" height="111" width="340"  alt="logo" />
  </h1>
 
-[![Download](https://api.bintray.com/packages/tellh/maven/common/images/download.svg)](https://bintray.com/tellh/maven/common/_latestVersion) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
+ [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/bytedance/ByteX/blob/master/LICENSE)
 
 > 本工具由字节跳动抖音 Android 团队提供。
 
@@ -65,7 +65,7 @@ ByteX是一个基于gradle transform api和ASM的字节码插件平台（或许�
 
 ```groovy
 buildscript {
-    ext.plugin_version="0.2.7"
+    ext.plugin_version="0.2.8"
     repositories {
         google()
         jcenter()
