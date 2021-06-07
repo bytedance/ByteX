@@ -6,7 +6,7 @@ import org.gradle.api.logging.Logging;
 
 public class SystemLoggerImpl extends BaseLogger {
 
-    private final Logger logger = Logging.getLogger("lancet");
+    private final Logger logger = Logging.getLogger("ByteX");
 
     @Override
     protected synchronized void write(LogLevel level, String prefix, String msg, Throwable t) {

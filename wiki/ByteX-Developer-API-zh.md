@@ -427,19 +427,63 @@ public TransformConfiguration transformConfiguration() {
 }
 ```
 
-### hook transform顺序
+### hookTransform/Task
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;依靠android的transform api registerTransform 只能把你的transform 注册到proguard,dex等内置transform之前,如果想让插件在proguard之后做些事情,就需要一些反射hook的手段.ByteX的IPlugin接口提供了一个hookTransformName方法,只需要复写这个方法,并返回你需要hook的transform的名字,那么你的插件就能在紧挨着这个transform之前执行.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;比如,如果你想让你的插件在proguard之后被执行（即在紧挨dex之前）,可以这么做：
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;依靠android的transform api registerTransform 只能把你的transform 注册到proguard,dex等内置transform之前,如果想让插件在proguard之后做些事情,或者想在任意的task前后执行你的transform,就需要一些反射hook的手段.ByteX的IPlugin接口提供了两个hookTask方法,只需要复写这拉两个方法(一个标识你是否需要hook，另外一个标识hook的类型),支持在task前或后或者不hook这个task,你的插件就能在紧挨着这个task之前/后执行.(之前版本hookTransformName方案依然可行但被标记成了废弃，目前框架依然会优先使用hookTransform方案实现，但如果hookTask传入的task不是TransformTask或者返回的HookType是after类型则会使用新方案执行)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;比如,如果你想让你的插件在proguard之后被执行（即在紧挨dex之前，也就是dexBuilder之前执行）,可以这么做：
 
 ```java
 public class DoAfterProguardPlugin extends CommonPlugin<Extension, Context> {
-    @Override
-    public String hookTransformName() {
-        return "Dex";
+    /**
+     * eg：dexBuilder
+     * use {@link #hookTask()} and {@link #hookTask(Task)} instead
+     */
+    @Deprecated
+    @Nullable
+    String hookTransformName() {
+        return "dexBuilder";
+    }
+
+    /**
+     * 是否使用hook模式运行插件，true表示使用hook模式
+     */
+    boolean hookTask() {
+        return true;
+    }
+
+    /**
+     * 是否需要Hook这个task
+     *
+     * @param task 被hook的Task
+     * @return {@link HookType#Before} 该task将被当前插件hook，插件并在task之前处理
+     * {@link HookType#After} 该task将被当前插件hook，插件并在task之后处理
+     * {@link HookType#None} 插件不hook这个task
+     */
+    @Nonnull
+    HookType hookTask(@Nonnull Task task) {
+        if(task.getName().contains("dexBuilder")){
+            return HookType.Before;
+        }
+        return HookType.None;
     }
 }
 ```
+### 混淆解析工具
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;一些插件需要在proguard之后执行(使用上面的hook方案)，需要解析mapping来进行混淆或者反混淆。bytex框架被提供了获取mapping接口并提供了比较通用的一些读取、解析mapping的工具，并添加了class名字规范的格式适配器，方便插件开发者能快速在混淆模式下修改字节码。相关的接口如下:
+
+```
+//获取mapping文件
+File mappingFile = context.getTransformContext().getProguardMappingFile();
+//解析mapping文件
+MappingReader mappingReader = MappingReader(mappingFile);   //解析器
+MappingProcessor mappingProcessor = new FullMappingProcessor();//全部解析
+mappingProcessor = new InternalNameMappingProcessor(mappingProcessor);//包装一下，默认类名是.符号分割，适配成Class名字规范(/分割和desc类型)的格式
+mappingReader.pump(mappingProcessor);
+//默认的提供一个简单解析类
+FullInternalNameRetrace retrace = new FullInternalNameRetrace(mappingFile);
+```
+
 ### 额外添加文件
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;如果需要在transform的时候,额外输出一些文件,可以复写beforeTransform方法,调用TransformEngine所提供的addFile方法.
@@ -543,7 +587,7 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 - bytex.checkIncrementalInDebug:是否禁止不支持增量但enableInDebug为true的插件运行(抛异常)，boolean类型,默认false。
 - bytex.enableSeparateProcessingNotIncremental:是否自动隔离执行非增量的插件进行单独运行。如果有一个插件不支持增量，ByteX所有插件(非alone)将使用非增量运行，这将大大降低增量构建的速度，开关开启后，支持增量的插件将合在一块执行，不支持增量的插件将独立在一个transform中运行.boolean类型,默认false。
 - bytex.${extension.getName()}.alone:是否独立运行某个插件，boolean类型,默认false。
-- bytex.useFixedTimestamp:是否固定一个输出文件jar中entity的时间戳(0)，这个对增量编译有比较大收益，因为输出内容不变+时间戳不变，后续task可以命中cache(比如DexBuilder)。boolean类型,默认false。
+- bytex.useFixedTimestamp:是否固定一个输出文件jar中entity的时间戳(0)，这个对增量编译有比较大收益，因为输出内容不变+时间戳不变，后续task可以命中cache(比如DexBuilder)。boolean类型,默认true。
 - bytex.forbidUseLenientMutationDuringGetArtifact:在调用GradleEnv.getArtifact时是否禁止使用Lenient方式获取，这个可以规避部分工程因为FileCollection.getFiles()死锁问题.boolean类型,默认false。
 
 ## 开发注意事项

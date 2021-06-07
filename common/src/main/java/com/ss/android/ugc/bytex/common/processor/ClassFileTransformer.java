@@ -86,7 +86,7 @@ public class ClassFileTransformer extends MainProcessFileHandler {
             LevelLog.sDefaultLogger.e(String.format("Failed to handle class %s", fileData.getRelativePath()), e);
             if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(fileData.getRelativePath())) {
                 if (context != null) {
-                    throw new RuntimeException(String.format("Failed to resolve class %s[%s]", fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
+                    throw new RuntimeException(String.format("%s\n\tFailed to resolve class %s[%s]", e.getMessage(), fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
                 } else {
                     throw e;
                 }

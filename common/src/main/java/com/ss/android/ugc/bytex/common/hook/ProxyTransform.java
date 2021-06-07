@@ -23,7 +23,6 @@ import java.util.Set;
 
 public class ProxyTransform extends CommonTransform<BaseContext> {
     private List<IPlugin> plugins = new ArrayList<>();
-    private final String transformName;
     private final Transform origTransform;
 
     ProxyTransform(Project project, AppExtension android, String transformName, Transform origTransform) {
@@ -33,7 +32,6 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
                 return "hook";
             }
         }));
-        this.transformName = transformName;
         this.origTransform = origTransform;
     }
 
@@ -48,6 +46,7 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
                         .setUseRawCache(BooleanProperty.ENABLE_RAM_CACHE.value())
                         .setUseFixedTimestamp(BooleanProperty.USE_FIXED_TIMESTAMP.value())
                         .setForbidUseLenientMutationDuringGetArtifact(BooleanProperty.FORBID_USE_LENIENT_MUTATION_DURING_GET_ARTIFACT.value())
+                        .setAllowRewrite(BooleanProperty.ALLOW_REWRITE.value())
                         .build());
     }
 
@@ -61,7 +60,7 @@ public class ProxyTransform extends CommonTransform<BaseContext> {
 
     @Override
     public String getName() {
-        return transformName + "Hook";
+        return origTransform.getName();
     }
 
     void appendPlugin(IPlugin plugin) {

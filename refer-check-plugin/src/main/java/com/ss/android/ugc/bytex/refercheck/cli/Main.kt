@@ -4,12 +4,14 @@ import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager
 import com.ss.android.ugc.bytex.common.graph.GraphBuilder
 import com.ss.android.ugc.bytex.common.utils.FileHandler
 import com.ss.android.ugc.bytex.common.utils.MethodMatcher
+import com.ss.android.ugc.bytex.common.utils.Utils
 import com.ss.android.ugc.bytex.common.visitor.GenerateGraphClassVisitor
 import com.ss.android.ugc.bytex.common.white_list.WhiteList
 import com.ss.android.ugc.bytex.refercheck.DefaultCheckIssueReceiver
 import com.ss.android.ugc.bytex.refercheck.InaccessibleNode
 import com.ss.android.ugc.bytex.refercheck.log.ErrorLogGenerator
 import com.ss.android.ugc.bytex.refercheck.visitor.ReferCheckClassVisitor
+import com.ss.android.ugc.bytex.transformer.TransformContext
 import org.objectweb.asm.ClassReader
 import java.io.File
 import java.util.*
@@ -44,7 +46,7 @@ object Main {
     }
 
     @JvmStatic
-    fun checkReference(programInputs: Collection<File>, libraryInputs: Collection<File>, whiteList: WhiteList?, checkInaccessOverrideMethodStrictly: Boolean, blockMethodList: List<String>): CheckResult {
+    fun checkReference(programInputs: Collection<File>, libraryInputs: Collection<File>, whiteList: WhiteList?, checkInaccessOverrideMethodStrictly: Boolean, blockMethodList: List<String>, context: TransformContext? = null): CheckResult {
         var startTime = System.currentTimeMillis()
         println("programInputs:\n\t${programInputs.map { it.absolutePath }.joinToString("\n\t")}")
         println("libraryInputs:\n\t${libraryInputs.map { it.absolutePath }.joinToString("\n\t")}")
@@ -63,7 +65,11 @@ object Main {
             } catch (e: Exception) {
                 e.printStackTrace()
                 if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(it.name)) {
-                    throw RuntimeException(it.file.absolutePath + it.path, e)
+                    if (context == null) {
+                        throw RuntimeException(it.file.absolutePath + it.path + ":" + e.message, e)
+                    } else {
+                        throw RuntimeException(String.format("%s\n\tFailed to resolve class %s[%s]", e.message, it.file.absolutePath + it.path, Utils.getAllFileCachePath(context, it.path)), e)
+                    }
                 }
             }
         }
@@ -81,7 +87,11 @@ object Main {
             } catch (e: Exception) {
                 e.printStackTrace()
                 if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(it.name)) {
-                    throw RuntimeException(it.file.absolutePath + it.path, e)
+                    if (context == null) {
+                        throw RuntimeException(it.file.absolutePath + it.path + ":" + e.message, e)
+                    } else {
+                        throw RuntimeException(String.format("%s\n\tFailed to resolve class %s[%s]", e.message, it.file.absolutePath + it.path, Utils.getAllFileCachePath(context, it.path)), e)
+                    }
                 }
             }
         }

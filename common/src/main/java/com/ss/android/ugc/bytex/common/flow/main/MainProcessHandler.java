@@ -64,7 +64,7 @@ public interface MainProcessHandler {
      * @param node     对应的Class解析后的的Tree Node结构
      *                 Tree Node
      */
-    default void traverseIncremental(@Nonnull FileData fileData, @Nonnull ClassNode node) {
+    default void traverseIncremental(@Nonnull FileData fileData, @Nullable ClassNode node) {
     }
 
     /**

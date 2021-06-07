@@ -20,7 +20,7 @@ public abstract class FileCache implements Serializable {
     protected TransformContext context;
     protected List<FileData> files;
     protected boolean hasRead = false;
-    protected boolean hasWritten = false;
+    private boolean hasWritten = false;
 
     public FileCache(QualifiedContent content, TransformContext context) {
         this.content = content;
@@ -32,9 +32,7 @@ public abstract class FileCache implements Serializable {
     }
 
     public void parallelForEach(boolean parallel, Consumer<FileData> visitor) {
-        stream(parallel).subscribe(visitor, throwable -> {
-            throw new RuntimeException(throwable);
-        });
+        stream(parallel).subscribe(visitor);
     }
 
     public final Observable<FileData> stream() {
@@ -72,6 +70,13 @@ public abstract class FileCache implements Serializable {
     }
 
     public abstract void transformOutput(Consumer<FileData> visitor) throws IOException;
+
+    protected synchronized void output() {
+        if (hasWritten && !context.getTransformOptions().isAllowRewrite()) {
+            throw new RuntimeException("rewrite");
+        }
+        hasWritten = true;
+    }
 
     protected abstract List<FileData> resolve(ObservableEmitter<FileData> emitter) throws IOException;
 

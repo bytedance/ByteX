@@ -1,9 +1,14 @@
 package com.ss.android.ugc.bytex.common;
 
 
+import com.android.build.gradle.api.BaseVariant;
+import com.android.build.gradle.internal.pipeline.TransformTask;
 import com.ss.android.ugc.bytex.common.flow.TransformFlow;
 import com.ss.android.ugc.bytex.common.flow.main.MainTransformFlow;
+import com.ss.android.ugc.bytex.gradletoolkit.TaskKt;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
+
+import org.gradle.api.Task;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -66,8 +71,54 @@ public interface IPlugin {
     TransformFlow getTransformFlow();
 
 
+    /**
+     * eg：dexBuilder
+     * use {@link #hookTask()} and {@link #hookTask(Task)} instead
+     */
+    @Deprecated
+    @Nullable
     default String hookTransformName() {
         return null;
+    }
+
+    /**
+     * 是否使用hook模式运行插件，true表示使用hook模式
+     */
+    default boolean hookTask() {
+        String hookTransformName = hookTransformName();
+        return hookTransformName != null && !hookTransformName.isEmpty();
+    }
+
+    /**
+     * 是否需要Hook这个task
+     *
+     * @param task 被hook的Task
+     * @return {@link HookType#Before} 该task将被当前插件hook，插件并在task之前处理
+     * {@link HookType#After} 该task将被当前插件hook，插件并在task之后处理
+     * {@link HookType#None} 插件不hook这个task
+     */
+    @Nonnull
+    default HookType hookTask(@Nonnull Task task) {
+        String transformName = hookTransformName();
+        if (transformName == null || transformName.isEmpty()) {
+            throw new IllegalStateException("Can not find hook name form hookTransformName:" + transformName);
+        }
+        if (task instanceof TransformTask) {
+            if (transformName.equalsIgnoreCase(((TransformTask) task).getTransform().getName())) {
+                return HookType.Before;
+            }
+        } else {
+            String taskName = task.getName().toLowerCase();
+            //我们要去掉变体的后缀
+            BaseVariant baseVariant = TaskKt.getVariant(task);
+            if (baseVariant != null) {
+                taskName = taskName.replaceAll(baseVariant.getName().toLowerCase(), "");
+            }
+            if (taskName.equalsIgnoreCase(transformName)) {
+                return HookType.Before;
+            }
+        }
+        return HookType.None;
     }
 
     default boolean shouldSaveCache() {
@@ -84,5 +135,9 @@ public interface IPlugin {
      * 插件执行执行结束后的回调，不管成功和失败都会执行.做一些数据回收处理工作
      */
     default void afterExecute() throws Throwable {
+    }
+
+    enum HookType {
+        None, Before, After
     }
 }

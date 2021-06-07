@@ -6,8 +6,10 @@ import com.android.build.gradle.internal.api.BaseVariantImpl
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.scope.VariantScope
 import com.android.build.gradle.internal.variant.BaseVariantData
+import com.android.build.gradle.tasks.MergeResources
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.file.Directory
+import org.gradle.api.file.DirectoryProperty
 import java.io.File
 
 val BaseVariant.scope: VariantScope
@@ -62,3 +64,18 @@ private fun BaseVariant.getArtifactFiles35_(artifactType: ArtifactType): Collect
 private fun BaseVariant.getArtifactFiles30_(artifactType: ArtifactType): Collection<File> {
     return scope.artifacts.getArtifactFiles(artifactType).files
 }
+
+val BaseVariant.blameLogOutputFolder: File
+    get() = if (ANDROID_GRADLE_PLUGIN_VERSION.major < 4 || (ANDROID_GRADLE_PLUGIN_VERSION.major == 4 && ANDROID_GRADLE_PLUGIN_VERSION.minor == 0)) {
+        this.blameLogOutputFolder40
+    } else {
+        this.blameLogOutputFolder41
+    }
+private val BaseVariant.blameLogOutputFolder40: File
+    get() = scope.resourceBlameLogDir
+
+
+private val BaseVariant.blameLogOutputFolder41: File
+    get() = mergeResources.let {
+        ReflectionUtils.callMethod<DirectoryProperty>(it, MergeResources::class.java, "getBlameLogOutputFolder", arrayOf(), arrayOf()).asFile.get()
+    }

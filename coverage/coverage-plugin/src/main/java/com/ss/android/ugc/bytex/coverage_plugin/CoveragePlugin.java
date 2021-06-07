@@ -2,6 +2,7 @@ package com.ss.android.ugc.bytex.coverage_plugin;
 
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.api.BaseVariant;
+import com.android.build.gradle.internal.pipeline.TransformTask;
 import com.google.common.base.Joiner;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
 import com.ss.android.ugc.bytex.common.TransformConfiguration;
@@ -14,6 +15,7 @@ import com.ss.android.ugc.bytex.gradletoolkit.TransformInvocationKt;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -112,8 +114,19 @@ public class CoveragePlugin extends CommonPlugin<CoverageExtension, Context> {
     }
 
     @Override
-    public String hookTransformName() {
-        return "dexBuilder";
+    public boolean hookTask() {
+        return true;
+    }
+
+    @Nonnull
+    @Override
+    public HookType hookTask(@Nonnull Task task) {
+        if (task instanceof TransformTask) {
+            if (((TransformTask) task).getTransform().getName().equals("proguard")) {
+                return HookType.After;
+            }
+        }
+        return HookType.None;
     }
 
     @Override

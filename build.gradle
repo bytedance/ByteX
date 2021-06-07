@@ -7,6 +7,9 @@ buildscript {
         maven {
             url uri('../gradle_plugins')
         }
+        maven {
+            url "https://artifact.bytedance.com/repository/byteX/"
+        }
         google()
         jcenter()
         maven {
@@ -30,6 +33,9 @@ allprojects {
     repositories {
         maven {
             url uri('../gradle_plugins')
+        }
+        maven {
+            url "https://artifact.bytedance.com/repository/byteX/"
         }
         google()
         jcenter()

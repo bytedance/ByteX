@@ -64,11 +64,12 @@ open class QuickReferCheckTask @Inject constructor(val pj: Project, val android:
                         .setUseFixedTimestamp(false)
                         .setUseRawCache(false)
                         .setForbidUseLenientMutationDuringGetArtifact(BooleanProperty.FORBID_USE_LENIENT_MUTATION_DURING_GET_ARTIFACT.value())
+                        .setAllowRewrite(BooleanProperty.ALLOW_REWRITE.value())
                         .build())
         if (!extension.isEnableInDebug && !context.isReleaseBuild) {
             return
         }
-        Main.checkReference(context.getArtifact(Artifact.CLASSES), listOf(context.androidJar()), whiteList, extension.isCheckInaccessOverrideMethodStrictly, blockMethodList).apply {
+        Main.checkReference(context.getArtifact(Artifact.CLASSES), listOf(context.androidJar()), whiteList, extension.isCheckInaccessOverrideMethodStrictly, blockMethodList, context).apply {
             val startTime = System.currentTimeMillis()
             if (keepByWhiteList.isNotEmpty() && extension.isPrintKept) {
                 println("keepByWhiteList:\n\t" + ErrorLogGenerator(

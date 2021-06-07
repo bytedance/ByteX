@@ -429,19 +429,65 @@ public TransformConfiguration transformConfiguration() {
 }
 ```
 
-### Transform Hooker
+### hookTransform/Task
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Relying on Android's transform api registerTransform, you can only register your transform before to proguard, dex, and other built-in transforms. If you want the plugin doing something after proguard, you need some reflection hooks. The IPlugin interface of ByteX provides a hookTransformName method .Just need to override this method and return the name of the transform you need to hook, then your plugin can execute before this transform.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, if you want your plugin to be executed after proguard (before dex), you can do this:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Using transform api by calling registerTransform could only run your plugin before proguard or dexBuilder.If you have a plugin which must run after proguard execution,or run before（after) any task execution，you could apply the HookTransform/Task feature provided by ByteX.ByteX provide two methods(all named as hookTask) to complete the feature.(The hookTransformName method design in previous versions is still supported but marked as Deprecated，and ByteX give priority to this solution，the new solution will work on if the plugin hooks a non-transform task or runs after task execution)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For example, if you want your plugin to be executed after proguard (before dexBuilder), you can do this:
+
 
 ```java
 public class DoAfterProguardPlugin extends CommonPlugin<Extension, Context> {
-    @Override
-    public String hookTransformName() {
+    /**
+     * eg：dexBuilder
+     * use {@link #hookTask()} and {@link #hookTask(Task)} instead
+     */
+    @Deprecated
+    @Nullable
+    String hookTransformName() {
         return "dexBuilder";
+    }
+
+    /**
+     * use hook mode.false by default
+     */
+    boolean hookTask() {
+        return true;
+    }
+
+    /**
+     * How to hook this task
+     *
+     * @param task
+     * @return {@link HookType#Befor:plugin will run before task execution
+     * {@link HookType#After} :plugin will run after task execution
+     * {@link HookType#None} do not hook the task
+     */
+    @Nonnull
+    HookType hookTask(@Nonnull Task task) {
+        if(task.getName().contains("dexBuilder")){
+            return HookType.Before;
+        }
+        return HookType.None;
     }
 }
 ```
+### Obfuscate Tool
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Some plugins may run after proguard execution，and these plugins usually need doing something like obfuscated or de-obfuscated.ByteX provides a set of class-tools for parsing proguard-mapping:
+
+```
+//obtain mapping file
+File mappingFile = context.getTransformContext().getProguardMappingFile();
+//read and parse mapping file
+MappingReader mappingReader = MappingReader(mappingFile);
+MappingProcessor mappingProcessor = new FullMappingProcessor();
+//The class name in the mapping file is separated by '.', but internal name or desc is commonly used in asm, so we provide a MappingProcessor adapter
+mappingProcessor = new InternalNameMappingProcessor(mappingProcessor);
+mappingReader.pump(mappingProcessor);
+//At the same time, we provide a simple retrace for asm users
+FullInternalNameRetrace retrace = new FullInternalNameRetrace(mappingFile);
+```
+
 ### Add Extra Files
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If you need to output some additional files during the transform, you can override the beforeTransform method and call the addFile method provided by TransformEngine.
@@ -535,7 +581,7 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 - bytex.checkIncrementalInDebug:Whether to check non-incremental plugins running with its enableInDebug is true，boolean , false by default.
 - bytex.enableSeparateProcessingNotIncremental:Whether to executing non-incremental plugins in single TransformTask automatically. If there is a plugin which is incremental, all ByteX plugins will run in non-incremental, which will greatly reduce the speed of incremental build. After the switch is turned on, the plugins that support increment will be executed together. Incremental plugins will run independently in a transform. oolean ,false by default.
 - bytex.${extension.getName()}.alone:Whether to run the plugin independently，boolean , false by default.
-- bytex.useFixedTimestamp:Whether to use the fixed timestamp (0) of the entity in the output jar, this has a great benefit for incremental compilation because the entity is same and the timestamp is unchanged,and tasks after bytex could hit the cache (such as DexBuilder).boolean , false by default.
+- bytex.useFixedTimestamp:Whether to use the fixed timestamp (0) of the entity in the output jar, this has a great benefit for incremental compilation because the entity is same and the timestamp is unchanged,and tasks after bytex could hit the cache (such as DexBuilder).boolean , true by default.
 - bytex.forbidUseLenientMutationDuringGetArtifact: Whether resolving configuration with lenient off when calling GradleEnv.getArtifact .This can fix the deadlock while calling FileCollection.getFiles() in some projects.boolean , false by default.
 
 
