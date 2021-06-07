@@ -53,8 +53,9 @@ public class ClassNodeLoader implements ClassFinder {
         }
     }
 
+
     @Override
-    public ClassNode find(String className) {
+    public ClassNode find(String className, int parsingOption) {
         try {
             URL url = cl.getResource(className + ".class");
             if (url == null) {
@@ -70,11 +71,16 @@ public class ClassNodeLoader implements ClassFinder {
             ClassReader cr = new ClassReader(urlConnection.getInputStream());
             urlConnection.getInputStream().close();
             ClassNode cn = new ClassNode();
-            cr.accept(cn, ClassReader.SKIP_DEBUG);
+            cr.accept(cn, parsingOption);
             return cn;
         } catch (IOException e) {
             return null;
         }
+    }
+
+    @Override
+    public ClassNode find(String className) {
+        return find(className, ClassReader.SKIP_DEBUG);
     }
 
     @Override

@@ -51,9 +51,7 @@ public class DirCache extends FileCache {
 
     @Override
     public final synchronized void transformOutput(Consumer<FileData> visitor) throws IOException {
-        if (hasWritten) {
-            throw new RuntimeException("rewrite");
-        }
+        output();
         Map<String, TransformOutputs.Entry> entryMap = new HashMap<>();
         String relativeToProject = context.getTransformOutputs().relativeToProject(outputFile);
         TransformOutputs.Entry entry = context.getTransformOutputs().getLastTransformOutputs().get(relativeToProject);
@@ -79,7 +77,6 @@ public class DirCache extends FileCache {
                         0L,
                         Collections.unmodifiableList(entries))
         );
-        hasWritten = true;
     }
 
     private TransformOutputs.Entry transformOutput(String input, String parent, FileData fileData, Map<String, TransformOutputs.Entry> entryMap) throws IOException {
@@ -161,11 +158,15 @@ public class DirCache extends FileCache {
             //拿到所有的改变的文件
             for (Map.Entry<File, Status> entry : ((DirectoryInput) content).getChangedFiles().entrySet()) {
                 File file = entry.getKey();
-                if (file.isFile() && !file.getName().equalsIgnoreCase(".DS_Store")) {
+                if (!file.isDirectory() && !file.getName().equalsIgnoreCase(".DS_Store")) {
                     String relativePath = base.relativize(file.toURI()).toString();
                     FileData data = entry.getValue() == Status.REMOVED ?
                             new FileData((byte[]) null, relativePath, entry.getValue()) :
                             new FileData(loadFunction, relativePath, entry.getValue());
+                    if (entry.getValue() == Status.REMOVED && new File(outputFile, data.getRelativePath()).isDirectory()) {
+                        //删除掉了一个文件夹
+                        continue;
+                    }
                     if (emitter != null) {
                         emitter.onNext(data);
                     }
@@ -197,10 +198,7 @@ public class DirCache extends FileCache {
 
     @Override
     public synchronized void skip() throws IOException {
-        if (hasWritten) {
-            throw new RuntimeException("rewrite");
-        }
+        output();
         FileUtils.copyDirectory(getFile(), outputFile);
-        hasWritten = true;
     }
 }

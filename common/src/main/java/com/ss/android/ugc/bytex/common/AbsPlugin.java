@@ -7,7 +7,7 @@ import com.ss.android.ugc.bytex.common.builder.internal.GlobalByteXBuildListener
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.configuration.ProjectOptions;
 import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager;
-import com.ss.android.ugc.bytex.common.hook.TransformHook;
+import com.ss.android.ugc.bytex.common.hook.HookInjector;
 import com.ss.android.ugc.bytex.transformer.TransformContext;
 
 import org.gradle.api.Plugin;
@@ -76,9 +76,8 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
             project.getExtensions().add(extension.getName(), extension);
         }
         onApply(project);
-        String hookTransformName = hookTransformName();
-        if (hookTransformName != null) {
-            TransformHook.inject(project, android, this);
+        if (hookTask()) {
+            HookInjector.Companion.obtain(project).inject(this);
         } else {
             if (!alone()) {
                 try {

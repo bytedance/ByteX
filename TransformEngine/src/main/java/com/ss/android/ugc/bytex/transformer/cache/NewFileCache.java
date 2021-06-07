@@ -44,7 +44,7 @@ public class NewFileCache extends DirCache {
     }
 
     public void addFile(FileData file) {
-        if (hasWritten) {
+        if (isHasWritten()) {
             throw new RuntimeException("can not add file after FileCache has been outputed");
         }
         files.add(file);

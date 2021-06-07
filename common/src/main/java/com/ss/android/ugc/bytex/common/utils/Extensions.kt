@@ -41,3 +41,38 @@ fun File.unzip(action: (String, ByteArray) -> Unit) {
         }
     }
 }
+
+@Throws(IllegalArgumentException::class)
+fun String.matchPair(left: String, right: String, startIndex: Int = 0, endIndex: Int = length): Pair<Int, Int>? {
+    if (left == right) {
+        throw IllegalArgumentException("left can not be equals right:${left}")
+    }
+    val sl = indexOf(left, startIndex)
+    if (sl < 0) {
+        return null
+    }
+    var start = sl + left.length
+    var stack = 1
+    while (stack != 0 && 0 < start && start < endIndex) {
+        val startRight = indexOf(right, start)
+        if (startRight < start) {
+            //Not Closed
+            throw IllegalArgumentException("Can matchPair by $left and $right from:$this")
+        }
+        val startLeft = indexOf(left, start)
+        if (0 <= startLeft && startLeft < startRight) {
+            //reach left
+            stack++
+            start = startLeft + left.length
+        } else {
+            //reach right
+            stack--
+            start = startRight + right.length
+        }
+    }
+    if (stack != 0) {
+        //Not Closed
+        throw IllegalArgumentException("Can matchPair by $left and $right from:$this")
+    }
+    return Pair(sl, start)
+}

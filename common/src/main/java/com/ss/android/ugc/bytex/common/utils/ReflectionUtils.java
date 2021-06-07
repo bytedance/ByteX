@@ -102,7 +102,11 @@ public class ReflectionUtils {
     }
 
     public static void setFiled(Object target, String filedName, Object fieldValue) throws Exception {
-        Field declaredField = target.getClass().getDeclaredField(filedName);
+        setFiled(target.getClass(), target, filedName, fieldValue);
+    }
+
+    public static void setFiled(Class<?> clazz, Object target, String filedName, Object fieldValue) throws Exception {
+        Field declaredField = clazz.getDeclaredField(filedName);
         declaredField.setAccessible(true);
         declaredField.set(target, fieldValue);
     }

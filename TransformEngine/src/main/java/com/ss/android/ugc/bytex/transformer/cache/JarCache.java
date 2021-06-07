@@ -71,9 +71,7 @@ public class JarCache extends FileCache {
 
     @Override
     public final synchronized void transformOutput(Consumer<FileData> visitor) throws IOException {
-        if (hasWritten) {
-            throw new RuntimeException("rewrite");
-        }
+        output();
         List<FileData> dataList = Collections.synchronizedList(new LinkedList<>());
         forEach(item -> {
             if (visitor != null) visitor.accept(item);
@@ -177,7 +175,6 @@ public class JarCache extends FileCache {
 
         }
         context.getTransformOutputs().getTransformOutputs().put(outputRelativePath, outputs);
-        hasWritten = true;
     }
 
     @Override
@@ -265,6 +262,10 @@ public class JarCache extends FileCache {
             }
             return new ArrayList<>(dataMap.values());
         } else {
+            File file = getFile();
+            if(!file.exists()){
+                return Collections.emptyList();
+            }
             List<FileData> dataList = new ArrayList<>();
             try (ZipInputStream zin = new ZipInputStream(new BufferedInputStream(new FileInputStream(getFile())))) {
                 ZipEntry zipEntry;
@@ -284,11 +285,8 @@ public class JarCache extends FileCache {
 
     @Override
     public synchronized void skip() throws IOException {
-        if (hasWritten) {
-            throw new RuntimeException("rewrite");
-        }
+        output();
         FileUtils.copyFile(getFile(), outputFile);
-        hasWritten = true;
     }
 
     @Override

@@ -59,6 +59,7 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
                 }
                 for (MainProcessHandler handler : pluginList) {
                     handler.traverseIncremental(fileData, (ClassVisitorChain) null);
+                    handler.traverseIncremental(fileData, (ClassNode) null);
                 }
                 return;
             }
@@ -105,12 +106,12 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
                 }
             });
         } catch (ByteXException e) {
-            throw new RuntimeException(String.format("Failed to resolve class %s[%s]", fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
+            throw new RuntimeException(String.format("%s\n\tFailed to resolve class %s[%s]", e.getMessage(), fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
         } catch (Exception e) {
             e.printStackTrace();
             LevelLog.sDefaultLogger.e(String.format("Failed to read class %s", fileData.getRelativePath()), e);
             if (!GlobalWhiteListManager.INSTANCE.shouldIgnore(fileData.getRelativePath())) {
-                throw new RuntimeException(String.format("Failed to resolve class %s[%s]", fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
+                throw new RuntimeException(String.format("%s\n\tFailed to resolve class %s[%s]", e.getMessage(), fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
             }
         }
     }

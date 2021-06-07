@@ -54,7 +54,7 @@ class LifecycleAwareMainProcessHandler(val real: MainProcessHandler) : MainProce
         real.traverseIncremental(fileData, chain)
     }
 
-    override fun traverseIncremental(fileData: FileData, node: ClassNode) {
+    override fun traverseIncremental(fileData: FileData, node: ClassNode?) {
         real.traverseIncremental(fileData, node)
     }
 

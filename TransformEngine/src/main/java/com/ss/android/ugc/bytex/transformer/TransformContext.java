@@ -4,6 +4,7 @@ import com.android.build.api.transform.QualifiedContent;
 import com.android.build.api.transform.TransformInvocation;
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.api.BaseVariant;
+import com.google.common.base.Joiner;
 import com.ss.android.ugc.bytex.gradletoolkit.Artifact;
 import com.ss.android.ugc.bytex.gradletoolkit.GradleEnv;
 import com.ss.android.ugc.bytex.gradletoolkit.TransformEnv;
@@ -22,6 +23,7 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.internal.service.UnknownServiceException;
 import org.gradle.launcher.daemon.server.scaninfo.DaemonScanInfo;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -33,6 +35,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
+
+import static com.android.builder.model.AndroidProject.FD_OUTPUTS;
 
 public class TransformContext implements GradleEnv, ClassFinder {
     private TransformInvocation invocation;
@@ -253,6 +257,17 @@ public class TransformContext implements GradleEnv, ClassFinder {
         }
     }
 
+    public File getProguardMappingFile(){
+        BaseVariant variant = TransformInvocationKt.getVariant(invocation);
+        return new File(Joiner.on(File.separatorChar).join(
+                String.valueOf(project.getBuildDir()),
+                FD_OUTPUTS,
+                "mapping",
+                variant.getFlavorName(),
+                variant.getBuildType().getName(),
+                "mapping.txt"));
+    }
+
     public void release() {
         transformInputs.saveCache();
         transformInputs.release();
@@ -272,12 +287,18 @@ public class TransformContext implements GradleEnv, ClassFinder {
         hasRequestNotIncremental = false;
     }
 
+
     @Override
-    public ClassNode find(String className) {
+    public ClassNode find(String className, int parsingOption) {
         if (finder != null) {
-            return finder.find(className);
+            return finder.find(className, parsingOption);
         }
         return null;
+    }
+
+    @Override
+    public ClassNode find(String className) {
+        return find(className, ClassReader.SKIP_DEBUG);
     }
 
     @Override

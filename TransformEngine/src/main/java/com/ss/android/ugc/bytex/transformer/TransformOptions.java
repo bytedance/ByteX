@@ -12,6 +12,7 @@ public class TransformOptions {
     private final boolean useFixedTimestamp;
     private final boolean forbidUseLenientMutationDuringGetArtifact;
     private final AndroidJarProvider androidJarProvider;
+    private final boolean allowRewrite;
 
     private TransformOptions(Builder builder) {
         this.isPluginIncremental = builder.isPluginIncremental;
@@ -20,6 +21,7 @@ public class TransformOptions {
         this.useFixedTimestamp = builder.useFixedTimestamp;
         this.forbidUseLenientMutationDuringGetArtifact = builder.forbidUseLenientMutationDuringGetArtifact;
         this.androidJarProvider = builder.androidJarProvider;
+        this.allowRewrite = builder.allowRewrite;
     }
 
     public boolean isPluginIncremental() {
@@ -46,6 +48,10 @@ public class TransformOptions {
         return androidJarProvider;
     }
 
+    public boolean isAllowRewrite() {
+        return allowRewrite;
+    }
+
     public static class Builder {
         private boolean isPluginIncremental = true;
         private boolean shouldSaveCache = true;
@@ -53,6 +59,7 @@ public class TransformOptions {
         private boolean useFixedTimestamp = false;
         private boolean forbidUseLenientMutationDuringGetArtifact = false;
         private AndroidJarProvider androidJarProvider = AndroidJarProvider.DEFAULT;
+        private boolean allowRewrite = false;
 
         public Builder setPluginIncremental(boolean pluginIncremental) {
             isPluginIncremental = pluginIncremental;
@@ -74,6 +81,10 @@ public class TransformOptions {
             return this;
         }
 
+        public Builder setAllowRewrite(boolean allowRewrite) {
+            this.allowRewrite = allowRewrite;
+            return this;
+        }
 
         public Builder setForbidUseLenientMutationDuringGetArtifact(boolean forbidUseLenientMutationDuringGetArtifact) {
             this.forbidUseLenientMutationDuringGetArtifact = forbidUseLenientMutationDuringGetArtifact;
