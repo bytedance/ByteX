@@ -69,6 +69,9 @@ buildscript {
     repositories {
         google()
         jcenter()
+        maven {
+            url "https://artifact.bytedance.com/repository/byteX/"
+        }
     }
   
     dependencies {
