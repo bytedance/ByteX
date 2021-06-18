@@ -4,7 +4,7 @@ import com.ss.android.ugc.bytex.common.Constants;
 
 import org.objectweb.asm.ClassVisitor;
 
-public class BaseClassVisitor extends ClassVisitor {
+public class BaseClassVisitor extends ClassVisitor implements ChainVisitor {
     public BaseClassVisitor() {
         super(Constants.ASM_API);
     }
