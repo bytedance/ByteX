@@ -583,6 +583,8 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 - bytex.${extension.getName()}.alone:Whether to run the plugin independently，boolean , false by default.
 - bytex.useFixedTimestamp:Whether to use the fixed timestamp (0) of the entity in the output jar, this has a great benefit for incremental compilation because the entity is same and the timestamp is unchanged,and tasks after bytex could hit the cache (such as DexBuilder).boolean , true by default.
 - bytex.forbidUseLenientMutationDuringGetArtifact: Whether resolving configuration with lenient off when calling GradleEnv.getArtifact .This can fix the deadlock while calling FileCollection.getFiles() in some projects.boolean , false by default.
+- bytex.ASM_API:The API value passed to ASM library, currently it can be ASM4, ASM5, ASM6, ASM7, ASM8, ASM9. ASM6 by default.
+- bytex.enable_gradle_daemon_ignore_classloader_singleton:Whether to handle the memory leak of ByteX Graph singleton Class caused by the change of Gradle ClassLoader.true by default.
 
 
 ## Development Considerations

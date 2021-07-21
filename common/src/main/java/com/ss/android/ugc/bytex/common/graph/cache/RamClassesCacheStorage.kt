@@ -1,14 +1,23 @@
 package com.ss.android.ugc.bytex.common.graph.cache
 
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty
 import com.ss.android.ugc.bytex.common.graph.ClassEntity
+import com.ss.android.ugc.bytex.common.utils.GradleDaemonIgnoreClassLoaderSingletonManager
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Created by yangzhiqian on 2020-03-04<br/>
  */
-internal object RamClassesCacheStorage : ClassCacheStorage {
-    private val caches = ConcurrentHashMap<String, List<ClassEntity>>()
+internal class RamClassesCacheStorage : ClassCacheStorage {
+    private val caches =
+            if (BooleanProperty.ENABLE_GRADLE_DAEMON_IGNORE_CLASSLOADER_SINGLETON.value()) {
+                GradleDaemonIgnoreClassLoaderSingletonManager.computeIfAbsent<ConcurrentHashMap<String, List<ClassEntity>>>(this, this.javaClass.name) {
+                    ConcurrentHashMap()
+                }
+            } else {
+                ConcurrentHashMap()
+            }
 
     fun clear() {
         caches.clear()

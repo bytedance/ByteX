@@ -86,12 +86,14 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
                             throw new RuntimeException(String.format("%s should be a interface, but it's a class now. It was referred at class [%s], method [%s].", ownerNode.entity.name, this.className, this.methodName));
                         }
                         graph.traverseChildren((InterfaceNode) ownerNode, child -> {
-                            if (child instanceof ClassNode && !TypeUtil.isAbstract(child.entity.access)
-                                    && TypeUtil.isAbstract(child.confirmOriginMethod(name, desc).access())) {
-                                //非抽象子类没有实现这个抽象类
-                                checkIssueReceiver.addNotAccessMember(
-                                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
-                                        child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
+                            if (child instanceof ClassNode && !TypeUtil.isAbstract(child.entity.access)) {
+                                MethodEntity childImpl = child.confirmOriginMethod(name, desc);
+                                if (childImpl == null || TypeUtil.isAbstract(childImpl.access())) {
+                                    //非抽象子类没有实现这个抽象类
+                                    checkIssueReceiver.addNotAccessMember(
+                                            className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                                            child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
+                                }
                             }
                             return false;
                         });
@@ -100,11 +102,14 @@ public class ReferCheckMethodVisitor extends MethodVisitor {
                             throw new RuntimeException(String.format("%s should be a class, but it's an interface now. It was referred at class [%s], method [%s].", ownerNode.entity.name, this.className, this.methodName));
                         }
                         graph.traverseChildren((ClassNode) ownerNode, child -> {
-                            if (!TypeUtil.isAbstract(child.entity.access) && TypeUtil.isAbstract(child.confirmOriginMethod(name, desc).access())) {
-                                //非抽象子类没有实现这个抽象方法
-                                checkIssueReceiver.addNotAccessMember(
-                                        className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
-                                        child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
+                            if (!TypeUtil.isAbstract(child.entity.access)) {
+                                MethodEntity childImpl = child.confirmOriginMethod(name, desc);
+                                if (childImpl == null || TypeUtil.isAbstract(childImpl.access())) {
+                                    //非抽象子类没有实现这个抽象方法
+                                    checkIssueReceiver.addNotAccessMember(
+                                            className, methodName, methodDesc, methodAccess, sourceFile, processingLineNumber,
+                                            child.entity.name, name, desc, originMethod.access(), InaccessibleNode.TYPE_NOT_IMPLEMENT);
+                                }
                             }
                             return false;
                         });

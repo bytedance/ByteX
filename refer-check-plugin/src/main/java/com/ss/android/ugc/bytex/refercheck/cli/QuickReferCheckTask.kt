@@ -4,6 +4,7 @@ import com.android.build.api.transform.Context
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.internal.pipeline.TransformInvocationBuilder
+import com.bytedance.gradle.compat.extension.HookContext
 import com.ss.android.ugc.bytex.common.configuration.BooleanProperty
 import com.ss.android.ugc.bytex.common.utils.Utils
 import com.ss.android.ugc.bytex.common.white_list.WhiteList
@@ -16,13 +17,18 @@ import com.ss.android.ugc.bytex.transformer.TransformContext
 import com.ss.android.ugc.bytex.transformer.TransformOptions
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.workers.WorkerExecutor
 import java.util.*
 import javax.inject.Inject
 
-open class QuickReferCheckTask @Inject constructor(val pj: Project, val android: AppExtension, val extension: ReferCheckExtension, val variant: BaseVariant) : DefaultTask(), Context {
+open class QuickReferCheckTask @Inject constructor(val pj: Project, val android: AppExtension, val extension: ReferCheckExtension, val variant: BaseVariant) : DefaultTask(), HookContext {
+
+    override val hookTask: Task
+        get() = this
+
     private val whiteList by lazy {
         WhiteList().apply {
             LinkedList<String>().let {

@@ -1,8 +1,10 @@
 package com.ss.android.ugc.bytex.common.graph.cache
 
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty
 import com.ss.android.ugc.bytex.common.graph.ClassNode
 import com.ss.android.ugc.bytex.common.graph.InterfaceNode
 import com.ss.android.ugc.bytex.common.graph.Node
+import com.ss.android.ugc.bytex.common.utils.GradleDaemonIgnoreClassLoaderSingletonManager
 import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -10,8 +12,15 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Created by yangzhiqian on 2020/9/3<br/>
  */
-internal object RamNodeCacheStorage : NodeCacheStorage {
-    private val caches = ConcurrentHashMap<String, Map<String, Node>>()
+internal class RamNodeCacheStorage : NodeCacheStorage {
+    private val caches =
+            if (BooleanProperty.ENABLE_GRADLE_DAEMON_IGNORE_CLASSLOADER_SINGLETON.value()) {
+                GradleDaemonIgnoreClassLoaderSingletonManager.computeIfAbsent<ConcurrentHashMap<String, Map<String, Node>>>(this, this.javaClass.name) {
+                    ConcurrentHashMap()
+                }
+            } else {
+                ConcurrentHashMap()
+            }
 
     fun clear() {
         caches.clear()

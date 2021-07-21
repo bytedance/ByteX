@@ -251,7 +251,7 @@ public class TransformContext implements GradleEnv, ClassFinder {
     public boolean isDaemonSingleUse() {
         try {
             return ((ProjectInternal) project).getServices().get(DaemonScanInfo.class).isSingleUse();
-        } catch (UnknownServiceException e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             return false;
         }

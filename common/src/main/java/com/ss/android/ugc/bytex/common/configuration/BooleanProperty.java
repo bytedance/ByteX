@@ -17,7 +17,11 @@ public enum BooleanProperty implements Property<Boolean> {
     ENABLE_SEPARATE_PROCESSING_NOTINCREMENTAL("bytex.enableSeparateProcessingNotIncremental", false),
     USE_FIXED_TIMESTAMP("bytex.useFixedTimestamp", true),
     FORBID_USE_LENIENT_MUTATION_DURING_GET_ARTIFACT("bytex.forbidUseLenientMutationDuringGetArtifact", false),
-    ALLOW_REWRITE("bytex.allowRewrite", false);
+    ALLOW_REWRITE("bytex.allowRewrite", false),
+    CHECK_TRAVERSE_MODIFY("bytex.check_traverse_modify", true),
+    CHECK_DEBUG_TRAVERSE_MODIFY("bytex.check_debug_traverse_modify", false),
+    ENABLE_BUILD_RECORDER("bytex.enable_build_recorder", true),
+    ENABLE_GRADLE_DAEMON_IGNORE_CLASSLOADER_SINGLETON("bytex.enable_gradle_daemon_ignore_classloader_singleton", true);
 
     @NonNull
     private final String propertyName;

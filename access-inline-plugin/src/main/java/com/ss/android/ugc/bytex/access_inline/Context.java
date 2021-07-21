@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 public class Context extends BaseContext<AccessInlineExtension> {
     private static final String SEPARATOR = "#";
@@ -39,7 +40,27 @@ public class Context extends BaseContext<AccessInlineExtension> {
 
     private final Map<String, RefMemberEntity> accessedMembers = new ConcurrentHashMap<>(512);
 
+    private final List<Pattern> whiteList = new ArrayList<>();
+
     private Graph graph;
+
+    @Override
+    public synchronized void init() {
+        super.init();
+        whiteList.clear();
+        for (String s : extension.getWhiteList()) {
+            whiteList.add(Pattern.compile(s));
+        }
+    }
+
+    public boolean inWhiteList(String className) {
+        for (Pattern pattern : whiteList) {
+            if (pattern.matcher(className).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public Access$MethodEntity addAccess$Method(String owner, String name, String desc) {
         Access$MethodEntity entity = new Access$MethodEntity(owner, name, desc);
@@ -274,6 +295,7 @@ public class Context extends BaseContext<AccessInlineExtension> {
         super.releaseContext();
         access$Methods.clear();
         accessedMembers.clear();
+        whiteList.clear();
         graph = null;
     }
 }
