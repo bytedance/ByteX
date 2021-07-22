@@ -59,6 +59,16 @@ public class ClassVisitorChain {
         } else return null;
     }
 
+
+    public byte[] accept(ClassNode classNode) {
+        if (head != null) {
+            classNode.accept(head);
+        }
+        if (classWriter != null) {
+            return classWriter.toByteArray();
+        } else return null;
+    }
+
     public boolean isEmpty() {
         return head == null;
     }

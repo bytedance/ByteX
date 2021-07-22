@@ -2,6 +2,7 @@ package com.ss.android.ugc.bytex.common.processor;
 
 
 import com.android.build.api.transform.Status;
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty;
 import com.ss.android.ugc.bytex.common.exception.ByteXException;
 import com.ss.android.ugc.bytex.common.exception.GlobalWhiteListManager;
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandler;
@@ -16,6 +17,7 @@ import com.ss.android.ugc.bytex.transformer.TransformContext;
 import com.ss.android.ugc.bytex.transformer.cache.FileData;
 
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.List;
@@ -67,6 +69,12 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
             String relativePath = fileData.getRelativePath();
             ClassReader cr = new ClassReader(raw);
             int flag = getFlag(handlers);
+            ClassNode checkCn = null;
+            if (BooleanProperty.CHECK_TRAVERSE_MODIFY.value() && (context.isReleaseBuild() || BooleanProperty.CHECK_DEBUG_TRAVERSE_MODIFY.value())) {
+                //需要检验是否有插件会改指令，我们先accept一下，用一个ClassNode接收一下，后面再check
+                checkCn = new SafeClassNode();
+                cr.accept(checkCn, flag);
+            }
             ClassVisitorChain chain = getClassVisitorChain(relativePath);
             if (this.mGraphBuilder != null) {
                 //do generate class diagram
@@ -89,7 +97,15 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
             });
             ClassNode cn = new SafeClassNode();
             chain.append(cn);
-            chain.accept(cr, flag);
+            if (checkCn != null) {
+                //之前解析过，这次不解析，直接用之前的ClassNode来传递数据
+                chain.accept(checkCn);
+                if (checkClassModified(cn, checkCn)) {
+                    throw new IllegalStateException("Found plugin modified the class during the traverse process");
+                }
+            } else {
+                chain.accept(cr, flag);
+            }
             pluginList.forEach(plugin -> {
                 switch (process) {
                     case TRAVERSE_INCREMENTAL:
@@ -105,6 +121,9 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
                         throw new RuntimeException("Unsupported Process");
                 }
             });
+            if (checkCn != null && checkClassModified(cn, checkCn)) {
+                throw new IllegalStateException("Found plugin modified the class during the traverse process");
+            }
         } catch (ByteXException e) {
             throw new RuntimeException(String.format("%s\n\tFailed to resolve class %s[%s]", e.getMessage(), fileData.getRelativePath(), Utils.getAllFileCachePath(context, fileData.getRelativePath())), e);
         } catch (Exception e) {
@@ -143,5 +162,26 @@ public class ClassFileAnalyzer extends MainProcessFileHandler {
             flag = flag & ~ClassReader.SKIP_FRAMES;
         }
         return flag;
+    }
+
+
+    private static boolean checkClassModified(ClassNode n1, ClassNode n2) {
+        ClassWriter cw1 = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        n1.accept(cw1);
+        byte[] b1 = cw1.toByteArray();
+
+        ClassWriter cw2 = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        n2.accept(cw2);
+        byte[] b2 = cw2.toByteArray();
+
+        if (b1.length != b2.length) {
+            return true;
+        }
+        for (int i = 0; i < b1.length; i++) {
+            if (b1[i] != b2[i]) {
+                return true;
+            }
+        }
+        return false;
     }
 }

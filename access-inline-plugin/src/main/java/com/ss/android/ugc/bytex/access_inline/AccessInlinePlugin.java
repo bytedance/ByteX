@@ -6,6 +6,7 @@ import com.ss.android.ugc.bytex.access_inline.visitor.PreProcessClassVisitor;
 import com.ss.android.ugc.bytex.access_inline.visitor.ShrinkAccessClassVisitor;
 import com.ss.android.ugc.bytex.common.CommonPlugin;
 import com.ss.android.ugc.bytex.common.TransformConfiguration;
+import com.ss.android.ugc.bytex.common.utils.Utils;
 import com.ss.android.ugc.bytex.common.visitor.ClassVisitorChain;
 import com.ss.android.ugc.bytex.transformer.TransformEngine;
 
@@ -28,13 +29,17 @@ public class AccessInlinePlugin extends CommonPlugin<AccessInlineExtension, Cont
     @Override
     public void traverse(@NotNull String relativePath, @NotNull ClassVisitorChain chain) {
         super.traverse(relativePath, chain);
-        chain.connect(new PreProcessClassVisitor(this.context));
+        if (!context.inWhiteList(Utils.getClassName(relativePath))) {
+            chain.connect(new PreProcessClassVisitor(this.context));
+        }
     }
 
     @Override
     public void traverseAndroidJar(@NotNull String relativePath, @NotNull ClassVisitorChain chain) {
         super.traverseAndroidJar(relativePath, chain);
-        chain.connect(new PreProcessClassVisitor(this.context, true));
+        if (!context.inWhiteList(Utils.getClassName(relativePath))) {
+            chain.connect(new PreProcessClassVisitor(this.context, true));
+        }
     }
 
     @Override

@@ -14,6 +14,7 @@ dependencies {
     compile project(':GradleToolKit')
     compile "com.google.code.gson:gson:2.8.2"
     compile group: 'dom4j', name: 'dom4j', version: '1.6.1'
+    compile("com.bytedance.android.build:gradle-compat-api:$gradle_compat_version")
 }
 
 sourceCompatibility = "1.8"

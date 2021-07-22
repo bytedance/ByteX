@@ -7,7 +7,8 @@ import javax.annotation.Nonnull;
  */
 public enum StringProperty implements Property<String> {
     EXCEPTION_IGNORE_LIST("bytex.exceptionIgnoreClassList", ""),
-    GLOBAL_IGNORE_LIST("bytex.globalIgnoreClassList", "");
+    GLOBAL_IGNORE_LIST("bytex.globalIgnoreClassList", ""),
+    ASM_API("bytex.ASM_API", "ASM6");
 
     @Nonnull
     private final String propertyName;

@@ -13,6 +13,7 @@ fun main() {
     println(MethodMatcher("!com/Clas").match("com/Class", "ab", "()V"))
     println(MethodMatcher("(com/Clas||com/Class)&&!(com/Clas&&com/Class)").match("com/Class", "ab", "()V"))
     println(MethodMatcher("(com/Clas||com/Class||(com/Clas||com/Class)&&!(!com/Clas&&com/Class))&&!(!com/Clas&&com/Class)").match("com/Class", "ab", "()V"))
+    println(MethodMatcher("android.content.res.Resources#openRawResourceFd").match("android.content.res.Resources", "openRawResourceFd", "()V"))
 }
 
 interface IMethodMatcher {

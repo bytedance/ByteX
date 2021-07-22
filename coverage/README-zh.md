@@ -15,8 +15,8 @@
 #### 1. 添加classpath
 
 ```groovy
-classpath "com.bytedance.android.byteX:coverage_lib:${Versions.BYTEX_VERSION}"
-classpath "com.bytedance.android.byteX:coverage_plugin:${Versions.BYTEX_VERSION}"
+classpath "com.bytedance.android.byteX:coverage-lib:${Versions.BYTEX_VERSION}"
+classpath "com.bytedance.android.byteX:coverage-plugin:${Versions.BYTEX_VERSION}"
 ```
 
 #### 2. 应用插件

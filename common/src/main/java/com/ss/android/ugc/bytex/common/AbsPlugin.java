@@ -64,11 +64,11 @@ public abstract class AbsPlugin<E extends BaseExtension> implements Plugin<Proje
 
     @Override
     public final void apply(@NotNull Project project) {
-        GlobalByteXBuildListener.INSTANCE.onByteXPluginApply(project, this);
         this.project = project;
         this.android = project.getExtensions().getByType(AppExtension.class);
         ProjectOptions.INSTANCE.init(project);
         GlobalWhiteListManager.INSTANCE.init(project);
+        GlobalByteXBuildListener.INSTANCE.onByteXPluginApply(project, this);
         Class<E> extensionClass = getExtensionClass();
         if (extensionClass != null) {
             Instantiator instantiator = ((DefaultGradle) project.getGradle()).getServices().get(Instantiator.class);

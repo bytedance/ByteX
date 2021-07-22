@@ -15,8 +15,8 @@ In Tiktok, we found 1/6 of the useless classes, excluding the resources they ref
 #### 1. Add classpath
 
 ```groovy
-classpath "com.bytedance.android.byteX:coverage_lib:${Versions.BYTEX_VERSION}"
-classpath "com.bytedance.android.byteX:coverage_plugin:${Versions.BYTEX_VERSION}"
+classpath "com.bytedance.android.byteX:coverage-lib:${Versions.BYTEX_VERSION}"
+classpath "com.bytedance.android.byteX:coverage-plugin:${Versions.BYTEX_VERSION}"
 ```
 
 #### 2. Apply plugin

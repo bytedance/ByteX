@@ -19,13 +19,13 @@ class CachedGraphBuilder(private val graphCacheFile: File?, shouldLoadCache: Boo
             AsynchronousGraphCacheStorage(
                     DefaultGraphCacheStorage(
                             if (useRamCache && BooleanProperty.ENABLE_RAM_CACHE.value() && BooleanProperty.ENABLE_RAM_NODES_CACHE.value()) {
-                                RamNodeCacheStorage
+                                RamNodeCacheStorage()
                             } else {
                                 null
                             },
                             GsonFileClassCacheStorage(
                                     if (useRamCache && BooleanProperty.ENABLE_RAM_CACHE.value() && BooleanProperty.ENABLE_RAM_CLASSES_CACHE.value()) {
-                                        RamClassesCacheStorage
+                                        RamClassesCacheStorage()
                                     } else {
                                         null
                                     }
@@ -36,8 +36,8 @@ class CachedGraphBuilder(private val graphCacheFile: File?, shouldLoadCache: Boo
             try {
                 shouldLoadCache && graphCache.loadCache(graphCacheFile, this).apply {
                     if (!this) {
-                        RamClassesCacheStorage.clear()
-                        RamNodeCacheStorage.clear()
+                        RamClassesCacheStorage().clear()
+                        RamNodeCacheStorage().clear()
                         graphCacheFile?.delete()
                         throw IllegalStateException("Failed to load cache")
 
@@ -46,8 +46,8 @@ class CachedGraphBuilder(private val graphCacheFile: File?, shouldLoadCache: Boo
             } finally {
                 if (graphCacheFile != null) {
                     graphCacheFile.delete()
-                    RamClassesCacheStorage.clearCache(graphCacheFile)
-                    RamNodeCacheStorage.clearCache(graphCacheFile)
+                    RamClassesCacheStorage().clearCache(graphCacheFile)
+                    RamNodeCacheStorage().clearCache(graphCacheFile)
                 }
             }
 

@@ -589,6 +589,8 @@ ByteXBuildListenerManager.INSTANCE.registerMainProcessHandlerListener(yourMainPr
 - bytex.${extension.getName()}.alone:是否独立运行某个插件，boolean类型,默认false。
 - bytex.useFixedTimestamp:是否固定一个输出文件jar中entity的时间戳(0)，这个对增量编译有比较大收益，因为输出内容不变+时间戳不变，后续task可以命中cache(比如DexBuilder)。boolean类型,默认true。
 - bytex.forbidUseLenientMutationDuringGetArtifact:在调用GradleEnv.getArtifact时是否禁止使用Lenient方式获取，这个可以规避部分工程因为FileCollection.getFiles()死锁问题.boolean类型,默认false。
+- bytex.ASM_API:设置使用ASM传递的API值，目前可以是ASM4、ASM5、ASM6、ASM7、ASM8、ASM9.默认ASM6.
+- bytex.enable_gradle_daemon_ignore_classloader_singleton:是否兜底因为Gradle ClassLoader改变导致的ByteX Graph单例内存泄露问题.默认true.
 
 ## 开发注意事项
 ### 分支管理

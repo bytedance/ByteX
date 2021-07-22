@@ -1,6 +1,7 @@
 package com.ss.android.ugc.bytex.common.builder
 
 import com.ss.android.ugc.bytex.common.builder.internal.DefaultByteXBuildListener
+import com.ss.android.ugc.bytex.common.configuration.BooleanProperty
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandlerListener
 import com.ss.android.ugc.bytex.common.flow.main.MainProcessHandlerListenerManager
 import java.util.*
@@ -12,8 +13,10 @@ object ByteXBuildListenerManager {
     private val listeners: MutableList<ByteXBuildListener> = LinkedList()
 
     init {
-        registerByteXBuildListener(DefaultByteXBuildListener)
-        registerMainProcessHandlerListener(DefaultByteXBuildListener)
+        if (BooleanProperty.ENABLE_BUILD_RECORDER.value()) {
+            registerByteXBuildListener(DefaultByteXBuildListener)
+            registerMainProcessHandlerListener(DefaultByteXBuildListener)
+        }
     }
 
     @Synchronized

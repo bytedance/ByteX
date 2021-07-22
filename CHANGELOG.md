@@ -1,4 +1,13 @@
 # Change Log
+### Version 0.3.0
+- Upgrade asm libs from 6.2.1 to 9.2(Notes:ASM_API which is passed to asm visitors has not been changed,ASM6 by default.You could changed it by append 'bytex.ASM_API=\[ASM4、ASM5、ASM6、ASM7、ASM8、ASM9\]' in gradle.properties)
+- Replace booster-gradle-api with gradle-compat-api.Both of them are perfect AGP compatible libraries.
+    `booster-gradle-api` is developed and maintained by [booster](https://github.com/didi/booster)，which was used by ByteX for a long time .
+    `gradle-compat-api` is developed and maintained by bytedance，witch has been running well within the company for several months.
+- Check unexpected bytecode modifications by plugins during the traverse phase in release build.(Notes:Plugins should only perceive the inputs in the traverse phase, and there should be no modifications) 
+- Fix memory leak caused by gradle
+- New whiteList feature in access-inline-plugin.
+
 ### Version 0.2.8
 - Replace hookTransform with HookInjector;
 - Add proguard mapping parser&retracer；
