@@ -1,8 +1,6 @@
 package com.ss.android.ugc.bytex.proguardconfigurationresolver.task;
 
 import com.android.build.gradle.internal.tasks.ProguardConfigurableTask;
-import com.android.build.gradle.internal.tasks.ProguardTask;
-import com.android.build.gradle.internal.tasks.R8Task;
 import com.ss.android.ugc.bytex.proguardconfigurationresolver.ProguardConfigurationResolver;
 
 import org.gradle.api.Project;
@@ -21,7 +19,7 @@ public class ProguardConfigurableTaskResolver extends ProguardConfigurationResol
     @Override
     public Task getTask() {
         for (Task task : project.getTasks()) {
-            if ((task instanceof ProguardTask || task instanceof R8Task) &&
+            if (task instanceof ProguardConfigurableTask &&
                     ((ProguardConfigurableTask) task).getVariantName().equals(variantName)) {
                 return task;
             }

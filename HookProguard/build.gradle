@@ -1,5 +1,11 @@
 apply from: rootProject.file('gradle/plugin.gradle')
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
 dependencies {
+    implementation "net.sf.proguard:proguard-gradle:6.0.3"
+
     implementation project(':ProguardConfigurationResolver')
     implementation project(':ProguardConfigurationResolver-task')
     implementation project(':ProguardConfigurationResolver-transform')
