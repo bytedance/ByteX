@@ -148,14 +148,15 @@ shrinkR {
     }
 }
 
-if (enableMinify) {
-    apply plugin: 'bytex.getter_setter_inline'
-    getter_setter_inline {
-        enable pluginEnable
-        enableInDebug pluginEnableInDebug
-        logLevel pluginLogLevel
-    }
-}
+// org.gradle.internal.work.NoAvailableWorkerLeaseException:: No worker lease associated with the current thread
+//if (enableMinify) {
+//    apply plugin: 'bytex.getter_setter_inline'
+//    getter_setter_inline {
+//        enable pluginEnable
+//        enableInDebug pluginEnableInDebug
+//        logLevel pluginLogLevel
+//    }
+//}
 
 apply plugin: 'bytex.closeable_checker'
 closeable_checker {

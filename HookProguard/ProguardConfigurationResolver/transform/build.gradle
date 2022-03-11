@@ -2,6 +2,9 @@ apply plugin: 'java'
 group "$upload_group"
 version "$upload_version"
 
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
 dependencies {
     compileOnly gradleApi()
     compileOnly "com.android.tools.build:gradle:3.5.3"
