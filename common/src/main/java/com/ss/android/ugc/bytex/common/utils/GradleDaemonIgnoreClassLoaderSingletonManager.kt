@@ -1,6 +1,9 @@
 package com.ss.android.ugc.bytex.common.utils
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.invocation.Gradle
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 
 /**
  * 用途：全局单例，忽略因为gradle的类加载器变化导致的全局单例泄露问题
@@ -11,10 +14,36 @@ import org.gradle.api.invocation.Gradle
  * 加载，同时在ClassLoader变化的情况下，将之前的缓存失效，做到真正的全局单例唯一。
  */
 object GradleDaemonIgnoreClassLoaderSingletonManager {
-    private val map = Gradle::class.java.classLoader.let {
-        val field = ClassLoader::class.java.getDeclaredField("parallelLockMap")
+    private val map = Gradle::class.java.classLoader.let { classLoader ->
+        val field = if (JavaVersion.current().ordinal >= JavaVersion.VERSION_12.ordinal) {
+            /**
+             * JDK17针对一些类增加了反射限制, 这里特殊处理下，否则会有如下报错：
+             * Caused by: java.lang.NoSuchFieldException: parallelLockMap
+             * 同时，虚拟机参数需要增加如下配置(可加在org.gradle.jvmargs里):
+             * --add-opens=java.base/java.lang=ALL-UNNAMED
+             *
+             * About the feature "Filtering for classes with security sensitive fields":
+             * Core reflection has a filtering mechanism to hide security and integrity sensitive
+             * fields and methods from Class getXXXField(s) and getXXXMethod(s).
+             * The filtering mechanism has been used for several releases to hide security sensitive
+             * fields such as System.security and Class.classLoader.
+             * This CSR proposes to extend the filters to hide fields from a number of highly
+             * security sensitive classes in java.lang.reflect and java.lang.invoke.
+             *
+             * You can visit https://bugs.openjdk.org/browse/JDK-8210522 for more details.
+             */
+            val getDeclaredFields0: Method = Class::class.java.getDeclaredMethod(
+                "getDeclaredFields0",
+                Boolean::class.javaPrimitiveType
+            )
+            getDeclaredFields0.isAccessible = true
+            (getDeclaredFields0.invoke(ClassLoader::class.java, false) as Array<Field>)
+                .first { "parallelLockMap" == it.name }
+        } else {
+            ClassLoader::class.java.getDeclaredField("parallelLockMap")
+        }
         field.isAccessible = true
-        field.get(it) as MutableMap<Any, Any>
+        field.get(classLoader) as MutableMap<Any, Any>
     }
 
     @Synchronized
